@@ -3,15 +3,15 @@
  */
 package com.alibaba.rocketmq.broker.offset;
 
-import java.util.Random;
-
-import org.junit.Test;
-
 import com.alibaba.rocketmq.broker.BrokerController;
 import com.alibaba.rocketmq.common.BrokerConfig;
+import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.remoting.netty.NettyClientConfig;
 import com.alibaba.rocketmq.remoting.netty.NettyServerConfig;
 import com.alibaba.rocketmq.store.config.MessageStoreConfig;
+import org.junit.Test;
+
+import java.util.Random;
 
 
 /**
@@ -24,7 +24,7 @@ public class ConsumerOffsetManagerTest {
             new BrokerConfig(), //
             new NettyServerConfig(), //
             new NettyClientConfig(), //
-            new MessageStoreConfig());
+            new MessageStoreConfig(), new Config());
         boolean initResult = brokerController.initialize();
         System.out.println("initialize " + initResult);
         brokerController.start();

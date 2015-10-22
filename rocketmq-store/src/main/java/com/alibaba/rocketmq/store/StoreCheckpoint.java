@@ -15,18 +15,17 @@
  */
 package com.alibaba.rocketmq.store;
 
+import com.alibaba.rocketmq.common.UtilAll;
+import com.alibaba.rocketmq.common.constant.LoggerName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.rocketmq.common.UtilAll;
-import com.alibaba.rocketmq.common.constant.LoggerName;
 
 
 /**
@@ -43,6 +42,7 @@ public class StoreCheckpoint {
     private volatile long physicMsgTimestamp = 0;
     private volatile long logicsMsgTimestamp = 0;
     private volatile long indexMsgTimestamp = 0;
+    private volatile long transactionTimestamp = 0;
 
 
     public StoreCheckpoint(final String scpPath) throws IOException {
@@ -59,6 +59,7 @@ public class StoreCheckpoint {
             this.physicMsgTimestamp = this.mappedByteBuffer.getLong(0);
             this.logicsMsgTimestamp = this.mappedByteBuffer.getLong(8);
             this.indexMsgTimestamp = this.mappedByteBuffer.getLong(16);
+            this.transactionTimestamp = this.mappedByteBuffer.getLong(24);
 
             log.info("store checkpoint file physicMsgTimestamp " + this.physicMsgTimestamp + ", "
                     + UtilAll.timeMillisToHumanString(this.physicMsgTimestamp));
@@ -66,6 +67,8 @@ public class StoreCheckpoint {
                     + UtilAll.timeMillisToHumanString(this.logicsMsgTimestamp));
             log.info("store checkpoint file indexMsgTimestamp " + this.indexMsgTimestamp + ", "
                     + UtilAll.timeMillisToHumanString(this.indexMsgTimestamp));
+            log.info("store checkpoint file transactionTimestamp " + this.transactionTimestamp + ", "
+                    + UtilAll.timeMillisToHumanString(this.transactionTimestamp));
         }
         else {
             log.info("store checkpoint file not exists, " + scpPath);
@@ -92,6 +95,7 @@ public class StoreCheckpoint {
         this.mappedByteBuffer.putLong(0, this.physicMsgTimestamp);
         this.mappedByteBuffer.putLong(8, this.logicsMsgTimestamp);
         this.mappedByteBuffer.putLong(16, this.indexMsgTimestamp);
+        this.mappedByteBuffer.putLong(24, this.transactionTimestamp);
         this.mappedByteBuffer.force();
     }
 
@@ -122,7 +126,7 @@ public class StoreCheckpoint {
 
 
     public long getMinTimestamp() {
-        long min = Math.min(this.physicMsgTimestamp, this.logicsMsgTimestamp);
+        long min = Math.min(Math.min(this.physicMsgTimestamp, this.logicsMsgTimestamp), this.transactionTimestamp);
 
         // 向前倒退3s，防止因为时间精度问题导致丢数据
         // fixed https://github.com/alibaba/RocketMQ/issues/467
@@ -143,4 +147,11 @@ public class StoreCheckpoint {
         this.indexMsgTimestamp = indexMsgTimestamp;
     }
 
+    public long getTransactionTimestamp() {
+        return transactionTimestamp;
+    }
+
+    public void setTransactionTimestamp(long transactionTimestamp) {
+        this.transactionTimestamp = transactionTimestamp;
+    }
 }

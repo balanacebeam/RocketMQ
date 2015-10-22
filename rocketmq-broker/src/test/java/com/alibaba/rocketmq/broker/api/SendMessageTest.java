@@ -3,20 +3,20 @@
  */
 package com.alibaba.rocketmq.broker.api;
 
-import org.junit.Test;
-
 import com.alibaba.rocketmq.broker.BrokerController;
 import com.alibaba.rocketmq.client.impl.CommunicationMode;
 import com.alibaba.rocketmq.client.impl.MQClientAPIImpl;
 import com.alibaba.rocketmq.client.producer.SendResult;
 import com.alibaba.rocketmq.common.BrokerConfig;
 import com.alibaba.rocketmq.common.MixAll;
+import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.common.message.Message;
 import com.alibaba.rocketmq.common.message.MessageDecoder;
 import com.alibaba.rocketmq.common.protocol.header.SendMessageRequestHeader;
 import com.alibaba.rocketmq.remoting.netty.NettyClientConfig;
 import com.alibaba.rocketmq.remoting.netty.NettyServerConfig;
 import com.alibaba.rocketmq.store.config.MessageStoreConfig;
+import org.junit.Test;
 
 
 /**
@@ -29,7 +29,7 @@ public class SendMessageTest {
             new BrokerConfig(), //
             new NettyServerConfig(), //
             new NettyClientConfig(), //
-            new MessageStoreConfig());
+            new MessageStoreConfig(), new Config());
         boolean initResult = brokerController.initialize();
         System.out.println("initialize " + initResult);
 

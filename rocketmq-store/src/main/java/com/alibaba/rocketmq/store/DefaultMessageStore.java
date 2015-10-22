@@ -15,33 +15,12 @@
  */
 package com.alibaba.rocketmq.store;
 
-import static com.alibaba.rocketmq.store.config.BrokerRole.SLAVE;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.alibaba.rocketmq.common.ServiceThread;
 import com.alibaba.rocketmq.common.SystemClock;
 import com.alibaba.rocketmq.common.ThreadFactoryImpl;
 import com.alibaba.rocketmq.common.UtilAll;
+import com.alibaba.rocketmq.common.config.Config;
+import com.alibaba.rocketmq.common.config.TransactionConfig;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.common.message.MessageConst;
 import com.alibaba.rocketmq.common.message.MessageDecoder;
@@ -57,6 +36,26 @@ import com.alibaba.rocketmq.store.index.IndexService;
 import com.alibaba.rocketmq.store.index.QueryOffsetResult;
 import com.alibaba.rocketmq.store.schedule.ScheduleMessageService;
 import com.alibaba.rocketmq.store.stats.BrokerStatsManager;
+import com.alibaba.rocketmq.store.transaction.TransactionRecord;
+import com.alibaba.rocketmq.store.transaction.TransactionStore;
+import com.alibaba.rocketmq.store.transaction.TransactionStoreFactory;
+import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.alibaba.rocketmq.store.config.BrokerRole.SLAVE;
 
 
 /**
@@ -110,11 +109,16 @@ public class DefaultMessageStore implements MessageStore {
         .newSingleThreadScheduledExecutor(new ThreadFactoryImpl("StoreScheduledThread"));
     private final BrokerStatsManager brokerStatsManager;
 
+    private TransactionStore transactionStore;
+
+    private Config config;
 
     public DefaultMessageStore(final MessageStoreConfig messageStoreConfig,
-            final BrokerStatsManager brokerStatsManager) throws IOException {
+                               final BrokerStatsManager brokerStatsManager,
+                               Config config) throws IOException {
         this.messageStoreConfig = messageStoreConfig;
         this.brokerStatsManager = brokerStatsManager;
+        this.config = config;
         this.allocateMapedFileService = new AllocateMapedFileService();
         this.commitLog = new CommitLog(this);
         this.consumeQueueTable =
@@ -151,6 +155,11 @@ public class DefaultMessageStore implements MessageStore {
         this.dispatchMessageService.start();
         // 因为下面的recover会分发请求到索引服务，如果不启动，分发过程会被流控
         this.indexService.start();
+
+        if (this.config != null && this.config.transactionConfig != null &&
+                !this.config.transactionConfig.storeType.equals(TransactionConfig.StoreType.none)) {
+            this.transactionStore = TransactionStoreFactory.getTransactionStore(this.config);
+        }
     }
 
 
@@ -316,6 +325,10 @@ public class DefaultMessageStore implements MessageStore {
             this.reputMessageService.start();
         }
 
+        if (this.transactionStore != null) {
+            this.transactionStore.start();
+        }
+
         this.haService.start();
 
         this.createTempFile();
@@ -358,6 +371,10 @@ public class DefaultMessageStore implements MessageStore {
             }
             this.storeCheckpoint.flush();
             this.storeCheckpoint.shutdown();
+
+            if (this.transactionStore != null) {
+                this.transactionStore.shutdown();
+            }
 
             this.deleteFile(StorePathConfigHelper.getAbortFile(this.messageStoreConfig.getStorePathRootDir()));
         }
@@ -1637,6 +1654,9 @@ public class DefaultMessageStore implements MessageStore {
 
         private void doDispatch() {
             if (!this.requestsRead.isEmpty()) {
+                List<TransactionRecord> rollbackOrCommit = Lists.newArrayList();
+                List<TransactionRecord> prepare = Lists.newArrayList();
+                long transactionTimestamp = 0;
                 for (DispatchRequest req : this.requestsRead) {
 
                     final int tranType = MessageSysFlag.getTransactionValue(req.getSysFlag());
@@ -1653,7 +1673,35 @@ public class DefaultMessageStore implements MessageStore {
                     case MessageSysFlag.TransactionRollbackType:
                         break;
                     }
+
+                    if (DefaultMessageStore.this.transactionStore != null) {
+                        switch (tranType) {
+                            case MessageSysFlag.TransactionNotType:
+                                break;
+                            case MessageSysFlag.TransactionPreparedType:
+                                prepare.add(buildTransactionRecord(req));
+                                break;
+                            case MessageSysFlag.TransactionCommitType:
+                            case MessageSysFlag.TransactionRollbackType:
+                                rollbackOrCommit.add(buildTransactionRecord(req));
+                                break;
+                        }
+                    }
+
+                    transactionTimestamp = req.getStoreTimestamp();
                 }
+
+                if (DefaultMessageStore.this.transactionStore != null) {
+                    boolean result = DefaultMessageStore.this.transactionStore.put(prepare);
+                    if (!result) {
+                        // TODO only retry once?
+                        DefaultMessageStore.this.transactionStore.put(prepare);
+                    }
+
+                    DefaultMessageStore.this.transactionStore.remove(rollbackOrCommit);
+                }
+
+                DefaultMessageStore.this.storeCheckpoint.setTransactionTimestamp(transactionTimestamp);
 
                 if (DefaultMessageStore.this.getMessageStoreConfig().isMessageIndexEnable()) {
                     DefaultMessageStore.this.indexService.putRequest(this.requestsRead.toArray());
@@ -1661,6 +1709,15 @@ public class DefaultMessageStore implements MessageStore {
 
                 this.requestsRead.clear();
             }
+        }
+
+        private TransactionRecord buildTransactionRecord(DispatchRequest request) {
+            TransactionRecord transactionRecord = new TransactionRecord();
+            transactionRecord.setBrokerName(DefaultMessageStore.this.config.brokerName);
+            transactionRecord.setProducerGroup(request.getProducerGroup());
+            transactionRecord.setOffset(request.getPreparedTransactionOffset());
+
+            return transactionRecord;
         }
 
 
@@ -1949,5 +2006,9 @@ public class DefaultMessageStore implements MessageStore {
 
     public BrokerStatsManager getBrokerStatsManager() {
         return brokerStatsManager;
+    }
+
+    public TransactionStore getTransactionStore() {
+        return transactionStore;
     }
 }

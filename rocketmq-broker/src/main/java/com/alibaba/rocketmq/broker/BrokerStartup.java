@@ -15,25 +15,13 @@
  */
 package com.alibaba.rocketmq.broker;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.PosixParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
-
 import com.alibaba.rocketmq.common.BrokerConfig;
 import com.alibaba.rocketmq.common.MQVersion;
 import com.alibaba.rocketmq.common.MixAll;
+import com.alibaba.rocketmq.common.config.Config;
+import com.alibaba.rocketmq.common.config.YamlConfigurationLoader;
 import com.alibaba.rocketmq.common.conflict.PackageConflictDetect;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.remoting.common.RemotingUtil;
@@ -44,6 +32,19 @@ import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import com.alibaba.rocketmq.srvutil.ServerUtil;
 import com.alibaba.rocketmq.store.config.BrokerRole;
 import com.alibaba.rocketmq.store.config.MessageStoreConfig;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.PosixParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -67,6 +68,10 @@ public class BrokerStartup {
         options.addOption(opt);
 
         opt = new Option("m", "printImportantConfig", false, "Print important config item");
+        opt.setRequired(false);
+        options.addOption(opt);
+
+        opt = new Option("tc", "transactionConfigFile", true, "Transaction config yaml file");
         opt.setRequired(false);
         options.addOption(opt);
 
@@ -155,6 +160,22 @@ public class BrokerStartup {
                 }
             }
 
+            Config config = null;
+            if (commandLine.hasOption("tc")) {
+                YamlConfigurationLoader yamlConfigurationLoader = new YamlConfigurationLoader();
+                String file = commandLine.getOptionValue("tc");
+                if (file != null) {
+                    config = yamlConfigurationLoader.loadConfig(new URL(file));
+                } else {
+                    config = yamlConfigurationLoader.loadConfig();
+                }
+
+                if (!config.check()) {
+                    System.out.println("Please set brokerName and urls and must unique for different broker.");
+                    System.exit(-2);
+                }
+            }
+
             MixAll.properties2Object(ServerUtil.commandLine2Properties(commandLine), brokerConfig);
 
             if (null == brokerConfig.getRocketmqHome()) {
@@ -223,7 +244,8 @@ public class BrokerStartup {
                 brokerConfig, //
                 nettyServerConfig, //
                 nettyClientConfig, //
-                messageStoreConfig);
+                messageStoreConfig,
+                    config);
             boolean initResult = controller.initialize();
             if (!initResult) {
                 controller.shutdown();

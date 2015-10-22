@@ -15,27 +15,7 @@
  */
 package com.alibaba.rocketmq.broker;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.rocketmq.broker.client.ClientHousekeepingService;
-import com.alibaba.rocketmq.broker.client.ConsumerIdsChangeListener;
-import com.alibaba.rocketmq.broker.client.ConsumerManager;
-import com.alibaba.rocketmq.broker.client.DefaultConsumerIdsChangeListener;
-import com.alibaba.rocketmq.broker.client.ProducerManager;
+import com.alibaba.rocketmq.broker.client.*;
 import com.alibaba.rocketmq.broker.client.net.Broker2Client;
 import com.alibaba.rocketmq.broker.client.rebalance.RebalanceLockManager;
 import com.alibaba.rocketmq.broker.filtersrv.FilterServerManager;
@@ -44,21 +24,13 @@ import com.alibaba.rocketmq.broker.mqtrace.ConsumeMessageHook;
 import com.alibaba.rocketmq.broker.mqtrace.SendMessageHook;
 import com.alibaba.rocketmq.broker.offset.ConsumerOffsetManager;
 import com.alibaba.rocketmq.broker.out.BrokerOuterAPI;
-import com.alibaba.rocketmq.broker.processor.AdminBrokerProcessor;
-import com.alibaba.rocketmq.broker.processor.ClientManageProcessor;
-import com.alibaba.rocketmq.broker.processor.EndTransactionProcessor;
-import com.alibaba.rocketmq.broker.processor.PullMessageProcessor;
-import com.alibaba.rocketmq.broker.processor.QueryMessageProcessor;
-import com.alibaba.rocketmq.broker.processor.SendMessageProcessor;
+import com.alibaba.rocketmq.broker.processor.*;
 import com.alibaba.rocketmq.broker.slave.SlaveSynchronize;
 import com.alibaba.rocketmq.broker.subscription.SubscriptionGroupManager;
 import com.alibaba.rocketmq.broker.topic.TopicConfigManager;
-import com.alibaba.rocketmq.common.BrokerConfig;
-import com.alibaba.rocketmq.common.DataVersion;
-import com.alibaba.rocketmq.common.MixAll;
-import com.alibaba.rocketmq.common.ThreadFactoryImpl;
-import com.alibaba.rocketmq.common.TopicConfig;
-import com.alibaba.rocketmq.common.UtilAll;
+import com.alibaba.rocketmq.broker.transaction.TransactionStateService;
+import com.alibaba.rocketmq.common.*;
+import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.common.constant.PermName;
 import com.alibaba.rocketmq.common.namesrv.RegisterBrokerResult;
@@ -76,8 +48,15 @@ import com.alibaba.rocketmq.store.config.BrokerRole;
 import com.alibaba.rocketmq.store.config.MessageStoreConfig;
 import com.alibaba.rocketmq.store.stats.BrokerStats;
 import com.alibaba.rocketmq.store.stats.BrokerStatsManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.*;
 
 
 /**
@@ -124,17 +103,21 @@ public class BrokerController {
     private final BrokerStatsManager brokerStatsManager;
     private InetSocketAddress storeHost;
 
+    private Config config;
+
+    private TransactionStateService transactionStateService;
 
     public BrokerController(//
-            final BrokerConfig brokerConfig, //
-            final NettyServerConfig nettyServerConfig, //
-            final NettyClientConfig nettyClientConfig, //
-            final MessageStoreConfig messageStoreConfig //
-    ) {
+                            final BrokerConfig brokerConfig, //
+                            final NettyServerConfig nettyServerConfig, //
+                            final NettyClientConfig nettyClientConfig, //
+                            final MessageStoreConfig messageStoreConfig, //
+                            Config config) {
         this.brokerConfig = brokerConfig;
         this.nettyServerConfig = nettyServerConfig;
         this.nettyClientConfig = nettyClientConfig;
         this.messageStoreConfig = messageStoreConfig;
+        this.config = config;
         this.consumerOffsetManager = new ConsumerOffsetManager(this);
         this.topicConfigManager = new TopicConfigManager(this);
         this.pullMessageProcessor = new PullMessageProcessor(this);
@@ -147,6 +130,7 @@ public class BrokerController {
         this.subscriptionGroupManager = new SubscriptionGroupManager(this);
         this.brokerOuterAPI = new BrokerOuterAPI(nettyClientConfig);
         this.filterServerManager = new FilterServerManager(this);
+
 
         if (this.brokerConfig.getNamesrvAddr() != null) {
             this.brokerOuterAPI.updateNameServerAddressList(this.brokerConfig.getNamesrvAddr());
@@ -177,11 +161,13 @@ public class BrokerController {
 
         if (result) {
             try {
-                this.messageStore = new DefaultMessageStore(this.messageStoreConfig, this.brokerStatsManager);
+                this.messageStore = new DefaultMessageStore(this.messageStoreConfig, this.brokerStatsManager, this.config);
             }
             catch (IOException e) {
                 result = false;
                 e.printStackTrace();
+
+                return result;
             }
         }
 
@@ -312,7 +298,10 @@ public class BrokerController {
                         }
                     }
                 }, 1000 * 10, 1000 * 60, TimeUnit.MILLISECONDS);
+
+                this.transactionStateService = new TransactionStateService(this.config, this, (DefaultMessageStore) this.messageStore);
             }
+
         }
 
         return result;
@@ -508,6 +497,10 @@ public class BrokerController {
         if (this.filterServerManager != null) {
             this.filterServerManager.shutdown();
         }
+
+        if (this.transactionStateService != null) {
+            this.transactionStateService.shutdown();
+        }
     }
 
 
@@ -571,6 +564,10 @@ public class BrokerController {
         }
 
         this.addDeleteTopicTask();
+
+        if (this.transactionStateService != null) {
+            this.transactionStateService.start();
+        }
     }
 
 
@@ -799,5 +796,9 @@ public class BrokerController {
 
     public void setStoreHost(InetSocketAddress storeHost) {
         this.storeHost = storeHost;
+    }
+
+    public TransactionStateService getTransactionStateService() {
+        return transactionStateService;
     }
 }

@@ -1,4 +1,4 @@
-package com.alibaba.rocketmq.broker.transaction.jdbc;
+package com.alibaba.rocketmq.store.transaction.jdbc;
 
 /**
  * Created by diwayou on 2015/10/20.
@@ -11,5 +11,5 @@ public interface SqlConfig {
 
     String GET_DB_TIME = "SELECT NOW()";
 
-    String TRAVERSE = "SELECT offset FROM t_transaction WHERE broker_name = ? and producer_group = ? and gmt_create < ? order by gmt_create desc limit ?";
+    String TRAVERSE = "SELECT id, offset FROM t_transaction WHERE broker_name = ? and producer_group = ? and gmt_create < ? and id < ? order by id desc limit ?";
 }

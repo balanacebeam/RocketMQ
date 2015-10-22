@@ -1,10 +1,12 @@
-package com.alibaba.rocketmq.broker.transaction.jdbc;
+package com.alibaba.rocketmq.store.jdbc;
 
-import com.alibaba.rocketmq.broker.transaction.TransactionRecord;
 import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.common.config.TransactionConfig;
 import com.alibaba.rocketmq.common.config.YamlConfigurationLoader;
+import com.alibaba.rocketmq.store.transaction.TransactionRecord;
+import com.alibaba.rocketmq.store.transaction.jdbc.SimpleJdbcTransactionStore;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.After;
@@ -15,14 +17,15 @@ import org.junit.Test;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
-public class DbTransactionStoreTest {
+public class SimpleJdbcTransactionStoreTest {
 
     private YamlConfigurationLoader yamlConfigurationLoader;
 
     private BasicDataSource dataSource;
 
-    private DbTransactionStore dbTransactionStore;
+    private SimpleJdbcTransactionStore simpleJdbcTransactionStore;
 
     private static final String BROKER_NAME = "test_broker_name";
 
@@ -45,8 +48,8 @@ public class DbTransactionStoreTest {
         dataSource.setMaxWaitMillis(transactionConfig.maxWaitMillis);
         dataSource.setUrl(transactionConfig.urls.get(0));
 
-        dbTransactionStore = new DbTransactionStore();
-        dbTransactionStore.setDataSource(dataSource);
+        simpleJdbcTransactionStore = new SimpleJdbcTransactionStore(config);
+        simpleJdbcTransactionStore.setDataSource(dataSource);
     }
 
     @After
@@ -69,7 +72,7 @@ public class DbTransactionStoreTest {
 
     @Test
     public void getStoreTimeTest() {
-        Date date = dbTransactionStore.getStoreTime();
+        Date date = simpleJdbcTransactionStore.getStoreTime();
 
         Assert.assertNotNull(date);
     }
@@ -81,7 +84,7 @@ public class DbTransactionStoreTest {
             transactionRecordList.add(buildTransactionRecord(BROKER_NAME, PRODUCER_GROUP, i));
         }
 
-        boolean result = dbTransactionStore.put(transactionRecordList);
+        boolean result = simpleJdbcTransactionStore.put(transactionRecordList);
 
         Assert.assertTrue(result);
     }
@@ -91,10 +94,17 @@ public class DbTransactionStoreTest {
         TransactionRecord transactionRecord = buildTransactionRecord(BROKER_NAME, PRODUCER_GROUP, 0);
         transactionRecord.setGmtCreate(DateUtils.addMinutes(new Date(), -20));
 
-        List<TransactionRecord> recordList = dbTransactionStore.traverse(transactionRecord, 10);
-
+        Map<String, Object> context = Maps.newHashMap();
+        List<TransactionRecord> recordList = simpleJdbcTransactionStore.traverse(context, transactionRecord, 10);
+        Long id = (Long) context.get(SimpleJdbcTransactionStore.ID);
         Assert.assertTrue(recordList != null);
         Assert.assertEquals(10, recordList.size());
+
+        List<TransactionRecord> nextRecordList = simpleJdbcTransactionStore.traverse(context, transactionRecord, 10);
+        Long nextId = (Long) context.get(SimpleJdbcTransactionStore.ID);
+        Assert.assertTrue(nextRecordList != null);
+        Assert.assertEquals(10, nextRecordList.size());
+        Assert.assertNotEquals(id, nextId);
     }
 
     @Test
@@ -104,6 +114,6 @@ public class DbTransactionStoreTest {
             transactionRecordList.add(buildTransactionRecord(BROKER_NAME, PRODUCER_GROUP, i));
         }
 
-        dbTransactionStore.remove(transactionRecordList);
+        simpleJdbcTransactionStore.remove(transactionRecordList);
     }
 }

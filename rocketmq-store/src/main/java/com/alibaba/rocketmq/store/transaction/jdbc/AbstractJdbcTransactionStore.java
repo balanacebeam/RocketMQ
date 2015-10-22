@@ -1,8 +1,10 @@
-package com.alibaba.rocketmq.broker.transaction.jdbc;
+package com.alibaba.rocketmq.store.transaction.jdbc;
 
-import com.alibaba.rocketmq.broker.transaction.TransactionRecord;
-import com.alibaba.rocketmq.broker.transaction.TransactionStore;
+import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.common.constant.LoggerName;
+import com.alibaba.rocketmq.store.transaction.TransactionRecord;
+import com.alibaba.rocketmq.store.transaction.TransactionStore;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,18 +13,28 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
-/**
- * 使用broker_name和producer_group进行分库
- */
-public class DbTransactionStore implements TransactionStore {
+public abstract class AbstractJdbcTransactionStore implements TransactionStore {
 
-    private static final Logger log = LoggerFactory.getLogger(LoggerName.TransactionLoggerName);
+    protected static final Logger log = LoggerFactory.getLogger(LoggerName.TransactionLoggerName);
+
+    public static final String ID = "id";
+
+    protected final Config config;
 
     private DataSource dataSource;
 
+    public AbstractJdbcTransactionStore(Config config) {
+        this.config = config;
+    }
+
     @Override
     public void remove(List<TransactionRecord> transactionRecordList) {
+        if (CollectionUtils.isEmpty(transactionRecordList)) {
+            return;
+        }
+
         Connection connection = null;
         PreparedStatement statement = null;
         try {
@@ -74,7 +86,7 @@ public class DbTransactionStore implements TransactionStore {
     }
 
     @Override
-    public List<TransactionRecord> traverse(TransactionRecord transactionRecord, int pageSize) {
+    public List<TransactionRecord> traverse(Map<String, Object> context, TransactionRecord transactionRecord, int pageSize) {
         PreparedStatement statement = null;
         Connection connection = null;
         ResultSet resultSet = null;
@@ -82,10 +94,16 @@ public class DbTransactionStore implements TransactionStore {
             connection = dataSource.getConnection();
             statement = connection.prepareStatement(SqlConfig.TRAVERSE);
 
+            Long id = (Long) context.get(ID);
+            if (id == null) {
+                id = Long.MAX_VALUE;
+            }
+
             statement.setString(1, transactionRecord.getBrokerName());
             statement.setString(2, transactionRecord.getProducerGroup());
-            statement.setTimestamp(3, new java.sql.Timestamp(transactionRecord.getGmtCreate().getTime()));
-            statement.setInt(4, pageSize);
+            statement.setTimestamp(3, new Timestamp(transactionRecord.getGmtCreate().getTime()));
+            statement.setLong(4, id);
+            statement.setInt(5, pageSize);
 
             resultSet = statement.executeQuery();
 
@@ -94,10 +112,13 @@ public class DbTransactionStore implements TransactionStore {
                 TransactionRecord tr = new TransactionRecord();
                 tr.setBrokerName(transactionRecord.getBrokerName());
                 tr.setProducerGroup(transactionRecord.getProducerGroup());
-                tr.setOffset(resultSet.getLong(1));
+                tr.setOffset(resultSet.getLong(2));
 
                 result.add(tr);
+
+                id = resultSet.getLong(1);
             }
+            context.put(ID, id);
 
             return result;
         } catch (Exception e) {
@@ -113,6 +134,10 @@ public class DbTransactionStore implements TransactionStore {
 
     @Override
     public boolean put(List<TransactionRecord> transactionRecordList) {
+        if (CollectionUtils.isEmpty(transactionRecordList)) {
+            return true;
+        }
+
         PreparedStatement statement = null;
         Connection connection = null;
         try {
@@ -180,5 +205,9 @@ public class DbTransactionStore implements TransactionStore {
 
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
     }
 }

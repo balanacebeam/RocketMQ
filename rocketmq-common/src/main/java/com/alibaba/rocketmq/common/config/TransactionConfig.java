@@ -7,27 +7,35 @@ import java.util.List;
  */
 public class TransactionConfig {
 
-    public StoreType storeType;
+    public int checkTransactionLogMinutesBefore = 1;
+
+    public int checkScheduleIntervalSeconds = 60;
+
+    public int checkSchedulePoolSize = 1;
+
+    public int checkPageSize = 100;
+
+    public StoreType storeType = StoreType.none;
 
     public String userName;
 
     public String password;
 
-    public String driverClassName;
+    public String driverClassName = "com.mysql.jdbc.Driver";
 
-    public int initialSize;
+    public int initialSize = 2;
 
-    public int maxTotal;
+    public int maxTotal = 50;
 
-    public int maxIdle;
+    public int maxIdle = 20;
 
-    public int minIdle;
+    public int minIdle = 2;
 
-    public long maxWaitMillis;
+    public long maxWaitMillis = 10000;
 
     public List<String> urls;
 
     public static enum StoreType {
-        jdbc
+        none, jdbc, sharding_jdbc
     }
 }

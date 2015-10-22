@@ -15,22 +15,21 @@
  */
 package com.alibaba.rocketmq.broker.client;
 
+import com.alibaba.rocketmq.common.constant.LoggerName;
+import com.alibaba.rocketmq.remoting.common.RemotingHelper;
+import com.alibaba.rocketmq.remoting.common.RemotingUtil;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import io.netty.channel.Channel;
+import org.apache.commons.collections.MapUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.rocketmq.common.constant.LoggerName;
-import com.alibaba.rocketmq.remoting.common.RemotingHelper;
-import com.alibaba.rocketmq.remoting.common.RemotingUtil;
 
 
 /**
@@ -51,6 +50,41 @@ public class ProducerManager {
     public ProducerManager() {
     }
 
+    public Set<String> getGroupNameSet() {
+        try {
+            if (this.groupChannelLock.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS)) {
+                try {
+                    return Sets.newHashSet(groupChannelTable.keySet());
+                } finally {
+                    this.groupChannelLock.unlock();
+                }
+            }
+        } catch (InterruptedException e) {
+            log.error("",e);
+        }
+
+        return Sets.newHashSet();
+    }
+
+    public List<ClientChannelInfo> getClientChannelInfo(String producerGroupName) {
+        try {
+            if (this.groupChannelLock.tryLock(LockTimeoutMillis, TimeUnit.MILLISECONDS)) {
+                try {
+                    Map<Channel, ClientChannelInfo> channelInfoMap = this.getGroupChannelTable().get(producerGroupName);
+
+                    if (!MapUtils.isEmpty(channelInfoMap)) {
+                        return Lists.newArrayList(channelInfoMap.values());
+                    }
+                } finally {
+                    this.groupChannelLock.unlock();
+                }
+            }
+        } catch (InterruptedException e) {
+            log.error("",e);
+        }
+
+        return Lists.newArrayList();
+    }
 
     public HashMap<String, HashMap<Channel, ClientChannelInfo>> getGroupChannelTable() {
         HashMap<String /* group name */, HashMap<Channel, ClientChannelInfo>> newGroupChannelTable =

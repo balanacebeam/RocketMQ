@@ -1,4 +1,9 @@
+brokerName: test
 transactionConfig:
+    checkTransactionLogMinutesBefore: 1
+    checkScheduleIntervalSeconds: 60
+    checkSchedulePoolSize: 1
+    checkPageSize: 100
     storeType: "jdbc"
     userName: "root"
     password: "123456"
