@@ -1715,7 +1715,7 @@ public class DefaultMessageStore implements MessageStore {
             TransactionRecord transactionRecord = new TransactionRecord();
             transactionRecord.setBrokerName(DefaultMessageStore.this.config.brokerName);
             transactionRecord.setProducerGroup(request.getProducerGroup());
-            transactionRecord.setOffset(request.getPreparedTransactionOffset());
+            transactionRecord.setOffset(request.getCommitLogOffset());
 
             return transactionRecord;
         }
