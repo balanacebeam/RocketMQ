@@ -40,9 +40,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -165,7 +165,7 @@ public class BrokerStartup {
                 YamlConfigurationLoader yamlConfigurationLoader = new YamlConfigurationLoader();
                 String file = commandLine.getOptionValue("tc");
                 if (file != null) {
-                    config = yamlConfigurationLoader.loadConfig(new URL(file));
+                    config = yamlConfigurationLoader.loadConfig(new File(file).toURI().toURL());
                 } else {
                     config = yamlConfigurationLoader.loadConfig();
                 }
