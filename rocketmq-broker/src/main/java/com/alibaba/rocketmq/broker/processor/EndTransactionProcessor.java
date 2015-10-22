@@ -15,11 +15,6 @@
  */
 package com.alibaba.rocketmq.broker.processor;
 
-import io.netty.channel.ChannelHandlerContext;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.alibaba.rocketmq.broker.BrokerController;
 import com.alibaba.rocketmq.common.TopicFilterType;
 import com.alibaba.rocketmq.common.constant.LoggerName;
@@ -37,6 +32,9 @@ import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import com.alibaba.rocketmq.store.MessageExtBrokerInner;
 import com.alibaba.rocketmq.store.MessageStore;
 import com.alibaba.rocketmq.store.PutMessageResult;
+import io.netty.channel.ChannelHandlerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -177,11 +175,11 @@ public class EndTransactionProcessor implements NettyRequestProcessor {
             }
 
             // 校验Transaction State Table Offset
-            if (msgExt.getQueueOffset() != requestHeader.getTranStateTableOffset()) {
-                response.setCode(ResponseCode.SYSTEM_ERROR);
-                response.setRemark("the transaction state table offset wrong");
-                return response;
-            }
+//            if (msgExt.getQueueOffset() != requestHeader.getTranStateTableOffset()) {
+//                response.setCode(ResponseCode.SYSTEM_ERROR);
+//                response.setRemark("the transaction state table offset wrong");
+//                return response;
+//            }
 
             // 校验Commit Log Offset
             if (msgExt.getCommitLogOffset() != requestHeader.getCommitLogOffset()) {
