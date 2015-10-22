@@ -299,7 +299,9 @@ public class BrokerController {
                     }
                 }, 1000 * 10, 1000 * 60, TimeUnit.MILLISECONDS);
 
-                this.transactionStateService = new TransactionStateService(this.config, this, (DefaultMessageStore) this.messageStore);
+                if (this.config != null && this.config.transactionConfig != null) {
+                    this.transactionStateService = new TransactionStateService(this.config, this, (DefaultMessageStore) this.messageStore);
+                }
             }
 
         }
