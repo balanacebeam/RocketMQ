@@ -15,8 +15,6 @@
  */
 package com.alibaba.rocketmq.example.broadcast;
 
-import java.util.List;
-
 import com.alibaba.rocketmq.client.consumer.DefaultMQPushConsumer;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
@@ -25,6 +23,8 @@ import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.common.consumer.ConsumeFromWhere;
 import com.alibaba.rocketmq.common.message.MessageExt;
 import com.alibaba.rocketmq.common.protocol.heartbeat.MessageModel;
+
+import java.util.List;
 
 
 /**
@@ -42,6 +42,7 @@ public class PushConsumer {
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
 
         consumer.setMessageModel(MessageModel.BROADCASTING);
+        consumer.setNamesrvAddr("127.0.0.1:9876");
 
         consumer.subscribe("TopicTest", "TagA || TagC || TagD");
 

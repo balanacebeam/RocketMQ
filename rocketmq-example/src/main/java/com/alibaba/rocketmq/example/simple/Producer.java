@@ -31,6 +31,8 @@ public class Producer {
          */
         DefaultMQProducer producer = new DefaultMQProducer("ProducerGroupName");
 
+        producer.setNamesrvAddr("127.0.0.1:9876");
+
         /**
          * Producer对象在使用之前必须要调用start初始化，初始化一次即可<br>
          * 注意：切记不可以在每次发送消息时，都调用start方法

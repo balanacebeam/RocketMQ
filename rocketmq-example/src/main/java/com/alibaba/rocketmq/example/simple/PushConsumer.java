@@ -15,8 +15,6 @@
  */
 package com.alibaba.rocketmq.example.simple;
 
-import java.util.List;
-
 import com.alibaba.rocketmq.client.consumer.DefaultMQPushConsumer;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
@@ -24,6 +22,8 @@ import com.alibaba.rocketmq.client.consumer.listener.MessageListenerConcurrently
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.common.consumer.ConsumeFromWhere;
 import com.alibaba.rocketmq.common.message.MessageExt;
+
+import java.util.List;
 
 
 public class PushConsumer {
@@ -38,6 +38,8 @@ public class PushConsumer {
          * 注意：ConsumerGroupName需要由应用来保证唯一
          */
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("CID_001");
+
+        consumer.setNamesrvAddr("127.0.0.1:9876");
 
         /**
          * 订阅指定topic下tags分别等于TagA或TagC或TagD

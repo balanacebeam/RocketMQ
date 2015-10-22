@@ -37,6 +37,8 @@ public class TransactionProducer {
         producer.setCheckThreadPoolMaxSize(2);
         // 队列数
         producer.setCheckRequestHoldMax(2000);
+
+        producer.setNamesrvAddr("127.0.0.1:9876");
         producer.setTransactionCheckListener(transactionCheckListener);
         producer.start();
 

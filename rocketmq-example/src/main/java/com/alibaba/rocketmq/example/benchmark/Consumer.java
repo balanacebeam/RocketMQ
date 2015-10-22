@@ -15,18 +15,18 @@
  */
 package com.alibaba.rocketmq.example.benchmark;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.alibaba.rocketmq.client.consumer.DefaultMQPushConsumer;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import com.alibaba.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.common.message.MessageExt;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -89,6 +89,7 @@ public class Consumer {
                 new DefaultMQPushConsumer("benchmark_consumer_"
                         + Long.toString(System.currentTimeMillis() % 100));
         consumer.setInstanceName(Long.toString(System.currentTimeMillis()));
+        consumer.setNamesrvAddr("127.0.0.1:9876");
 
         consumer.subscribe("BenchmarkTest", "*");
 

@@ -15,21 +15,17 @@
  */
 package com.alibaba.rocketmq.example.benchmark;
 
+import com.alibaba.rocketmq.client.exception.MQClientException;
+import com.alibaba.rocketmq.client.producer.*;
+import com.alibaba.rocketmq.common.message.Message;
+import com.alibaba.rocketmq.common.message.MessageExt;
+
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.alibaba.rocketmq.client.exception.MQClientException;
-import com.alibaba.rocketmq.client.producer.LocalTransactionExecuter;
-import com.alibaba.rocketmq.client.producer.LocalTransactionState;
-import com.alibaba.rocketmq.client.producer.SendResult;
-import com.alibaba.rocketmq.client.producer.TransactionCheckListener;
-import com.alibaba.rocketmq.client.producer.TransactionMQProducer;
-import com.alibaba.rocketmq.common.message.Message;
-import com.alibaba.rocketmq.common.message.MessageExt;
 
 
 /**
@@ -107,6 +103,7 @@ public class TransactionProducer {
         producer.setInstanceName(Long.toString(System.currentTimeMillis()));
         producer.setTransactionCheckListener(transactionCheckListener);
         producer.setDefaultTopicQueueNums(1000);
+        producer.setNamesrvAddr("127.0.0.1:9876");
         producer.start();
 
         final TransactionExecuterBImpl tranExecuter = new TransactionExecuterBImpl(ischeck);
