@@ -1657,6 +1657,8 @@ public class DefaultMessageStore implements MessageStore {
                 List<TransactionRecord> rollbackOrCommit = Lists.newArrayList();
                 List<TransactionRecord> prepare = Lists.newArrayList();
                 long transactionTimestamp = 0;
+                boolean isSlave = DefaultMessageStore.this.messageStoreConfig.getBrokerRole() == BrokerRole.SLAVE;
+
                 for (DispatchRequest req : this.requestsRead) {
 
                     final int tranType = MessageSysFlag.getTransactionValue(req.getSysFlag());
@@ -1674,7 +1676,7 @@ public class DefaultMessageStore implements MessageStore {
                         break;
                     }
 
-                    if (DefaultMessageStore.this.transactionStore != null) {
+                    if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
                         switch (tranType) {
                             case MessageSysFlag.TransactionNotType:
                                 break;
@@ -1691,7 +1693,7 @@ public class DefaultMessageStore implements MessageStore {
                     transactionTimestamp = req.getStoreTimestamp();
                 }
 
-                if (DefaultMessageStore.this.transactionStore != null) {
+                if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
                     boolean result = DefaultMessageStore.this.transactionStore.put(prepare);
                     if (!result) {
                         // TODO only retry once?
