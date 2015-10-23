@@ -1679,11 +1679,11 @@ public class DefaultMessageStore implements MessageStore {
                             case MessageSysFlag.TransactionNotType:
                                 break;
                             case MessageSysFlag.TransactionPreparedType:
-                                prepare.add(buildTransactionRecord(req));
+                                prepare.add(buildTransactionRecord(req, true));
                                 break;
                             case MessageSysFlag.TransactionCommitType:
                             case MessageSysFlag.TransactionRollbackType:
-                                rollbackOrCommit.add(buildTransactionRecord(req));
+                                rollbackOrCommit.add(buildTransactionRecord(req, false));
                                 break;
                         }
                     }
@@ -1711,11 +1711,15 @@ public class DefaultMessageStore implements MessageStore {
             }
         }
 
-        private TransactionRecord buildTransactionRecord(DispatchRequest request) {
+        private TransactionRecord buildTransactionRecord(DispatchRequest request, boolean prepare) {
             TransactionRecord transactionRecord = new TransactionRecord();
             transactionRecord.setBrokerName(DefaultMessageStore.this.config.brokerName);
             transactionRecord.setProducerGroup(request.getProducerGroup());
-            transactionRecord.setOffset(request.getCommitLogOffset());
+            if (prepare) {
+                transactionRecord.setOffset(request.getCommitLogOffset());
+            } else {
+                transactionRecord.setOffset(request.getPreparedTransactionOffset());
+            }
 
             return transactionRecord;
         }
