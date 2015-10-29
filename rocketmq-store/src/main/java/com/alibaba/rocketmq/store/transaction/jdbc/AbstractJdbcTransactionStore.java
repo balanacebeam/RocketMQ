@@ -60,7 +60,7 @@ public abstract class AbstractJdbcTransactionStore implements TransactionStore {
     }
 
     @Override
-    public Date getStoreTime() {
+    public Date getStoreTime(String groupName) {
         Connection connection = null;
         Statement statement = null;
         ResultSet resultSet = null;

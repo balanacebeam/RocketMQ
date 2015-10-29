@@ -36,6 +36,7 @@ public class Producer {
             try {
                 Message msg = new Message("TopicTest",// topic
                     "TagA",// tag
+                        String.valueOf(i),
                     ("Hello RocketMQ " + i).getBytes()// body
                         );
                 SendResult sendResult = producer.send(msg);

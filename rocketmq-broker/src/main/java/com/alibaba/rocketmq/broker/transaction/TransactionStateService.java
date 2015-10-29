@@ -74,7 +74,7 @@ public class TransactionStateService {
                                 return;
                             }
 
-                            Date dbTime = messageStore.getTransactionStore().getStoreTime();
+                            Date dbTime = messageStore.getTransactionStore().getStoreTime(groupName);
                             int pageSize = config.transactionConfig.checkPageSize;
 
                             final TransactionRecord record = new TransactionRecord();

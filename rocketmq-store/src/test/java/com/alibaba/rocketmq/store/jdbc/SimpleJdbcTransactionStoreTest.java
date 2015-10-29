@@ -72,7 +72,7 @@ public class SimpleJdbcTransactionStoreTest {
 
     @Test
     public void getStoreTimeTest() {
-        Date date = simpleJdbcTransactionStore.getStoreTime();
+        Date date = simpleJdbcTransactionStore.getStoreTime("");
 
         Assert.assertNotNull(date);
     }
