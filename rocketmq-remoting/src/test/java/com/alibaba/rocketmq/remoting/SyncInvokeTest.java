@@ -3,11 +3,10 @@
  */
 package com.alibaba.rocketmq.remoting;
 
-import static org.junit.Assert.assertTrue;
-
+import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import org.junit.Test;
 
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
+import static org.junit.Assert.assertTrue;
 
 
 /**

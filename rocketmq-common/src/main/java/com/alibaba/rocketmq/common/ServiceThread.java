@@ -15,10 +15,9 @@
  */
 package com.alibaba.rocketmq.common;
 
+import com.alibaba.rocketmq.common.constant.LoggerName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.alibaba.rocketmq.common.constant.LoggerName;
 
 
 /**

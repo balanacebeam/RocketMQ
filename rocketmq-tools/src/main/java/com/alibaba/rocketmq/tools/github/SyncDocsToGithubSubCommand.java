@@ -1,8 +1,8 @@
 package com.alibaba.rocketmq.tools.github;
 
-import java.io.File;
-import java.util.Arrays;
-
+import com.alibaba.rocketmq.common.MixAll;
+import com.alibaba.rocketmq.remoting.RPCHook;
+import com.alibaba.rocketmq.tools.command.SubCommand;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -11,9 +11,8 @@ import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 
-import com.alibaba.rocketmq.common.MixAll;
-import com.alibaba.rocketmq.remoting.RPCHook;
-import com.alibaba.rocketmq.tools.command.SubCommand;
+import java.io.File;
+import java.util.Arrays;
 
 
 /**

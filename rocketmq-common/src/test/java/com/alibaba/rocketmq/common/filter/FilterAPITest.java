@@ -1,9 +1,8 @@
 package com.alibaba.rocketmq.common.filter;
 
-import org.junit.Test;
-
 import com.alibaba.rocketmq.common.protocol.heartbeat.SubscriptionData;
 import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+import org.junit.Test;
 
 
 /**

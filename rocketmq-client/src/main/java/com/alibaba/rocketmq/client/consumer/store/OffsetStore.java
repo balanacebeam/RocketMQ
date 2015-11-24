@@ -15,11 +15,11 @@
  */
 package com.alibaba.rocketmq.client.consumer.store;
 
-import java.util.Map;
-import java.util.Set;
-
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.common.message.MessageQueue;
+
+import java.util.Map;
+import java.util.Set;
 
 
 /**

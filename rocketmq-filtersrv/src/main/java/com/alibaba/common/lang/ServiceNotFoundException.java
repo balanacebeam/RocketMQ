@@ -1,10 +1,10 @@
 package com.alibaba.common.lang;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
-
 import com.alibaba.common.lang.exception.ChainedThrowable;
 import com.alibaba.common.lang.exception.ChainedThrowableDelegate;
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
 
 
 /**

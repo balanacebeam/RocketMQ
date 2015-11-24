@@ -15,11 +15,11 @@
  */
 package com.alibaba.rocketmq.example.transaction;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.alibaba.rocketmq.client.producer.LocalTransactionState;
 import com.alibaba.rocketmq.client.producer.TransactionCheckListener;
 import com.alibaba.rocketmq.common.message.MessageExt;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**

@@ -15,9 +15,9 @@
  */
 package com.alibaba.rocketmq.common;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**

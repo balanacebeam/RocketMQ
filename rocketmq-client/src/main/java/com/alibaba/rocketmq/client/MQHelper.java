@@ -15,15 +15,14 @@
  */
 package com.alibaba.rocketmq.client;
 
-import java.util.Set;
-import java.util.TreeSet;
-
-import org.slf4j.Logger;
-
 import com.alibaba.rocketmq.client.consumer.DefaultMQPullConsumer;
 import com.alibaba.rocketmq.client.log.ClientLogger;
 import com.alibaba.rocketmq.common.message.MessageQueue;
 import com.alibaba.rocketmq.common.protocol.heartbeat.MessageModel;
+import org.slf4j.Logger;
+
+import java.util.Set;
+import java.util.TreeSet;
 
 
 /**

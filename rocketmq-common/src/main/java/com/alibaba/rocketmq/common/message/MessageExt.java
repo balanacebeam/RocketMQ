@@ -15,12 +15,12 @@
  */
 package com.alibaba.rocketmq.common.message;
 
+import com.alibaba.rocketmq.common.TopicFilterType;
+import com.alibaba.rocketmq.common.sysflag.MessageSysFlag;
+
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-
-import com.alibaba.rocketmq.common.TopicFilterType;
-import com.alibaba.rocketmq.common.sysflag.MessageSysFlag;
 
 
 /**

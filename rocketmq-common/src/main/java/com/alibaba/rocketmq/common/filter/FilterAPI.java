@@ -15,9 +15,9 @@
  */
 package com.alibaba.rocketmq.common.filter;
 
-import java.net.URL;
-
 import com.alibaba.rocketmq.common.protocol.heartbeat.SubscriptionData;
+
+import java.net.URL;
 
 
 /**

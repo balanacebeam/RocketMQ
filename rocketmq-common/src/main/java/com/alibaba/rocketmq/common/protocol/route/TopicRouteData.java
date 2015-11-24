@@ -3,11 +3,11 @@
  */
 package com.alibaba.rocketmq.common.protocol.route;
 
+import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
 
 
 /**

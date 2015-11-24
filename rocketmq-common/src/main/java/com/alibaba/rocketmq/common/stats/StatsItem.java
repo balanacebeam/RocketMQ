@@ -1,13 +1,12 @@
 package com.alibaba.rocketmq.common.stats;
 
+import com.alibaba.rocketmq.common.UtilAll;
+import org.slf4j.Logger;
+
 import java.util.LinkedList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-
-import com.alibaba.rocketmq.common.UtilAll;
 
 
 public class StatsItem {

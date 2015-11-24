@@ -1,10 +1,6 @@
 package com.alibaba.rocketmq.example.simple;
 
-import com.alibaba.rocketmq.client.consumer.MQPullConsumer;
-import com.alibaba.rocketmq.client.consumer.MQPullConsumerScheduleService;
-import com.alibaba.rocketmq.client.consumer.PullResult;
-import com.alibaba.rocketmq.client.consumer.PullTaskCallback;
-import com.alibaba.rocketmq.client.consumer.PullTaskContext;
+import com.alibaba.rocketmq.client.consumer.*;
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.common.message.MessageQueue;
 import com.alibaba.rocketmq.common.protocol.heartbeat.MessageModel;

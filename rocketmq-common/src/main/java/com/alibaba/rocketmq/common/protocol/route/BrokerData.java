@@ -3,9 +3,9 @@
  */
 package com.alibaba.rocketmq.common.protocol.route;
 
-import java.util.HashMap;
-
 import com.alibaba.rocketmq.common.MixAll;
+
+import java.util.HashMap;
 
 
 /**

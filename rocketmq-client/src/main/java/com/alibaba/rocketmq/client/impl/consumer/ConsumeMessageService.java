@@ -15,11 +15,11 @@
  */
 package com.alibaba.rocketmq.client.impl.consumer;
 
-import java.util.List;
-
 import com.alibaba.rocketmq.common.message.MessageExt;
 import com.alibaba.rocketmq.common.message.MessageQueue;
 import com.alibaba.rocketmq.common.protocol.body.ConsumeMessageDirectlyResult;
+
+import java.util.List;
 
 
 /**

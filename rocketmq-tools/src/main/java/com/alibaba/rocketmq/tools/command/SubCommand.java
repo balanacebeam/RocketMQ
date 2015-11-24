@@ -15,10 +15,9 @@
  */
 package com.alibaba.rocketmq.tools.command;
 
+import com.alibaba.rocketmq.remoting.RPCHook;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-
-import com.alibaba.rocketmq.remoting.RPCHook;
 
 
 /**

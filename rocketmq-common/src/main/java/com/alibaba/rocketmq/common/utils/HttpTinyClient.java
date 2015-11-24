@@ -1,5 +1,7 @@
 package com.alibaba.rocketmq.common.utils;
 
+import com.alibaba.rocketmq.common.MQVersion;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -7,8 +9,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.List;
-
-import com.alibaba.rocketmq.common.MQVersion;
 
 
 /**

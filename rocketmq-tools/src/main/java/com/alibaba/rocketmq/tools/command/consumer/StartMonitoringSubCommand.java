@@ -15,16 +15,15 @@
  */
 package com.alibaba.rocketmq.tools.command.consumer;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
-import org.slf4j.Logger;
-
 import com.alibaba.rocketmq.client.log.ClientLogger;
 import com.alibaba.rocketmq.remoting.RPCHook;
 import com.alibaba.rocketmq.tools.command.SubCommand;
 import com.alibaba.rocketmq.tools.monitor.DefaultMonitorListener;
 import com.alibaba.rocketmq.tools.monitor.MonitorConfig;
 import com.alibaba.rocketmq.tools.monitor.MonitorService;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.slf4j.Logger;
 
 
 /**

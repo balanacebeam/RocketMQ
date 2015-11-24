@@ -15,14 +15,13 @@
  */
 package com.alibaba.rocketmq.client.consumer.rebalance;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-
 import com.alibaba.rocketmq.client.consumer.AllocateMessageQueueStrategy;
 import com.alibaba.rocketmq.client.log.ClientLogger;
 import com.alibaba.rocketmq.common.message.MessageQueue;
+import org.slf4j.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**

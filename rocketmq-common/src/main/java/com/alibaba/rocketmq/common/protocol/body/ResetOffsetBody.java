@@ -1,9 +1,9 @@
 package com.alibaba.rocketmq.common.protocol.body;
 
-import java.util.Map;
-
 import com.alibaba.rocketmq.common.message.MessageQueue;
 import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+
+import java.util.Map;
 
 
 /**

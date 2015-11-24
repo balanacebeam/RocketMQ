@@ -15,14 +15,13 @@
  */
 package com.alibaba.rocketmq.broker.pagecache;
 
+import com.alibaba.rocketmq.store.SelectMapedBufferResult;
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
-
-import com.alibaba.rocketmq.store.SelectMapedBufferResult;
 
 
 /**

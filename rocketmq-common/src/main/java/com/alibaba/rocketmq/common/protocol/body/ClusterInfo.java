@@ -1,12 +1,12 @@
 package com.alibaba.rocketmq.common.protocol.body;
 
+import com.alibaba.rocketmq.common.protocol.route.BrokerData;
+import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-
-import com.alibaba.rocketmq.common.protocol.route.BrokerData;
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
 
 
 /**

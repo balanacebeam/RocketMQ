@@ -3,10 +3,10 @@
  */
 package com.alibaba.rocketmq.common.protocol.heartbeat;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import java.util.HashSet;
 import java.util.Set;
-
-import com.alibaba.fastjson.annotation.JSONField;
 
 
 /**

@@ -15,10 +15,10 @@
  */
 package com.alibaba.rocketmq.client.consumer.rebalance;
 
-import java.util.List;
-
 import com.alibaba.rocketmq.client.consumer.AllocateMessageQueueStrategy;
 import com.alibaba.rocketmq.common.message.MessageQueue;
+
+import java.util.List;
 
 
 /**

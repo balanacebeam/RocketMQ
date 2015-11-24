@@ -15,15 +15,14 @@
  */
 package com.alibaba.rocketmq.tools.command.namesrv;
 
-import java.util.List;
-
+import com.alibaba.rocketmq.remoting.RPCHook;
+import com.alibaba.rocketmq.tools.admin.DefaultMQAdminExt;
+import com.alibaba.rocketmq.tools.command.SubCommand;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
-import com.alibaba.rocketmq.remoting.RPCHook;
-import com.alibaba.rocketmq.tools.admin.DefaultMQAdminExt;
-import com.alibaba.rocketmq.tools.command.SubCommand;
+import java.util.List;
 
 
 /**

@@ -15,10 +15,10 @@
  */
 package com.alibaba.rocketmq.client.producer;
 
-import java.util.List;
-
 import com.alibaba.rocketmq.common.message.Message;
 import com.alibaba.rocketmq.common.message.MessageQueue;
+
+import java.util.List;
 
 
 /**

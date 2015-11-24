@@ -3,9 +3,9 @@
  */
 package com.alibaba.rocketmq.common.namesrv;
 
-import java.io.File;
-
 import com.alibaba.rocketmq.common.MixAll;
+
+import java.io.File;
 
 
 /**

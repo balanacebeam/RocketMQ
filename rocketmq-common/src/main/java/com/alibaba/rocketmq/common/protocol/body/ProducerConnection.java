@@ -1,8 +1,8 @@
 package com.alibaba.rocketmq.common.protocol.body;
 
-import java.util.HashSet;
-
 import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+
+import java.util.HashSet;
 
 
 /**

@@ -15,9 +15,9 @@
  */
 package com.alibaba.rocketmq.client.consumer;
 
-import java.util.Set;
-
 import com.alibaba.rocketmq.common.message.MessageQueue;
+
+import java.util.Set;
 
 
 /**

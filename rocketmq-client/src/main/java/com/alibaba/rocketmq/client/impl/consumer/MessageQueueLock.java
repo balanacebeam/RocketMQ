@@ -15,9 +15,9 @@
  */
 package com.alibaba.rocketmq.client.impl.consumer;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.alibaba.rocketmq.common.message.MessageQueue;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
