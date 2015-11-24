@@ -207,6 +207,10 @@ public class DefaultMessageStore implements MessageStore {
 
                 this.indexService.load(lastExitOK);
 
+                if (this.transactionStore != null) {
+                    this.transactionStore.start();
+                }
+
                 // 尝试恢复数据
                 this.recover(lastExitOK);
 
@@ -220,6 +224,7 @@ public class DefaultMessageStore implements MessageStore {
 
         if (!result) {
             this.allocateMapedFileService.shutdown();
+            this.transactionStore.shutdown();
         }
 
         return result;
@@ -323,10 +328,6 @@ public class DefaultMessageStore implements MessageStore {
         if (this.reputMessageService != null) {
             this.reputMessageService.setReputFromOffset(this.commitLog.getMaxOffset());
             this.reputMessageService.start();
-        }
-
-        if (this.transactionStore != null) {
-            this.transactionStore.start();
         }
 
         this.haService.start();
