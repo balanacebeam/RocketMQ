@@ -23,19 +23,19 @@ public class SimpleJdbcTransactionStore extends AbstractJdbcTransactionStore {
             return false;
         }
 
-        BasicDataSource dataSource = new BasicDataSource();
-        dataSource.setUsername(transactionConfig.userName);
-        dataSource.setPassword(transactionConfig.password);
-        dataSource.setDriverClassName(transactionConfig.driverClassName);
-        dataSource.setInitialSize(transactionConfig.initialSize);
-        dataSource.setMaxTotal(transactionConfig.maxTotal);
-        dataSource.setMaxIdle(transactionConfig.maxIdle);
-        dataSource.setMinIdle(transactionConfig.minIdle);
-        dataSource.setMaxWaitMillis(transactionConfig.maxWaitMillis);
+        BasicDataSource basicDataSource = new BasicDataSource();
+        basicDataSource.setUsername(transactionConfig.userName);
+        basicDataSource.setPassword(transactionConfig.password);
+        basicDataSource.setDriverClassName(transactionConfig.driverClassName);
+        basicDataSource.setInitialSize(transactionConfig.initialSize);
+        basicDataSource.setMaxTotal(transactionConfig.maxTotal);
+        basicDataSource.setMaxIdle(transactionConfig.maxIdle);
+        basicDataSource.setMinIdle(transactionConfig.minIdle);
+        basicDataSource.setMaxWaitMillis(transactionConfig.maxWaitMillis);
 
-        dataSource.setUrl(transactionConfig.urls.get(0));
+        basicDataSource.setUrl(transactionConfig.urls.get(0));
 
-        setDataSource(dataSource);
+        setDataSource(basicDataSource);
 
         return true;
     }
