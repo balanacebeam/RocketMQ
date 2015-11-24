@@ -1695,9 +1695,20 @@ public class DefaultMessageStore implements MessageStore {
 
                 if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
                     boolean result = DefaultMessageStore.this.transactionStore.put(prepare);
-                    if (!result) {
-                        // TODO only retry once?
-                        DefaultMessageStore.this.transactionStore.put(prepare);
+                    int time = 1;
+                    while (!this.isStoped() && !result) { // retry until db recovery
+                        result = DefaultMessageStore.this.transactionStore.put(prepare);
+                        if (result) {
+                            log.warn("doDispatch transaction put retry success times={}.", time);
+                            break;
+                        }
+                        try {
+                            TimeUnit.SECONDS.sleep(5);
+                        } catch (InterruptedException e) {
+                            // ignore
+                        }
+                        log.warn("doDispatch transaction put retry times={}", time);
+                        time++;
                     }
 
                     DefaultMessageStore.this.transactionStore.remove(rollbackOrCommit);

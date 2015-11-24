@@ -1,17 +1,17 @@
 brokerName: test
 transactionConfig:
-    checkTransactionLogMinutesBefore: 1
+    checkTransactionLogMinutesBefore: 2
     checkScheduleIntervalSeconds: 60
     checkSchedulePoolSize: 1
-    checkPageSize: 100
+    checkPageSize: 500
     storeType: "jdbc"
     userName: "root"
     password: "123456"
     driverClassName: "com.mysql.jdbc.Driver"
-    initialSize: 5
-    maxTotal: 50
-    maxIdle: 10
-    minIdle: 3
+    initialSize: 1
+    maxTotal: 5
+    maxIdle: 2
+    minIdle: 1
     maxWaitMillis: 10000
     urls:
         - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
