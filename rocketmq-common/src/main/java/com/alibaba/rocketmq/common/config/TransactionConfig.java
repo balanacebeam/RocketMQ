@@ -35,6 +35,8 @@ public class TransactionConfig {
 
     public List<String> urls;
 
+    public int batchSize = 1000;
+
     public static enum StoreType {
         none, jdbc, sharding_jdbc
     }

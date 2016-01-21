@@ -1692,30 +1692,16 @@ public class DefaultMessageStore implements MessageStore {
                     }
 
                     transactionTimestamp = req.getStoreTimestamp();
-                }
 
-                if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
-                    boolean result = DefaultMessageStore.this.transactionStore.put(prepare);
-                    int time = 1;
-                    while (!this.isStoped() && !result) { // retry until db recovery
-                        result = DefaultMessageStore.this.transactionStore.put(prepare);
-                        if (result) {
-                            log.warn("doDispatch transaction put retry success times={}.", time);
-                            break;
-                        }
-                        try {
-                            TimeUnit.SECONDS.sleep(5);
-                        } catch (InterruptedException e) {
-                            // ignore
-                        }
-                        log.warn("doDispatch transaction put retry times={}", time);
-                        time++;
+                    if (prepare.size() + rollbackOrCommit.size() >= config.transactionConfig.batchSize) {
+                        putTransactionLog(rollbackOrCommit, prepare, transactionTimestamp, isSlave);
+
+                        prepare.clear();
+                        rollbackOrCommit.clear();
                     }
-
-                    DefaultMessageStore.this.transactionStore.remove(rollbackOrCommit);
                 }
 
-                DefaultMessageStore.this.storeCheckpoint.setTransactionTimestamp(transactionTimestamp);
+                putTransactionLog(rollbackOrCommit, prepare, transactionTimestamp, isSlave);
 
                 if (DefaultMessageStore.this.getMessageStoreConfig().isMessageIndexEnable()) {
                     DefaultMessageStore.this.indexService.putRequest(this.requestsRead.toArray());
@@ -1723,6 +1709,31 @@ public class DefaultMessageStore implements MessageStore {
 
                 this.requestsRead.clear();
             }
+        }
+
+        private void putTransactionLog(List<TransactionRecord> rollbackOrCommit, List<TransactionRecord> prepare, long transactionTimestamp, boolean isSlave) {
+            if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
+                boolean result = DefaultMessageStore.this.transactionStore.put(prepare);
+                int time = 1;
+                while (!this.isStoped() && !result) { // retry until db recovery
+                    result = DefaultMessageStore.this.transactionStore.put(prepare);
+                    if (result) {
+                        log.warn("doDispatch transaction put retry success times={}.", time);
+                        break;
+                    }
+                    try {
+                        TimeUnit.SECONDS.sleep(5);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+                    log.warn("doDispatch transaction put retry times={}", time);
+                    time++;
+                }
+
+                DefaultMessageStore.this.transactionStore.remove(rollbackOrCommit);
+            }
+
+            DefaultMessageStore.this.storeCheckpoint.setTransactionTimestamp(transactionTimestamp);
         }
 
         private TransactionRecord buildTransactionRecord(DispatchRequest request, boolean prepare) {
