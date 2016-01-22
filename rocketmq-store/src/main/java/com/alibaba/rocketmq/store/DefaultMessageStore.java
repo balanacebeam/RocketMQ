@@ -1693,15 +1693,18 @@ public class DefaultMessageStore implements MessageStore {
 
                     transactionTimestamp = req.getStoreTimestamp();
 
-                    if (prepare.size() + rollbackOrCommit.size() >= config.transactionConfig.batchSize) {
-                        putTransactionLog(rollbackOrCommit, prepare, transactionTimestamp, isSlave);
+                    if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
+                        if (prepare.size() + rollbackOrCommit.size() >= config.transactionConfig.batchSize) {
+                            processTransactionLog(rollbackOrCommit, prepare, transactionTimestamp);
 
-                        prepare.clear();
-                        rollbackOrCommit.clear();
+                            prepare.clear();
+                            rollbackOrCommit.clear();
+                        }
                     }
                 }
-
-                putTransactionLog(rollbackOrCommit, prepare, transactionTimestamp, isSlave);
+                if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
+                    processTransactionLog(rollbackOrCommit, prepare, transactionTimestamp);
+                }
 
                 if (DefaultMessageStore.this.getMessageStoreConfig().isMessageIndexEnable()) {
                     DefaultMessageStore.this.indexService.putRequest(this.requestsRead.toArray());
@@ -1711,26 +1714,41 @@ public class DefaultMessageStore implements MessageStore {
             }
         }
 
-        private void putTransactionLog(List<TransactionRecord> rollbackOrCommit, List<TransactionRecord> prepare, long transactionTimestamp, boolean isSlave) {
-            if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
-                boolean result = DefaultMessageStore.this.transactionStore.put(prepare);
-                int time = 1;
-                while (!this.isStoped() && !result) { // retry until db recovery
-                    result = DefaultMessageStore.this.transactionStore.put(prepare);
-                    if (result) {
-                        log.warn("doDispatch transaction put retry success times={}.", time);
-                        break;
-                    }
-                    try {
-                        TimeUnit.SECONDS.sleep(5);
-                    } catch (InterruptedException e) {
-                        // ignore
-                    }
-                    log.warn("doDispatch transaction put retry times={}", time);
-                    time++;
+        private void processTransactionLog(List<TransactionRecord> rollbackOrCommit, List<TransactionRecord> prepare, long transactionTimestamp) {
+            long start = getSystemClock().now();
+            boolean result = DefaultMessageStore.this.transactionStore.put(prepare);
+            long elapse = getSystemClock().now() - start;
+            if (elapse > 1000) {
+                log.warn("doDispatch transaction put firstTime elapse={}", elapse);
+            }
+
+            int time = 1;
+            while (!this.isStoped() && !result) { // retry until db recovery
+                start = getSystemClock().now();
+                result = DefaultMessageStore.this.transactionStore.put(prepare);
+                elapse = getSystemClock().now() - start;
+                if (elapse > 1000) {
+                    log.warn("doDispatch transaction put elapse={}, times={}", elapse, time);
+                }
+                if (result) {
+                    log.warn("doDispatch transaction put retry success times={}.", time);
+                    break;
                 }
 
-                DefaultMessageStore.this.transactionStore.remove(rollbackOrCommit);
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+                log.warn("doDispatch transaction put retry times={}", time);
+                time++;
+            }
+
+            start = getSystemClock().now();
+            DefaultMessageStore.this.transactionStore.remove(rollbackOrCommit);
+            elapse = getSystemClock().now() - start;
+            if (elapse > 1000) {
+                log.warn("doDispatch transaction remove elapse={}", elapse);
             }
 
             DefaultMessageStore.this.storeCheckpoint.setTransactionTimestamp(transactionTimestamp);
