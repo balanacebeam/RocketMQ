@@ -1665,8 +1665,8 @@ public class DefaultMessageStore implements MessageStore {
 
                 long transactionTimestamp = 0;
                 int batchSize = config.transactionConfig.batchSize;
-                List<TransactionRecord> rollbackOrCommit = Lists.newArrayListWithCapacity(batchSize);
-                List<TransactionRecord> prepare = Lists.newArrayListWithCapacity(batchSize);
+                List<TransactionRecord> rollbackOrCommit = Lists.newArrayList();
+                List<TransactionRecord> prepare = Lists.newArrayList();
 
                 for (DispatchRequest req : this.requestsRead) {
                     final int tranType = MessageSysFlag.getTransactionValue(req.getSysFlag());
@@ -1705,8 +1705,8 @@ public class DefaultMessageStore implements MessageStore {
                             final List<TransactionRecord> finalPrepare = prepare;
                             final List<TransactionRecord> finalRollbackOrCommit = rollbackOrCommit;
 
-                            prepare = Lists.newArrayListWithCapacity(batchSize);
-                            rollbackOrCommit = Lists.newArrayListWithCapacity(batchSize);
+                            prepare = Lists.newArrayList();
+                            rollbackOrCommit = Lists.newArrayList();
 
                             TransactionLogAsyncWorker worker = new TransactionLogAsyncWorker(finalPrepare,
                                     finalRollbackOrCommit, transactionTimestamp,
