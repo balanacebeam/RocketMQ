@@ -48,6 +48,7 @@ import com.alibaba.rocketmq.store.config.BrokerRole;
 import com.alibaba.rocketmq.store.config.MessageStoreConfig;
 import com.alibaba.rocketmq.store.stats.BrokerStats;
 import com.alibaba.rocketmq.store.stats.BrokerStatsManager;
+import com.alibaba.rocketmq.store.transaction.util.TransactionConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -299,7 +300,7 @@ public class BrokerController {
                     }
                 }, 1000 * 10, 1000 * 60, TimeUnit.MILLISECONDS);
 
-                if (this.config != null && this.config.transactionConfig != null) {
+                if (TransactionConfigUtil.isTransaction(config)) {
                     this.transactionStateService = new TransactionStateService(this.config, this, (DefaultMessageStore) this.messageStore);
                 }
             }

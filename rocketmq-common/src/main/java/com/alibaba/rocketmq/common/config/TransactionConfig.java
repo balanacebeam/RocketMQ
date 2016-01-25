@@ -37,6 +37,10 @@ public class TransactionConfig {
 
     public int batchSize = 1000;
 
+    public boolean asyncTransactionLog = true;
+
+    public int asyncQueueSize = 300000;
+
     public static enum StoreType {
         none, jdbc, sharding_jdbc
     }

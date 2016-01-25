@@ -20,7 +20,6 @@ import com.alibaba.rocketmq.common.SystemClock;
 import com.alibaba.rocketmq.common.ThreadFactoryImpl;
 import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.config.Config;
-import com.alibaba.rocketmq.common.config.TransactionConfig;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.common.message.MessageConst;
 import com.alibaba.rocketmq.common.message.MessageDecoder;
@@ -39,6 +38,8 @@ import com.alibaba.rocketmq.store.stats.BrokerStatsManager;
 import com.alibaba.rocketmq.store.transaction.TransactionRecord;
 import com.alibaba.rocketmq.store.transaction.TransactionStore;
 import com.alibaba.rocketmq.store.transaction.TransactionStoreFactory;
+import com.alibaba.rocketmq.store.transaction.async.TransactionLogAsyncWorker;
+import com.alibaba.rocketmq.store.transaction.util.TransactionConfigUtil;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +50,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.alibaba.rocketmq.store.config.BrokerRole.SLAVE;
@@ -109,9 +107,11 @@ public class DefaultMessageStore implements MessageStore {
         .newSingleThreadScheduledExecutor(new ThreadFactoryImpl("StoreScheduledThread"));
     private final BrokerStatsManager brokerStatsManager;
 
-    private TransactionStore transactionStore;
+    private final TransactionStore transactionStore;
 
-    private Config config;
+    private final Config config;
+
+    private ExecutorService transactionExecutor;
 
     public DefaultMessageStore(final MessageStoreConfig messageStoreConfig,
                                final BrokerStatsManager brokerStatsManager,
@@ -156,9 +156,11 @@ public class DefaultMessageStore implements MessageStore {
         // 因为下面的recover会分发请求到索引服务，如果不启动，分发过程会被流控
         this.indexService.start();
 
-        if (this.config != null && this.config.transactionConfig != null &&
-                !this.config.transactionConfig.storeType.equals(TransactionConfig.StoreType.none)) {
-            this.transactionStore = TransactionStoreFactory.getTransactionStore(this.config);
+        this.transactionStore = TransactionStoreFactory.getTransactionStore(this.config);
+        if (TransactionConfigUtil.isTransaction(config)) {
+            transactionExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<Runnable>(this.config.transactionConfig.asyncQueueSize),
+                    new ThreadPoolExecutor.AbortPolicy());
         }
     }
 
@@ -375,6 +377,10 @@ public class DefaultMessageStore implements MessageStore {
 
             if (this.transactionStore != null) {
                 this.transactionStore.shutdown();
+            }
+
+            if (TransactionConfigUtil.isTransaction(config)) {
+                this.transactionExecutor.shutdownNow();
             }
 
             this.deleteFile(StorePathConfigHelper.getAbortFile(this.messageStoreConfig.getStorePathRootDir()));
@@ -1655,14 +1661,16 @@ public class DefaultMessageStore implements MessageStore {
 
         private void doDispatch() {
             if (!this.requestsRead.isEmpty()) {
-                List<TransactionRecord> rollbackOrCommit = Lists.newArrayList();
-                List<TransactionRecord> prepare = Lists.newArrayList();
-                long transactionTimestamp = 0;
                 boolean isSlave = DefaultMessageStore.this.messageStoreConfig.getBrokerRole() == BrokerRole.SLAVE;
 
-                for (DispatchRequest req : this.requestsRead) {
+                long transactionTimestamp = 0;
+                int batchSize = config.transactionConfig.batchSize;
+                List<TransactionRecord> rollbackOrCommit = Lists.newArrayListWithCapacity(batchSize);
+                List<TransactionRecord> prepare = Lists.newArrayListWithCapacity(batchSize);
 
+                for (DispatchRequest req : this.requestsRead) {
                     final int tranType = MessageSysFlag.getTransactionValue(req.getSysFlag());
+
                     // 1、分发消息位置信息到ConsumeQueue
                     switch (tranType) {
                     case MessageSysFlag.TransactionNotType:
@@ -1677,7 +1685,7 @@ public class DefaultMessageStore implements MessageStore {
                         break;
                     }
 
-                    if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
+                    if (TransactionConfigUtil.isTransaction(config) && !isSlave) {
                         switch (tranType) {
                             case MessageSysFlag.TransactionNotType:
                                 break;
@@ -1689,21 +1697,40 @@ public class DefaultMessageStore implements MessageStore {
                                 rollbackOrCommit.add(buildTransactionRecord(req, false));
                                 break;
                         }
-                    }
 
-                    transactionTimestamp = req.getStoreTimestamp();
+                        transactionTimestamp = req.getStoreTimestamp();
 
-                    if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
-                        if (prepare.size() + rollbackOrCommit.size() >= config.transactionConfig.batchSize) {
-                            processTransactionLog(rollbackOrCommit, prepare, transactionTimestamp);
+                        if (prepare.size() >= batchSize || rollbackOrCommit.size() >= batchSize ||
+                                req.equals(this.requestsRead.get(this.requestsRead.size() - 1))) { // last one
+                            final List<TransactionRecord> finalPrepare = prepare;
+                            final List<TransactionRecord> finalRollbackOrCommit = rollbackOrCommit;
 
-                            prepare.clear();
-                            rollbackOrCommit.clear();
+                            prepare = Lists.newArrayListWithCapacity(batchSize);
+                            rollbackOrCommit = Lists.newArrayListWithCapacity(batchSize);
+
+                            TransactionLogAsyncWorker worker = new TransactionLogAsyncWorker(finalPrepare,
+                                    finalRollbackOrCommit, transactionTimestamp,
+                                    DefaultMessageStore.this);
+                            if (config.transactionConfig.asyncTransactionLog) {
+                                while (true) {
+                                    try {
+                                        transactionExecutor.execute(worker);
+                                        break;
+                                    } catch (RejectedExecutionException ree) {
+                                        log.warn("AyncTransactionLog queue full, reject new worker.");
+                                        try {
+                                            TimeUnit.SECONDS.sleep(1);
+                                        } catch (InterruptedException e) {
+                                            // ignore
+                                        }
+                                        continue;
+                                    }
+                                }
+                            } else {
+                                worker.run();
+                            }
                         }
                     }
-                }
-                if (DefaultMessageStore.this.transactionStore != null && !isSlave) {
-                    processTransactionLog(rollbackOrCommit, prepare, transactionTimestamp);
                 }
 
                 if (DefaultMessageStore.this.getMessageStoreConfig().isMessageIndexEnable()) {
@@ -1712,46 +1739,6 @@ public class DefaultMessageStore implements MessageStore {
 
                 this.requestsRead.clear();
             }
-        }
-
-        private void processTransactionLog(List<TransactionRecord> rollbackOrCommit, List<TransactionRecord> prepare, long transactionTimestamp) {
-            long start = getSystemClock().now();
-            boolean result = DefaultMessageStore.this.transactionStore.put(prepare);
-            long elapse = getSystemClock().now() - start;
-            if (elapse > 1000) {
-                log.warn("doDispatch transaction put firstTime elapse={}", elapse);
-            }
-
-            int time = 1;
-            while (!this.isStoped() && !result) { // retry until db recovery
-                start = getSystemClock().now();
-                result = DefaultMessageStore.this.transactionStore.put(prepare);
-                elapse = getSystemClock().now() - start;
-                if (elapse > 1000) {
-                    log.warn("doDispatch transaction put elapse={}, times={}", elapse, time);
-                }
-                if (result) {
-                    log.warn("doDispatch transaction put retry success times={}.", time);
-                    break;
-                }
-
-                try {
-                    TimeUnit.SECONDS.sleep(5);
-                } catch (InterruptedException e) {
-                    // ignore
-                }
-                log.warn("doDispatch transaction put retry times={}", time);
-                time++;
-            }
-
-            start = getSystemClock().now();
-            DefaultMessageStore.this.transactionStore.remove(rollbackOrCommit);
-            elapse = getSystemClock().now() - start;
-            if (elapse > 1000) {
-                log.warn("doDispatch transaction remove elapse={}", elapse);
-            }
-
-            DefaultMessageStore.this.storeCheckpoint.setTransactionTimestamp(transactionTimestamp);
         }
 
         private TransactionRecord buildTransactionRecord(DispatchRequest request, boolean prepare) {
@@ -2057,5 +2044,9 @@ public class DefaultMessageStore implements MessageStore {
 
     public TransactionStore getTransactionStore() {
         return transactionStore;
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
     }
 }
