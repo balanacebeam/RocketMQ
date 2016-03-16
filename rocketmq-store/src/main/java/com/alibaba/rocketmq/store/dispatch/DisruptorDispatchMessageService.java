@@ -1,5 +1,6 @@
 package com.alibaba.rocketmq.store.dispatch;
 
+import com.alibaba.rocketmq.common.SystemClock;
 import com.alibaba.rocketmq.common.ThreadFactoryImpl;
 import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.constant.LoggerName;
@@ -37,11 +38,14 @@ public class DisruptorDispatchMessageService {
 
     private final BatchEventProcessor<?>[] batchEventProcessors;
 
+    private final SystemClock systemClock;
+
     private ExecutorService executorService;
 
     public DisruptorDispatchMessageService(DefaultMessageStore defaultMessageStore) {
         this.defaultMessageStore = defaultMessageStore;
         this.messageStoreConfig = defaultMessageStore.getMessageStoreConfig();
+        this.systemClock = defaultMessageStore.getSystemClock();
 
         int putMsgIndexHighWater = this.messageStoreConfig.getPutMsgIndexHightWater() * 2;
         this.ringBuffer = RingBuffer.createSingleProducer(ValueEvent.EVENT_FACTORY,
@@ -91,6 +95,7 @@ public class DisruptorDispatchMessageService {
 
 
     public void putRequest(final DispatchRequest dispatchRequest) {
+        long start = systemClock.now();
         long sequence = this.ringBuffer.next();
 
         try {
@@ -99,9 +104,13 @@ public class DisruptorDispatchMessageService {
             this.ringBuffer.publish(sequence);
         }
 
+        if (log.isInfoEnabled()) {
+            log.info("DisruptorDispatchMessageService putRequest elapse=" + (systemClock.now() - start));
+        }
+
         this.defaultMessageStore.getStoreStatsService().setDispatchMaxBuffer(this.ringBuffer.getBufferSize() - this.ringBuffer.remainingCapacity());
 
-        if (log.isInfoEnabled() && this.ringBuffer.remainingCapacity() < 100) {
+        if (log.isInfoEnabled() && this.ringBuffer.remainingCapacity() < 10000) {
             log.info("RingBuffer remainingCapacity" + " < 100");
         }
     }
