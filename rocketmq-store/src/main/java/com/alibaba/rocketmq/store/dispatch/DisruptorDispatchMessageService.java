@@ -95,7 +95,7 @@ public class DisruptorDispatchMessageService {
 
 
     public void putRequest(final DispatchRequest dispatchRequest) {
-        long start = systemClock.now();
+        long start = System.currentTimeMillis();
         long sequence = this.ringBuffer.next();
 
         try {
@@ -105,7 +105,7 @@ public class DisruptorDispatchMessageService {
         }
 
         if (log.isInfoEnabled()) {
-            log.info("DisruptorDispatchMessageService putRequest elapse=" + (systemClock.now() - start));
+            log.info("DisruptorDispatchMessageService putRequest elapse=" + (System.currentTimeMillis() - start));
         }
 
         this.defaultMessageStore.getStoreStatsService().setDispatchMaxBuffer(this.ringBuffer.getBufferSize() - this.ringBuffer.remainingCapacity());
