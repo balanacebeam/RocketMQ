@@ -5,7 +5,7 @@ transactionConfig:
     checkScheduleIntervalSeconds: 60
     checkSchedulePoolSize: 1
     checkPageSize: 500
-    storeType: "jdbc"
+    storeType: "concurrent_jdbc"
     userName: "root"
     password: "123456"
     driverClassName: "com.mysql.jdbc.Driver"
@@ -20,3 +20,5 @@ transactionConfig:
     batchSize: 50
     asyncTransactionLog: true
     asyncQueueSize: 30000
+    concurrentPoolSize: 4
+    noConcurrentBatchSize: 10

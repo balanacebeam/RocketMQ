@@ -2,6 +2,7 @@ package com.alibaba.rocketmq.store.transaction;
 
 import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.common.config.TransactionConfig;
+import com.alibaba.rocketmq.store.transaction.jdbc.ConcurrentSimpleJdbcTransactionStore;
 import com.alibaba.rocketmq.store.transaction.jdbc.ShardingJdbcTransactionStore;
 import com.alibaba.rocketmq.store.transaction.jdbc.SimpleJdbcTransactionStore;
 import com.alibaba.rocketmq.store.transaction.util.TransactionConfigUtil;
@@ -23,6 +24,8 @@ public class TransactionStoreFactory {
                 return new SimpleJdbcTransactionStore(config);
             case sharding_jdbc:
                 return new ShardingJdbcTransactionStore(config);
+            case concurrent_jdbc:
+                return new ConcurrentSimpleJdbcTransactionStore(config);
             case none:
                 return new NoneTransactionStore();
             default:

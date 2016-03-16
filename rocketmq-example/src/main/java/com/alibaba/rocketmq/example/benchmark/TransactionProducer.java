@@ -25,6 +25,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -38,7 +39,7 @@ public class TransactionProducer {
     private static boolean ischeckffalse;
 
 
-    public static void main(String[] args) throws MQClientException {
+    public static void main(String[] args) throws MQClientException, InterruptedException {
         threadCount = args.length >= 1 ? Integer.parseInt(args[0]) : 32;
         messageSize = args.length >= 2 ? Integer.parseInt(args[1]) : 1024;
         ischeck = args.length >= 3 ? Boolean.parseBoolean(args[2]) : false;
@@ -112,7 +113,8 @@ public class TransactionProducer {
             sendThreadPool.execute(new Runnable() {
                 @Override
                 public void run() {
-                    while (true) {
+                    int count = 10000;
+                    while (count-- > 0) {
                         try {
                             // Thread.sleep(1000);
                             final long beginTimestamp = System.currentTimeMillis();
@@ -143,6 +145,8 @@ public class TransactionProducer {
                 }
             });
         }
+
+        TimeUnit.HOURS.sleep(1);
     }
 
 

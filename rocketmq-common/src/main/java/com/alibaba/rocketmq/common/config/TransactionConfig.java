@@ -41,7 +41,11 @@ public class TransactionConfig {
 
     public int asyncQueueSize = 30000;
 
+    public int concurrentPoolSize = 4;
+
+    public int noConcurrentBatchSize = 10;
+
     public static enum StoreType {
-        none, jdbc, sharding_jdbc
+        none, jdbc, sharding_jdbc, concurrent_jdbc
     }
 }
