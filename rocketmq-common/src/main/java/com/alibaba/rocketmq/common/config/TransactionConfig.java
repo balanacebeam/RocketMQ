@@ -39,7 +39,7 @@ public class TransactionConfig {
 
     public boolean asyncTransactionLog = true;
 
-    public int asyncQueueSize = 300000;
+    public int asyncQueueSize = 3000;
 
     public static enum StoreType {
         none, jdbc, sharding_jdbc

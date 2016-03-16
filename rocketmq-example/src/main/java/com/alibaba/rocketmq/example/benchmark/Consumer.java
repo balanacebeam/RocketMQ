@@ -87,7 +87,7 @@ public class Consumer {
 
         DefaultMQPushConsumer consumer =
                 new DefaultMQPushConsumer("benchmark_consumer_"
-                        + Long.toString(System.currentTimeMillis() % 100));
+                        + Long.toString(32));
         consumer.setInstanceName(Long.toString(System.currentTimeMillis()));
         consumer.setNamesrvAddr("127.0.0.1:9876");
 

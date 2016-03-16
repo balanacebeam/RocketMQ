@@ -1,4 +1,5 @@
 brokerName: test
+indexBatchSize: 100
 transactionConfig:
     checkTransactionLogMinutesBefore: 2
     checkScheduleIntervalSeconds: 60
@@ -9,7 +10,7 @@ transactionConfig:
     password: "123456"
     driverClassName: "com.mysql.jdbc.Driver"
     initialSize: 1
-    maxTotal: 5
+    maxTotal: 10
     maxIdle: 2
     minIdle: 1
     maxWaitMillis: 10000
@@ -18,4 +19,4 @@ transactionConfig:
         - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
     batchSize: 1000
     asyncTransactionLog: true
-    asyncQueueSize: 300000
+    asyncQueueSize: 3000
