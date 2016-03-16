@@ -35,11 +35,11 @@ public class TransactionConfig {
 
     public List<String> urls;
 
-    public int batchSize = 1000;
+    public int batchSize = 50;
 
     public boolean asyncTransactionLog = true;
 
-    public int asyncQueueSize = 3000;
+    public int asyncQueueSize = 30000;
 
     public static enum StoreType {
         none, jdbc, sharding_jdbc
