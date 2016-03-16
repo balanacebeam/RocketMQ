@@ -1,6 +1,7 @@
 package com.alibaba.rocketmq.store.dispatch;
 
 import com.alibaba.rocketmq.common.ThreadFactoryImpl;
+import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.store.DefaultMessageStore;
 import com.alibaba.rocketmq.store.DispatchRequest;
@@ -44,7 +45,7 @@ public class DisruptorDispatchMessageService {
 
         int putMsgIndexHighWater = this.messageStoreConfig.getPutMsgIndexHightWater() * 2;
         this.ringBuffer = RingBuffer.createSingleProducer(ValueEvent.EVENT_FACTORY,
-                putMsgIndexHighWater, new SleepingWaitStrategy());
+                UtilAll.roundPowOfTwo(putMsgIndexHighWater), new SleepingWaitStrategy());
         this.sequenceBarrier = this.ringBuffer.newBarrier();
 
         this.batchEventProcessors = new BatchEventProcessor[]{

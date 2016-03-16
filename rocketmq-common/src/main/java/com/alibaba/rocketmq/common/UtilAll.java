@@ -463,4 +463,13 @@ public class UtilAll {
 
         return result.toString();
     }
+
+    public static int roundPowOfTwo(int number) {
+        int result = 2;
+        while (result < number) {
+            result <<= 1;
+        }
+
+        return result;
+    }
 }
