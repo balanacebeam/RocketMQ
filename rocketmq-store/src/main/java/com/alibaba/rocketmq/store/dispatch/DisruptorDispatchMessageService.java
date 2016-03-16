@@ -101,8 +101,8 @@ public class DisruptorDispatchMessageService {
 
         this.defaultMessageStore.getStoreStatsService().setDispatchMaxBuffer(this.ringBuffer.getBufferSize() - this.ringBuffer.remainingCapacity());
 
-        if (log.isDebugEnabled() && this.ringBuffer.remainingCapacity() < 100) {
-            log.debug("RingBuffer remainingCapacity" + " < 100");
+        if (log.isWarnEnabled() && this.ringBuffer.remainingCapacity() < 100) {
+            log.info("RingBuffer remainingCapacity" + " < 100");
         }
     }
 }
