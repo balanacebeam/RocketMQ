@@ -95,17 +95,12 @@ public class DisruptorDispatchMessageService {
 
 
     public void putRequest(final DispatchRequest dispatchRequest) {
-        long start = System.nanoTime();
         long sequence = this.ringBuffer.next();
 
         try {
             this.ringBuffer.get(sequence).setDispatchRequest(dispatchRequest);
         } finally {
             this.ringBuffer.publish(sequence);
-        }
-
-        if (log.isInfoEnabled()) {
-            log.info("DisruptorDispatchMessageService putRequest elapse=" + (System.nanoTime() - start));
         }
 
         this.defaultMessageStore.getStoreStatsService().setDispatchMaxBuffer(this.ringBuffer.getBufferSize() - this.ringBuffer.remainingCapacity());
