@@ -61,6 +61,10 @@ public class DisruptorDispatchMessageService {
 
     public void start() {
         this.executorService = Executors.newFixedThreadPool(this.batchEventProcessors.length, new ThreadFactoryImpl("DisruptorDispatchProcessor"));
+
+        this.executorService.submit(this.batchEventProcessors[0]);
+        this.executorService.submit(this.batchEventProcessors[1]);
+        this.executorService.submit(this.batchEventProcessors[2]);
     }
 
     public void shutdown() {
