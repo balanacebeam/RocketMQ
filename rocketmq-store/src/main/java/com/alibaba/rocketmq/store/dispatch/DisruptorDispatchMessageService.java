@@ -81,14 +81,10 @@ public class DisruptorDispatchMessageService {
         }
 
         this.executorService.shutdown();
-        while (true) {
-            try {
-                this.executorService.awaitTermination(24, TimeUnit.HOURS);
-
-                break;
-            } catch (InterruptedException e) {
-                log.error("DisruptorDispatchMessageService shutdown: ", e);
-            }
+        try {
+            this.executorService.awaitTermination(24, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            log.error("DisruptorDispatchMessageService shutdown: ", e);
         }
     }
 

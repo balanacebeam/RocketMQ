@@ -155,14 +155,10 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
         if (transactionExecutor != null) {
             transactionExecutor.shutdown();
 
-            while (true) {
-                try {
-                    transactionExecutor.awaitTermination(24, TimeUnit.HOURS);
-
-                    break;
-                } catch (InterruptedException e) {
-                    log.error("TransactionLogDispatchHandler shutdownUntilFinished:", e);
-                }
+            try {
+                transactionExecutor.awaitTermination(24, TimeUnit.HOURS);
+            } catch (InterruptedException e) {
+                log.error("TransactionLogDispatchHandler shutdownUntilFinished:", e);
             }
         }
     }
