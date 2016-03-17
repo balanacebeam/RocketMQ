@@ -2,7 +2,7 @@ brokerName: test
 indexBatchSize: 100
 transactionConfig:
     checkTransactionLogMinutesBefore: 2
-    checkScheduleIntervalSeconds: 60
+    checkScheduleIntervalSeconds: 1200
     checkSchedulePoolSize: 1
     checkPageSize: 500
     storeType: "concurrent_jdbc"
@@ -17,7 +17,7 @@ transactionConfig:
     urls:
         - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
         - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
-    batchSize: 50
+    batchSize: 400
     asyncTransactionLog: true
     asyncQueueSize: 30000
     concurrentPoolSize: 4

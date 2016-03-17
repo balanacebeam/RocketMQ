@@ -9,7 +9,7 @@ public class TransactionConfig {
 
     public int checkTransactionLogMinutesBefore = 1;
 
-    public int checkScheduleIntervalSeconds = 60;
+    public int checkScheduleIntervalSeconds = 1200;
 
     public int checkSchedulePoolSize = 1;
 
@@ -35,7 +35,7 @@ public class TransactionConfig {
 
     public List<String> urls;
 
-    public int batchSize = 50;
+    public int batchSize = 400;
 
     public boolean asyncTransactionLog = true;
 
