@@ -80,12 +80,18 @@ public class DisruptorDispatchMessageService {
             }
         }
 
+        for (BatchEventProcessor batchEventProcessor : batchEventProcessors) {
+            batchEventProcessor.halt();
+        }
+
         this.executorService.shutdown();
         try {
             this.executorService.awaitTermination(24, TimeUnit.HOURS);
         } catch (InterruptedException e) {
             log.error("DisruptorDispatchMessageService shutdown: ", e);
         }
+
+        log.info("DisruptorDispatchMessageService shutdown success.");
     }
 
 

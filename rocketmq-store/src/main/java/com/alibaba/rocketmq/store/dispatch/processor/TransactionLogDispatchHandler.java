@@ -171,5 +171,7 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
                 log.error("TransactionLogDispatchHandler shutdownUntilFinished:", e);
             }
         }
+
+        log.info("TransactionLogDispatchHandler shutdown success.");
     }
 }
