@@ -80,7 +80,12 @@ public class DisruptorDispatchMessageService {
             }
         }
 
-        this.executorService.shutdownNow();
+        this.executorService.shutdown();
+        try {
+            this.executorService.awaitTermination(24, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            log.error("DisruptorDispatchMessageService shutdown: ", e);
+        }
     }
 
 
