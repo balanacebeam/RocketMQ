@@ -72,10 +72,7 @@ public class DisruptorDispatchMessageService {
     }
 
     public void shutdown() {
-        long start = System.currentTimeMillis();
         while (hasRemainMessage()) {
-            if (System.currentTimeMillis() - start > 1000 * 60) break;
-
             try {
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
@@ -83,7 +80,16 @@ public class DisruptorDispatchMessageService {
             }
         }
 
-        this.executorService.shutdownNow();
+        this.executorService.shutdown();
+        while (true) {
+            try {
+                this.executorService.awaitTermination(24, TimeUnit.HOURS);
+
+                break;
+            } catch (InterruptedException e) {
+                log.error("DisruptorDispatchMessageService shutdown: ", e);
+            }
+        }
     }
 
 

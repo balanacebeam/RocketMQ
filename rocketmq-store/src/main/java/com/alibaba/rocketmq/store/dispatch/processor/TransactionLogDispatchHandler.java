@@ -90,7 +90,7 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
                     } catch (RejectedExecutionException ree) {
                         log.warn("AsyncTransactionLog queue full, reject new worker.");
                         try {
-                            TimeUnit.SECONDS.sleep(1);
+                            TimeUnit.SECONDS.sleep(5);
                         } catch (InterruptedException e) {
                             // ignore
                         }
@@ -138,7 +138,8 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
 
     @Override
     public void onStart() {
-        if (TransactionConfigUtil.isTransaction(this.defaultMessageStore.getConfig())) {
+        if (TransactionConfigUtil.isTransaction(this.defaultMessageStore.getConfig()) &&
+                this.defaultMessageStore.getConfig().transactionConfig.asyncTransactionLog) {
             transactionExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
                     new LinkedBlockingQueue<Runnable>(this.defaultMessageStore.getConfig().transactionConfig.asyncQueueSize),
                     new ThreadPoolExecutor.AbortPolicy());
@@ -147,8 +148,22 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
 
     @Override
     public void onShutdown() {
+        shutdownUntilFinished();
+    }
+
+    public void shutdownUntilFinished() {
         if (transactionExecutor != null) {
-            transactionExecutor.shutdownNow();
+            transactionExecutor.shutdown();
+
+            while (true) {
+                try {
+                    transactionExecutor.awaitTermination(24, TimeUnit.HOURS);
+
+                    break;
+                } catch (InterruptedException e) {
+                    log.error("TransactionLogDispatchHandler shutdownUntilFinished:", e);
+                }
+            }
         }
     }
 }
