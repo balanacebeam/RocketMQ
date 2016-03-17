@@ -113,7 +113,7 @@ public class TransactionProducer {
             sendThreadPool.execute(new Runnable() {
                 @Override
                 public void run() {
-                    int count = 10000;
+                    int count = 1000;
                     while (count-- > 0) {
                         try {
                             // Thread.sleep(1000);

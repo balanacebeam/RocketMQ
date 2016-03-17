@@ -24,14 +24,18 @@ public class TransactionLogAsyncWorker implements java.lang.Runnable {
     
     private DefaultMessageStore defaultMessageStore;
 
+    private boolean flushCheckpoint;
+
     public TransactionLogAsyncWorker(List<TransactionRecord> prepareTransactionLog,
                                      List<TransactionRecord> rollbackOrCommitTransactionLog,
                                      long transactionTimestamp,
-                                     DefaultMessageStore defaultMessageStore) {
+                                     DefaultMessageStore defaultMessageStore,
+                                     boolean flushCheckpoint) {
         this.prepareTransactionLog = prepareTransactionLog;
         this.rollbackOrCommitTransactionLog = rollbackOrCommitTransactionLog;
         this.transactionTimestamp = transactionTimestamp;
         this.defaultMessageStore = defaultMessageStore;
+        this.flushCheckpoint = flushCheckpoint;
     }
 
     @Override
@@ -73,5 +77,8 @@ public class TransactionLogAsyncWorker implements java.lang.Runnable {
         }
 
         this.defaultMessageStore.getStoreCheckpoint().setTransactionTimestamp(transactionTimestamp);
+        if (flushCheckpoint) {
+            this.defaultMessageStore.getStoreCheckpoint().flush();
+        }
     }
 }

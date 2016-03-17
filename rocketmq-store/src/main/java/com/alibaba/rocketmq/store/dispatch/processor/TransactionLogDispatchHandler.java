@@ -25,6 +25,8 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
 
     private static final Logger log = LoggerFactory.getLogger(LoggerName.StoreLoggerName);
 
+    private static final int FLUSH_CHECKPOINT_BATCH_NUM = 1000;
+
     private final DefaultMessageStore defaultMessageStore;
 
     private volatile boolean isSlave = true;
@@ -81,7 +83,7 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
 
             TransactionLogAsyncWorker worker = new TransactionLogAsyncWorker(finalPrepare,
                     finalRollbackOrCommit, transactionTimestamp,
-                    defaultMessageStore);
+                    defaultMessageStore, flushCheckpoint(sequence, endOfBatch));
             if (this.defaultMessageStore.getConfig().transactionConfig.asyncTransactionLog) {
                 while (true) {
                     try {
@@ -105,6 +107,10 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
         if (!endOfBatch) {
             batchOneMessage(req, tranType);
         }
+    }
+
+    private boolean flushCheckpoint(long sequence, boolean endOfBatch) {
+        return endOfBatch || sequence % (batchSize * FLUSH_CHECKPOINT_BATCH_NUM) == 0;
     }
 
     private void batchOneMessage(final DispatchRequest req, final int tranType) {
