@@ -61,6 +61,10 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
 
         DispatchRequest req = event.getDispatchRequest();
 
+        if (req.getStoreTimestamp() < this.defaultMessageStore.getStoreCheckpoint().getTransactionTimestamp()) {
+            return;
+        }
+
         final int tranType = MessageSysFlag.getTransactionValue(req.getSysFlag());
 
         if (MessageSysFlag.TransactionNotType == tranType) return;
