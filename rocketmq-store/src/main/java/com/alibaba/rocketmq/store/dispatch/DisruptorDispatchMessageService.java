@@ -53,10 +53,10 @@ public class DisruptorDispatchMessageService {
         this.sequenceBarrier = this.ringBuffer.newBarrier();
 
         BatchEventProcessor<ValueEvent> consumeQueueProcessor = new BatchEventProcessor<>(this.ringBuffer, this.sequenceBarrier, new ConsumeQueueDispatchHandler(defaultMessageStore));
-        BatchEventProcessor<ValueEvent> msgIdxProcessor = new BatchEventProcessor<>(this.ringBuffer, this.sequenceBarrier, new TransactionLogDispatchHandler(defaultMessageStore));
+        BatchEventProcessor<ValueEvent> msgIdxProcessor = new BatchEventProcessor<>(this.ringBuffer, this.sequenceBarrier, new MessageIndexDispatchHandler(defaultMessageStore));
         BatchEventProcessor<ValueEvent> transLogProcessor = new BatchEventProcessor<>(this.ringBuffer,
                 this.ringBuffer.newBarrier(consumeQueueProcessor.getSequence(), msgIdxProcessor.getSequence()),
-                new MessageIndexDispatchHandler(defaultMessageStore));
+                new TransactionLogDispatchHandler(defaultMessageStore));
         this.batchEventProcessors = new BatchEventProcessor[]{
                 consumeQueueProcessor,
                 msgIdxProcessor,
