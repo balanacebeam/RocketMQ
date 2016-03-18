@@ -11,7 +11,6 @@ import com.alibaba.rocketmq.store.dispatch.processor.ConsumeQueueDispatchHandler
 import com.alibaba.rocketmq.store.dispatch.processor.MessageIndexDispatchHandler;
 import com.alibaba.rocketmq.store.dispatch.processor.TransactionLogDispatchHandler;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SequenceBarrier;
 import org.slf4j.Logger;
@@ -49,7 +48,8 @@ public class DisruptorDispatchMessageService {
 
         int putMsgIndexHighWater = this.messageStoreConfig.getPutMsgIndexHightWater();
         this.ringBuffer = RingBuffer.createSingleProducer(ValueEvent.EVENT_FACTORY,
-                UtilAll.roundPowOfTwo(putMsgIndexHighWater), new BlockingWaitStrategy());
+                UtilAll.roundPowOfTwo(putMsgIndexHighWater),
+                WaitStrategyFactory.newInstance(this.defaultMessageStore.getConfig().waitStrategy));
         this.sequenceBarrier = this.ringBuffer.newBarrier();
 
         BatchEventProcessor<ValueEvent> consumeQueueProcessor = new BatchEventProcessor<>(this.ringBuffer, this.sequenceBarrier, new ConsumeQueueDispatchHandler(defaultMessageStore));

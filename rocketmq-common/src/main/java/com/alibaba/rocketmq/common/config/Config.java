@@ -14,6 +14,8 @@ public class Config {
 
     public int indexBatchSize = 100;
 
+    public int waitStrategy = 0;
+
     public boolean check() {
         if (transactionConfig != null && transactionConfig.storeType.equals(TransactionConfig.StoreType.none)) {
             if (StringUtils.isEmpty(brokerName)) {
