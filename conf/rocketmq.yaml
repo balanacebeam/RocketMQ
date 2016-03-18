@@ -1,6 +1,6 @@
 brokerName: test
 indexBatchSize: 100
-waitStrategy: 0
+waitStrategy: 2
 transactionConfig:
     checkTransactionLogMinutesBefore: 2
     checkScheduleIntervalSeconds: 1200
