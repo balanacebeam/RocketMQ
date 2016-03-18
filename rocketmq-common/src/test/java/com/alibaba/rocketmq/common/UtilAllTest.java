@@ -144,4 +144,9 @@ public class UtilAllTest {
             this.demoName = demoName;
         }
     }
+
+    @Test
+    public void testRoundPowOfTwo() {
+        System.out.println(UtilAll.roundPowOfTwo(1200000));
+    }
 }

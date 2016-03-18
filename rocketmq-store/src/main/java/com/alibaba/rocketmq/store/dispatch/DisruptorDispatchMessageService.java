@@ -47,7 +47,7 @@ public class DisruptorDispatchMessageService {
         this.messageStoreConfig = defaultMessageStore.getMessageStoreConfig();
         this.systemClock = defaultMessageStore.getSystemClock();
 
-        int putMsgIndexHighWater = this.messageStoreConfig.getPutMsgIndexHightWater() * 2;
+        int putMsgIndexHighWater = this.messageStoreConfig.getPutMsgIndexHightWater();
         this.ringBuffer = RingBuffer.createSingleProducer(ValueEvent.EVENT_FACTORY,
                 UtilAll.roundPowOfTwo(putMsgIndexHighWater), new BlockingWaitStrategy());
         this.sequenceBarrier = this.ringBuffer.newBarrier();

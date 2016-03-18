@@ -52,14 +52,15 @@ public class TransactionLogDispatchHandler implements EventHandler<ValueEvent>, 
 
     @Override
     public void onEvent(ValueEvent event, long sequence, boolean endOfBatch) throws Exception {
-        if (event.getDispatchRequest() == null) {
+        DispatchRequest req = event.getDispatchRequest();
+
+        if (req == null) {
             log.warn("TransactionLogDispatchHandler event payload is null.");
             return;
         }
+        event.setDispatchRequest(null);
 
         if (this.isSlave) return;
-
-        DispatchRequest req = event.getDispatchRequest();
 
         if (req.getStoreTimestamp() < this.defaultMessageStore.getStoreCheckpoint().getTransactionTimestamp()) {
             return;

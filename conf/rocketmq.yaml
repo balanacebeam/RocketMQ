@@ -11,14 +11,14 @@ transactionConfig:
     driverClassName: "com.mysql.jdbc.Driver"
     initialSize: 1
     maxTotal: 10
-    maxIdle: 2
+    maxIdle: 4
     minIdle: 1
     maxWaitMillis: 10000
     urls:
         - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
         - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
-    batchSize: 400
+    batchSize: 40
     asyncTransactionLog: true
-    asyncQueueSize: 30000
+    asyncQueueSize: 3000
     concurrentPoolSize: 4
     noConcurrentBatchSize: 10

@@ -24,12 +24,13 @@ public class ConsumeQueueDispatchHandler implements EventHandler<ValueEvent> {
 
     @Override
     public void onEvent(ValueEvent event, long sequence, boolean endOfBatch) throws Exception {
-        if (event.getDispatchRequest() == null) {
+        DispatchRequest req = event.getDispatchRequest();
+
+        if (req == null) {
             log.warn("ConsumeQueueDispatchHandler event payload is null.");
             return;
         }
-
-        DispatchRequest req = event.getDispatchRequest();
+        event.setDispatchRequest(null);
 
         final int tranType = MessageSysFlag.getTransactionValue(req.getSysFlag());
 

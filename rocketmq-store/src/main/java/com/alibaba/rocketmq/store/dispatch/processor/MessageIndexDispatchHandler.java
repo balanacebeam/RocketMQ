@@ -32,17 +32,20 @@ public class MessageIndexDispatchHandler implements EventHandler<ValueEvent> {
 
     @Override
     public void onEvent(ValueEvent event, long sequence, boolean endOfBatch) throws Exception {
-        if (event.getDispatchRequest() == null) {
+        DispatchRequest req = event.getDispatchRequest();
+
+        if (req == null) {
             log.warn("MessageIndexDispatchHandler event payload is null.");
             return;
         }
+        event.setDispatchRequest(null);
 
         if (!this.defaultMessageStore.getMessageStoreConfig().isMessageIndexEnable()) {
             return;
         }
 
         if (endOfBatch) {
-            indexBuffer.add(event.getDispatchRequest());
+            indexBuffer.add(req);
         }
 
         if (indexBuffer.size() >= batchSize || endOfBatch) {
@@ -52,7 +55,7 @@ public class MessageIndexDispatchHandler implements EventHandler<ValueEvent> {
         }
 
         if (!endOfBatch) {
-            indexBuffer.add(event.getDispatchRequest());
+            indexBuffer.add(req);
         }
     }
 }
