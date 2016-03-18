@@ -38,7 +38,6 @@ public class MessageIndexDispatchHandler implements EventHandler<ValueEvent> {
             log.warn("MessageIndexDispatchHandler event payload is null.");
             return;
         }
-        event.setDispatchRequest(null);
 
         if (!this.defaultMessageStore.getMessageStoreConfig().isMessageIndexEnable()) {
             return;

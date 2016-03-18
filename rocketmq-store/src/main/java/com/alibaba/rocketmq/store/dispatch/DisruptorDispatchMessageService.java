@@ -52,23 +52,26 @@ public class DisruptorDispatchMessageService {
                 UtilAll.roundPowOfTwo(putMsgIndexHighWater), new BlockingWaitStrategy());
         this.sequenceBarrier = this.ringBuffer.newBarrier();
 
+        BatchEventProcessor<ValueEvent> consumeQueueProcessor = new BatchEventProcessor<>(this.ringBuffer, this.sequenceBarrier, new ConsumeQueueDispatchHandler(defaultMessageStore));
+        BatchEventProcessor<ValueEvent> msgIdxProcessor = new BatchEventProcessor<>(this.ringBuffer, this.sequenceBarrier, new TransactionLogDispatchHandler(defaultMessageStore));
+        BatchEventProcessor<ValueEvent> transLogProcessor = new BatchEventProcessor<>(this.ringBuffer,
+                this.ringBuffer.newBarrier(consumeQueueProcessor.getSequence(), msgIdxProcessor.getSequence()),
+                new MessageIndexDispatchHandler(defaultMessageStore));
         this.batchEventProcessors = new BatchEventProcessor[]{
-                new BatchEventProcessor<>(this.ringBuffer, this.sequenceBarrier, new ConsumeQueueDispatchHandler(defaultMessageStore)),
-                new BatchEventProcessor<>(this.ringBuffer, this.sequenceBarrier, new TransactionLogDispatchHandler(defaultMessageStore)),
-                new BatchEventProcessor<>(this.ringBuffer, this.sequenceBarrier, new MessageIndexDispatchHandler(defaultMessageStore))
+                consumeQueueProcessor,
+                msgIdxProcessor,
+                transLogProcessor
         };
 
-        this.ringBuffer.addGatingSequences(this.batchEventProcessors[0].getSequence(),
-                this.batchEventProcessors[1].getSequence(),
-                this.batchEventProcessors[2].getSequence());
+        this.ringBuffer.addGatingSequences(transLogProcessor.getSequence());
     }
 
     public void start() {
         this.executorService = Executors.newFixedThreadPool(this.batchEventProcessors.length, new ThreadFactoryImpl("DisruptorDispatchProcessor"));
 
-        this.executorService.submit(this.batchEventProcessors[0]);
-        this.executorService.submit(this.batchEventProcessors[1]);
-        this.executorService.submit(this.batchEventProcessors[2]);
+        for (BatchEventProcessor processor : batchEventProcessors) {
+            this.executorService.submit(processor);
+        }
     }
 
     public void shutdown() {

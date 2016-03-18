@@ -30,7 +30,6 @@ public class ConsumeQueueDispatchHandler implements EventHandler<ValueEvent> {
             log.warn("ConsumeQueueDispatchHandler event payload is null.");
             return;
         }
-        event.setDispatchRequest(null);
 
         final int tranType = MessageSysFlag.getTransactionValue(req.getSysFlag());
 
