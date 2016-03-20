@@ -8,15 +8,14 @@ import java.util.List;
 
 /**
  * IO操作
- * 
+ *
  * @author manhong.yqd<jodie.yqd@gmail.com>
- * 
  */
 public class IOTinyUtils {
 
     static public String toString(InputStream input, String encoding) throws IOException {
         return (null == encoding) ? toString(new InputStreamReader(input)) : toString(new InputStreamReader(
-            input, encoding));
+                input, encoding));
     }
 
 
@@ -30,7 +29,7 @@ public class IOTinyUtils {
     static public long copy(Reader input, Writer output) throws IOException {
         char[] buffer = new char[1 << 12];
         long count = 0;
-        for (int n = 0; (n = input.read(buffer)) >= 0;) {
+        for (int n = 0; (n = input.read(buffer)) >= 0; ) {
             output.write(buffer, 0, n);
             count += n;
         }
@@ -45,12 +44,11 @@ public class IOTinyUtils {
         BufferedReader reader = toBufferedReader(input);
         List<String> list = new ArrayList<String>();
         String line = null;
-        for (;;) {
+        for (; ; ) {
             line = reader.readLine();
             if (null != line) {
                 list.add(line);
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -80,8 +78,7 @@ public class IOTinyUtils {
             tc = new FileOutputStream(tf).getChannel();
             sc = new FileInputStream(sf).getChannel();
             sc.transferTo(0, sc.size(), tc);
-        }
-        finally {
+        } finally {
             if (null != sc) {
                 sc.close();
             }
@@ -128,8 +125,7 @@ public class IOTinyUtils {
         for (File file : files) {
             try {
                 delete(file);
-            }
-            catch (IOException ioe) {
+            } catch (IOException ioe) {
                 exception = ioe;
             }
         }
@@ -145,8 +141,7 @@ public class IOTinyUtils {
         try {
             os = new FileOutputStream(file);
             os.write(data.getBytes(encoding));
-        }
-        finally {
+        } finally {
             if (null != os) {
                 os.close();
             }

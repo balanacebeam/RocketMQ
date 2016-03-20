@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import java.util.Map;
 
 /**
  * 消息解码
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  */
 public class MessageDecoder {
@@ -50,7 +50,12 @@ public class MessageDecoder {
     public final static int MessagePhysicOffsetPostion = 28;
     public final static int MessageStoreTimestampPostion = 56;
     public final static int MessageMagicCode = 0xAABBCCDD ^ 1880681586 + 8;
-    private final static  String charset = "utf-8";
+    /**
+     * 序列化消息属性
+     */
+    public static final char NAME_VALUE_SEPARATOR = 1;
+    public static final char PROPERTY_SEPARATOR = 2;
+    private final static String charset = "utf-8";
 
     public static String createMessageId(final ByteBuffer input, final ByteBuffer addr, final long offset) {
         input.flip();
@@ -64,7 +69,7 @@ public class MessageDecoder {
         return UtilAll.bytes2string(input.array());
     }
 
-    public static String createMessageId(SocketAddress socketAddress,long transactionIdhashCode) {
+    public static String createMessageId(SocketAddress socketAddress, long transactionIdhashCode) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(MessageDecoder.MSG_ID_LENGTH);
         InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
         byteBuffer.put(inetSocketAddress.getAddress().getAddress());
@@ -93,11 +98,9 @@ public class MessageDecoder {
         return new MessageId(address, offset);
     }
 
-
     public static MessageExt decode(java.nio.ByteBuffer byteBuffer) {
         return decode(byteBuffer, true, true);
     }
-
 
     /**
      * 客户端使用，SLAVE也会使用
@@ -105,14 +108,15 @@ public class MessageDecoder {
     public static MessageExt decode(java.nio.ByteBuffer byteBuffer, final boolean readBody) {
         return decode(byteBuffer, readBody, true);
     }
-    public static  byte[] encode(MessageExt messageExt) throws Exception {
-        byte [] body = messageExt.getBody();
+
+    public static byte[] encode(MessageExt messageExt) throws Exception {
+        byte[] body = messageExt.getBody();
         int bodyLength = messageExt.getBody().length;
-        byte[]  topics = messageExt.getTopic().getBytes(charset);
-        byte topicLen = (byte)topics.length;
-        String properties =  messageProperties2String(messageExt.getProperties());
-        byte [] propertiesBytes = properties.getBytes(charset);
-        short   propertiesLength = (short) propertiesBytes.length;
+        byte[] topics = messageExt.getTopic().getBytes(charset);
+        byte topicLen = (byte) topics.length;
+        String properties = messageProperties2String(messageExt.getProperties());
+        byte[] propertiesBytes = properties.getBytes(charset);
+        short propertiesLength = (short) propertiesBytes.length;
         final int msgLen = 4 // 1 TOTALSIZE
                 + 4 // 2 MAGICCODE
                 + 4 // 3 BODYCRC
@@ -146,7 +150,7 @@ public class MessageDecoder {
 
         // 4 QUEUEID
         int queueId = messageExt.getQueueId();
-        byteBuffer.putInt(queueId) ;
+        byteBuffer.putInt(queueId);
 
         // 5 FLAG
         int flag = messageExt.getFlag();
@@ -170,7 +174,7 @@ public class MessageDecoder {
 
         // 10 BORNHOST
 
-        InetSocketAddress bornHost = (InetSocketAddress)messageExt.getBornHost();
+        InetSocketAddress bornHost = (InetSocketAddress) messageExt.getBornHost();
         byteBuffer.put(bornHost.getAddress().getAddress());
         byteBuffer.putInt(bornHost.getPort());
 
@@ -180,7 +184,7 @@ public class MessageDecoder {
 
         // 12 STOREHOST
 
-        InetSocketAddress serverHost = (InetSocketAddress)messageExt.getStoreHost();
+        InetSocketAddress serverHost = (InetSocketAddress) messageExt.getStoreHost();
         byteBuffer.put(serverHost.getAddress().getAddress());
         byteBuffer.putInt(serverHost.getPort());
 
@@ -193,9 +197,9 @@ public class MessageDecoder {
         byteBuffer.putLong(preparedTransactionOffset);
 
         // 15 BODY
-        byte [] newBody = body;
+        byte[] newBody = body;
         if ((sysFlag & MessageSysFlag.CompressedFlag) == MessageSysFlag.CompressedFlag) {
-            newBody = UtilAll.compress(body,5);
+            newBody = UtilAll.compress(body, 5);
         }
 
         byteBuffer.putInt(bodyLength);
@@ -221,7 +225,7 @@ public class MessageDecoder {
     }
 
     public static MessageExt decode(java.nio.ByteBuffer byteBuffer, final boolean readBody,
-            final boolean deCompressBody) {
+                                    final boolean deCompressBody) {
         try {
             MessageExt msgExt = new MessageExt();
 
@@ -298,8 +302,7 @@ public class MessageDecoder {
                     }
 
                     msgExt.setBody(body);
-                }
-                else {
+                } else {
                     byteBuffer.position(byteBuffer.position() + bodyLen);
                 }
             }
@@ -327,25 +330,20 @@ public class MessageDecoder {
             msgExt.setMsgId(msgId);
 
             return msgExt;
-        }
-        catch (UnknownHostException e) {
+        } catch (UnknownHostException e) {
             byteBuffer.position(byteBuffer.limit());
-        }
-        catch (BufferUnderflowException e) {
+        } catch (BufferUnderflowException e) {
             byteBuffer.position(byteBuffer.limit());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             byteBuffer.position(byteBuffer.limit());
         }
 
         return null;
     }
 
-
     public static List<MessageExt> decodes(java.nio.ByteBuffer byteBuffer) {
         return decodes(byteBuffer, true);
     }
-
 
     /**
      * 客户端使用
@@ -356,20 +354,12 @@ public class MessageDecoder {
             MessageExt msgExt = decode(byteBuffer, readBody);
             if (null != msgExt) {
                 msgExts.add(msgExt);
-            }
-            else {
+            } else {
                 break;
             }
         }
         return msgExts;
     }
-
-    /**
-     * 序列化消息属性
-     */
-    public static final char NAME_VALUE_SEPARATOR = 1;
-    public static final char PROPERTY_SEPARATOR = 2;
-
 
     public static String messageProperties2String(Map<String, String> properties) {
         StringBuilder sb = new StringBuilder();

@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ import java.util.Map.Entry;
 
 /**
  * 所有运维接口都在这里实现
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-21
  */
@@ -80,38 +80,38 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
     @Override
     public void start() throws MQClientException {
         switch (this.serviceState) {
-        case CREATE_JUST:
-            this.serviceState = ServiceState.START_FAILED;
+            case CREATE_JUST:
+                this.serviceState = ServiceState.START_FAILED;
 
-            this.defaultMQAdminExt.changeInstanceNameToPID();
+                this.defaultMQAdminExt.changeInstanceNameToPID();
 
-            this.mqClientInstance =
-                    MQClientManager.getInstance().getAndCreateMQClientInstance(this.defaultMQAdminExt,
-                        rpcHook);
+                this.mqClientInstance =
+                        MQClientManager.getInstance().getAndCreateMQClientInstance(this.defaultMQAdminExt,
+                                rpcHook);
 
-            boolean registerOK =
-                    mqClientInstance.registerAdminExt(this.defaultMQAdminExt.getAdminExtGroup(), this);
-            if (!registerOK) {
-                this.serviceState = ServiceState.CREATE_JUST;
-                throw new MQClientException("The adminExt group[" + this.defaultMQAdminExt.getAdminExtGroup()
-                        + "] has created already, specifed another name please."//
-                        + FAQUrl.suggestTodo(FAQUrl.GROUP_NAME_DUPLICATE_URL), null);
-            }
+                boolean registerOK =
+                        mqClientInstance.registerAdminExt(this.defaultMQAdminExt.getAdminExtGroup(), this);
+                if (!registerOK) {
+                    this.serviceState = ServiceState.CREATE_JUST;
+                    throw new MQClientException("The adminExt group[" + this.defaultMQAdminExt.getAdminExtGroup()
+                            + "] has created already, specifed another name please."//
+                            + FAQUrl.suggestTodo(FAQUrl.GROUP_NAME_DUPLICATE_URL), null);
+                }
 
-            mqClientInstance.start();
+                mqClientInstance.start();
 
-            log.info("the adminExt [{}] start OK", this.defaultMQAdminExt.getAdminExtGroup());
+                log.info("the adminExt [{}] start OK", this.defaultMQAdminExt.getAdminExtGroup());
 
-            this.serviceState = ServiceState.RUNNING;
-            break;
-        case RUNNING:
-        case START_FAILED:
-        case SHUTDOWN_ALREADY:
-            throw new MQClientException("The AdminExt service state not OK, maybe started once, "//
-                    + this.serviceState//
-                    + FAQUrl.suggestTodo(FAQUrl.CLIENT_SERVICE_NOT_OK), null);
-        default:
-            break;
+                this.serviceState = ServiceState.RUNNING;
+                break;
+            case RUNNING:
+            case START_FAILED:
+            case SHUTDOWN_ALREADY:
+                throw new MQClientException("The AdminExt service state not OK, maybe started once, "//
+                        + this.serviceState//
+                        + FAQUrl.suggestTodo(FAQUrl.CLIENT_SERVICE_NOT_OK), null);
+            default:
+                break;
         }
     }
 
@@ -119,19 +119,19 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
     @Override
     public void shutdown() {
         switch (this.serviceState) {
-        case CREATE_JUST:
-            break;
-        case RUNNING:
-            this.mqClientInstance.unregisterAdminExt(this.defaultMQAdminExt.getAdminExtGroup());
-            this.mqClientInstance.shutdown();
+            case CREATE_JUST:
+                break;
+            case RUNNING:
+                this.mqClientInstance.unregisterAdminExt(this.defaultMQAdminExt.getAdminExtGroup());
+                this.mqClientInstance.shutdown();
 
-            log.info("the adminExt [{}] shutdown OK", this.defaultMQAdminExt.getAdminExtGroup());
-            this.serviceState = ServiceState.SHUTDOWN_ALREADY;
-            break;
-        case SHUTDOWN_ALREADY:
-            break;
-        default:
-            break;
+                log.info("the adminExt [{}] shutdown OK", this.defaultMQAdminExt.getAdminExtGroup());
+                this.serviceState = ServiceState.SHUTDOWN_ALREADY;
+                break;
+            case SHUTDOWN_ALREADY:
+                break;
+            default:
+                break;
         }
     }
 
@@ -140,7 +140,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
     public void createAndUpdateTopicConfig(String addr, TopicConfig config) throws RemotingException,
             MQBrokerException, InterruptedException, MQClientException {
         this.mqClientInstance.getMQClientAPIImpl().createTopic(addr,
-            this.defaultMQAdminExt.getCreateTopicKey(), config, 3000);
+                this.defaultMQAdminExt.getCreateTopicKey(), config, 3000);
     }
 
 
@@ -201,7 +201,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
                 // 由于查询时间戳会产生IO操作，可能会耗时较长，所以超时时间设置为15s
                 ConsumeStats consumeStats =
                         this.mqClientInstance.getMQClientAPIImpl().getConsumeStats(addr, consumerGroup,
-                            topic, 15000);
+                                topic, 15000);
                 result.getOffsetTable().putAll(consumeStats.getOffsetTable());
                 long value = result.getConsumeTps() + consumeStats.getConsumeTps();
                 result.setConsumeTps(value);
@@ -210,8 +210,8 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
 
         if (result.getOffsetTable().isEmpty()) {
             throw new MQClientException(
-                "Not found the consumer group consume stats, because return offset table is empty, maybe the consumer not consume any message",
-                null);
+                    "Not found the consumer group consume stats, because return offset table is empty, maybe the consumer not consume any message",
+                    null);
         }
 
         return result;
@@ -315,13 +315,13 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
             String addr = bd.selectBrokerAddr();
             if (addr != null) {
                 return this.mqClientInstance.getMQClientAPIImpl().getConsumerConnectionList(addr,
-                    consumerGroup, 3000);
+                        consumerGroup, 3000);
             }
         }
 
         if (result.getConnectionSet().isEmpty()) {
             throw new MQClientException(ResponseCode.CONSUMER_NOT_ONLINE,
-                "Not found the consumer group connection");
+                    "Not found the consumer group connection");
         }
 
         return result;
@@ -338,7 +338,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
             String addr = bd.selectBrokerAddr();
             if (addr != null) {
                 return this.mqClientInstance.getMQClientAPIImpl().getProducerConnectionList(addr,
-                    producerGroup, 3000);
+                        producerGroup, 3000);
             }
         }
 
@@ -355,7 +355,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
             throws RemotingCommandException, RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQClientException {
         return this.mqClientInstance.getMQClientAPIImpl()
-            .wipeWritePermOfBroker(namesrvAddr, brokerName, 3000);
+                .wipeWritePermOfBroker(namesrvAddr, brokerName, 3000);
     }
 
 
@@ -446,7 +446,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
 
     @Override
     public List<RollbackStats> resetOffsetByTimestampOld(String consumerGroup, String topic, long timestamp,
-            boolean force) throws RemotingException, MQBrokerException, InterruptedException,
+                                                         boolean force) throws RemotingException, MQBrokerException, InterruptedException,
             MQClientException {
         TopicRouteData topicRouteData = this.examineTopicRouteInfo(topic);
         List<RollbackStats> rollbackStatsList = new ArrayList<RollbackStats>();
@@ -472,7 +472,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
                         hasConsumed = true;
                         RollbackStats rollbackStats =
                                 resetOffsetConsumeOffset(addr, consumerGroup, queue, offsetWrapper,
-                                    timestamp, force);
+                                        timestamp, force);
                         rollbackStatsList.add(rollbackStats);
                     }
                 }
@@ -480,7 +480,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
                 if (!hasConsumed) {
                     HashMap<MessageQueue, TopicOffset> topicStatus =
                             this.mqClientInstance.getMQClientAPIImpl().getTopicStatsInfo(addr, topic, 3000)
-                                .getOffsetTable();
+                                    .getOffsetTable();
                     for (int i = 0; i < topicRouteMap.get(addr); i++) {
                         MessageQueue queue = new MessageQueue(topic, bd.getBrokerName(), i);
                         OffsetWrapper offsetWrapper = new OffsetWrapper();
@@ -489,7 +489,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
 
                         RollbackStats rollbackStats =
                                 resetOffsetConsumeOffset(addr, consumerGroup, queue, offsetWrapper,
-                                    timestamp, force);
+                                        timestamp, force);
                         rollbackStatsList.add(rollbackStats);
                     }
                 }
@@ -500,12 +500,12 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
 
 
     private RollbackStats resetOffsetConsumeOffset(String brokerAddr, String consumeGroup,
-            MessageQueue queue, OffsetWrapper offsetWrapper, long timestamp, boolean force)
+                                                   MessageQueue queue, OffsetWrapper offsetWrapper, long timestamp, boolean force)
             throws RemotingException, InterruptedException, MQBrokerException {
         // 根据 timestamp 查找对应的offset
         long resetOffset =
                 this.mqClientInstance.getMQClientAPIImpl().searchOffset(brokerAddr, queue.getTopic(),
-                    queue.getQueueId(), timestamp, 3000);
+                        queue.getQueueId(), timestamp, 3000);
         // 构建按时间回溯消费进度
         RollbackStats rollbackStats = new RollbackStats();
         rollbackStats.setBrokerName(queue.getBrokerName());
@@ -546,7 +546,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
 
     @Override
     public Map<MessageQueue, Long> resetOffsetByTimestamp(String topic, String group, long timestamp,
-            boolean isForce) throws RemotingException, MQBrokerException, InterruptedException,
+                                                          boolean isForce) throws RemotingException, MQBrokerException, InterruptedException,
             MQClientException {
         TopicRouteData topicRouteData = this.examineTopicRouteInfo(topic);
         List<BrokerData> brokerDatas = topicRouteData.getBrokerDatas();
@@ -557,7 +557,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
                 if (addr != null) {
                     Map<MessageQueue, Long> offsetTable =
                             this.mqClientInstance.getMQClientAPIImpl().invokeBrokerToResetOffset(addr, topic,
-                                group, timestamp, isForce, 5000);
+                                    group, timestamp, isForce, 5000);
                     if (offsetTable != null) {
                         allOffsetTable.putAll(offsetTable);
                     }
@@ -578,7 +578,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
             String addr = brokerDatas.get(0).selectBrokerAddr();
             if (addr != null) {
                 return this.mqClientInstance.getMQClientAPIImpl().invokeBrokerToGetConsumerStatus(addr,
-                    topic, group, clientAddr, 5000);
+                        topic, group, clientAddr, 5000);
             }
         }
         return Collections.EMPTY_MAP;
@@ -590,16 +590,14 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
 
         if (isCluster) {
             this.mqClientInstance.getMQClientAPIImpl().putKVConfigValue(
-                NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG, key, value, 3000);
-        }
-        else {
+                    NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG, key, value, 3000);
+        } else {
             String oldOrderConfs = null;
             try {
                 oldOrderConfs =
                         this.mqClientInstance.getMQClientAPIImpl().getKVConfigValue(
-                            NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG, key, 3000);
-            }
-            catch (Exception e) {
+                                NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG, key, 3000);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -622,7 +620,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
                 splitor = ";";
             }
             this.mqClientInstance.getMQClientAPIImpl().putKVConfigValue(
-                NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG, key, newOrderConf.toString(), 3000);
+                    NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG, key, newOrderConf.toString(), 3000);
         }
     }
 
@@ -654,7 +652,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
             String addr = bd.selectBrokerAddr();
             if (addr != null) {
                 spanSet.addAll(this.mqClientInstance.getMQClientAPIImpl().queryConsumeTimeSpan(addr, topic,
-                    group, 3000));
+                        group, 3000));
             }
         }
         return null;
@@ -666,8 +664,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
             MQBrokerException, InterruptedException, MQClientException {
         try {
             this.resetOffsetByTimestamp(topic, consumerGroup, timestamp, true);
-        }
-        catch (MQClientException e) {
+        } catch (MQClientException e) {
             if (ResponseCode.CONSUMER_NOT_ONLINE == e.getResponseCode()) {
                 this.resetOffsetByTimestampOld(consumerGroup, topic, timestamp, true);
                 return;
@@ -699,12 +696,10 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
                 for (String targetCluster : clusterInfo.retrieveAllClusterNames()) {
                     result = cleanExpiredConsumerQueueByCluster(clusterInfo, targetCluster);
                 }
-            }
-            else {
+            } else {
                 result = cleanExpiredConsumerQueueByCluster(clusterInfo, cluster);
             }
-        }
-        catch (MQBrokerException e) {
+        } catch (MQBrokerException e) {
             log.error("cleanExpiredConsumerQueue error.", e);
         }
 
@@ -732,7 +727,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
                 String addr = brokerData.selectBrokerAddr();
                 if (addr != null) {
                     return this.mqClientInstance.getMQClientAPIImpl().getConsumerRunningInfo(addr,
-                        consumerGroup, clientId, jstack, 12000);
+                            consumerGroup, clientId, jstack, 12000);
                 }
             }
         }
@@ -742,12 +737,12 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
 
     @Override
     public ConsumeMessageDirectlyResult consumeMessageDirectly(String consumerGroup, String clientId,
-            String msgId) throws RemotingException, MQClientException, InterruptedException,
+                                                               String msgId) throws RemotingException, MQClientException, InterruptedException,
             MQBrokerException {
         MessageExt msg = this.viewMessage(msgId);
 
         return this.mqClientInstance.getMQClientAPIImpl().consumeMessageDirectly(
-            RemotingUtil.socketAddress2String(msg.getStoreHost()), consumerGroup, clientId, msgId, 10000);
+                RemotingUtil.socketAddress2String(msg.getStoreHost()), consumerGroup, clientId, msgId, 10000);
     }
 
 
@@ -794,41 +789,38 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
             try {
                 ConsumerConnection cc = this.examineConsumerConnectionInfo(group);
                 switch (cc.getConsumeType()) {
-                case CONSUME_ACTIVELY:
-                    mt.setTrackType(TrackType.SUBSCRIBED_BUT_PULL);
-                    break;
-                case CONSUME_PASSIVELY:
-                    boolean ifConsumed = this.consumed(msg, group);
-                    if (ifConsumed) {
-                        mt.setTrackType(TrackType.SUBSCRIBED_AND_CONSUMED);
+                    case CONSUME_ACTIVELY:
+                        mt.setTrackType(TrackType.SUBSCRIBED_BUT_PULL);
+                        break;
+                    case CONSUME_PASSIVELY:
+                        boolean ifConsumed = this.consumed(msg, group);
+                        if (ifConsumed) {
+                            mt.setTrackType(TrackType.SUBSCRIBED_AND_CONSUMED);
 
-                        // 查看订阅关系是否匹配
-                        Iterator<Entry<String, SubscriptionData>> it =
-                                cc.getSubscriptionTable().entrySet().iterator();
-                        while (it.hasNext()) {
-                            Entry<String, SubscriptionData> next = it.next();
-                            if (next.getKey().equals(msg.getTopic())) {
-                                if (next.getValue().getTagsSet().contains(msg.getTags()) //
-                                        || next.getValue().getTagsSet().contains("*")//
-                                        || next.getValue().getTagsSet().isEmpty()//
-                                ) {
+                            // 查看订阅关系是否匹配
+                            Iterator<Entry<String, SubscriptionData>> it =
+                                    cc.getSubscriptionTable().entrySet().iterator();
+                            while (it.hasNext()) {
+                                Entry<String, SubscriptionData> next = it.next();
+                                if (next.getKey().equals(msg.getTopic())) {
+                                    if (next.getValue().getTagsSet().contains(msg.getTags()) //
+                                            || next.getValue().getTagsSet().contains("*")//
+                                            || next.getValue().getTagsSet().isEmpty()//
+                                            ) {
 
-                                }
-                                else {
-                                    mt.setTrackType(TrackType.SUBSCRIBED_BUT_FILTERD);
+                                    } else {
+                                        mt.setTrackType(TrackType.SUBSCRIBED_BUT_FILTERD);
+                                    }
                                 }
                             }
+                        } else {
+                            mt.setTrackType(TrackType.SUBSCRIBED_AND_NOT_CONSUME_YET);
                         }
-                    }
-                    else {
-                        mt.setTrackType(TrackType.SUBSCRIBED_AND_NOT_CONSUME_YET);
-                    }
-                    break;
-                default:
-                    break;
+                        break;
+                    default:
+                        break;
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 mt.setExceptionDesc(RemotingHelper.exceptionSimpleDesc(e));
             }
 
@@ -850,7 +842,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
             if (addr != null) {
                 // 由于查询时间戳会产生IO操作，可能会耗时较长，所以超时时间设置为15s
                 this.mqClientInstance.getMQClientAPIImpl().cloneGroupOffset(addr, srcGroup, destGroup, topic,
-                    isOffline, 15000);
+                        isOffline, 15000);
             }
         }
     }
@@ -861,6 +853,6 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
             throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
             MQClientException, InterruptedException {
         return this.mqClientInstance.getMQClientAPIImpl().ViewBrokerStatsData(brokerAddr, statsName,
-            statsKey, 3000);
+                statsKey, 3000);
     }
 }

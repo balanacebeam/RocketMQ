@@ -41,8 +41,7 @@ public class StoreCheckpointTest {
             storeCheckpoint = new StoreCheckpoint("a/b/0000");
             assertTrue(physicMsgTimestamp == storeCheckpoint.getPhysicMsgTimestamp());
             assertTrue(logicsMsgTimestamp == storeCheckpoint.getLogicsMsgTimestamp());
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             assertTrue(false);
         }

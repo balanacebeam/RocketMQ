@@ -16,6 +16,5 @@ transactionConfig:
     urls:
         - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
         - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
-    batchSize: 1000
     asyncTransactionLog: true
     asyncQueueSize: 300000

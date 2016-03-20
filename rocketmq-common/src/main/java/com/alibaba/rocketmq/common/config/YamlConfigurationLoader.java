@@ -87,6 +87,17 @@ public class YamlConfigurationLoader implements ConfigurationLoader {
         }
     }
 
+    private void logConfig(byte[] configBytes) {
+        Map<Object, Object> configMap = new TreeMap<>((Map<?, ?>) new Yaml().load(new ByteArrayInputStream(configBytes)));
+        // these keys contain passwords, don't log them
+        for (String sensitiveKey : new String[]{"client_encryption_options", "server_encryption_options"}) {
+            if (configMap.containsKey(sensitiveKey)) {
+                configMap.put(sensitiveKey, "<REDACTED>");
+            }
+        }
+        logger.info("Node configuration:[{}]", Joiner.on("; ").join(configMap.entrySet()));
+    }
+
     static class CustomConstructor extends Constructor {
         CustomConstructor(Class<?> theRoot) {
             super(theRoot);
@@ -111,17 +122,6 @@ public class YamlConfigurationLoader implements ConfigurationLoader {
         protected Set<Object> createDefaultSet() {
             return Sets.newConcurrentHashSet();
         }
-    }
-
-    private void logConfig(byte[] configBytes) {
-        Map<Object, Object> configMap = new TreeMap<>((Map<?, ?>) new Yaml().load(new ByteArrayInputStream(configBytes)));
-        // these keys contain passwords, don't log them
-        for (String sensitiveKey : new String[]{"client_encryption_options", "server_encryption_options"}) {
-            if (configMap.containsKey(sensitiveKey)) {
-                configMap.put(sensitiveKey, "<REDACTED>");
-            }
-        }
-        logger.info("Node configuration:[{}]", Joiner.on("; ").join(configMap.entrySet()));
     }
 
     private static class MissingPropertiesChecker extends PropertyUtils {

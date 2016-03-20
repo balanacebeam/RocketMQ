@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ import java.util.List;
 
 /**
  * mqadmin启动程序
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-25
  */
@@ -122,55 +122,52 @@ public class MQAdminStartup {
         try {
             initLogback();
             switch (args.length) {
-            case 0:
-                printHelp();
-                break;
-            case 2:
-                if (args[0].equals("help")) {
-                    SubCommand cmd = findSubCommand(args[1]);
-                    if (cmd != null) {
-                        Options options = ServerUtil.buildCommandlineOptions(new Options());
-                        options = cmd.buildCommandlineOptions(options);
-                        if (options != null) {
-                            ServerUtil.printCommandLineHelp("mqadmin " + cmd.commandName(), options);
+                case 0:
+                    printHelp();
+                    break;
+                case 2:
+                    if (args[0].equals("help")) {
+                        SubCommand cmd = findSubCommand(args[1]);
+                        if (cmd != null) {
+                            Options options = ServerUtil.buildCommandlineOptions(new Options());
+                            options = cmd.buildCommandlineOptions(options);
+                            if (options != null) {
+                                ServerUtil.printCommandLineHelp("mqadmin " + cmd.commandName(), options);
+                            }
+                        } else {
+                            System.out.println("The sub command \'" + args[1] + "\' not exist.");
                         }
+                        break;
                     }
-                    else {
-                        System.out.println("The sub command \'" + args[1] + "\' not exist.");
+                case 1:
+                default:
+                    SubCommand cmd = findSubCommand(args[0]);
+                    if (cmd != null) {
+                        // 将main中的args转化为子命令的args（去除第一个参数）
+                        String[] subargs = parseSubArgs(args);
+
+                        // 解析命令行
+                        Options options = ServerUtil.buildCommandlineOptions(new Options());
+                        final CommandLine commandLine =
+                                ServerUtil.parseCmdLine("mqadmin " + cmd.commandName(), subargs,
+                                        cmd.buildCommandlineOptions(options), new PosixParser());
+                        if (null == commandLine) {
+                            System.exit(-1);
+                            return;
+                        }
+
+                        if (commandLine.hasOption('n')) {
+                            String namesrvAddr = commandLine.getOptionValue('n');
+                            System.setProperty(MixAll.NAMESRV_ADDR_PROPERTY, namesrvAddr);
+                        }
+
+                        cmd.execute(commandLine, options, rpcHook);
+                    } else {
+                        System.out.println("The sub command \'" + args[0] + "\' not exist.");
                     }
                     break;
-                }
-            case 1:
-            default:
-                SubCommand cmd = findSubCommand(args[0]);
-                if (cmd != null) {
-                    // 将main中的args转化为子命令的args（去除第一个参数）
-                    String[] subargs = parseSubArgs(args);
-
-                    // 解析命令行
-                    Options options = ServerUtil.buildCommandlineOptions(new Options());
-                    final CommandLine commandLine =
-                            ServerUtil.parseCmdLine("mqadmin " + cmd.commandName(), subargs,
-                                cmd.buildCommandlineOptions(options), new PosixParser());
-                    if (null == commandLine) {
-                        System.exit(-1);
-                        return;
-                    }
-
-                    if (commandLine.hasOption('n')) {
-                        String namesrvAddr = commandLine.getOptionValue('n');
-                        System.setProperty(MixAll.NAMESRV_ADDR_PROPERTY, namesrvAddr);
-                    }
-
-                    cmd.execute(commandLine, options, rpcHook);
-                }
-                else {
-                    System.out.println("The sub command \'" + args[0] + "\' not exist.");
-                }
-                break;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

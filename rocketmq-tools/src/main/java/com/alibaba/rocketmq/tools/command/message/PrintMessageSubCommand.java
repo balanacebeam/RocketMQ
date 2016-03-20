@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,23 +34,44 @@ import java.util.Set;
 
 /**
  * 打印指定Topic的所有消息，某个时间区间，方便排查问题
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2014-6-22
  */
 public class PrintMessageSubCommand implements SubCommand {
+
+    public static void printMessage(final List<MessageExt> msgs, final String charsetName) {
+        for (MessageExt msg : msgs) {
+            try {
+                System.out.printf("MSGID: %s %s BODY: %s\n", msg.getMsgId(), msg.toString(),
+                        new String(msg.getBody(), charsetName));
+            } catch (UnsupportedEncodingException e) {
+            }
+        }
+    }
+
+    public static long timestampFormat(final String value) {
+        long timestamp = 0;
+        try {
+            // 直接输入 long 类型的 timestamp
+            timestamp = Long.valueOf(value);
+        } catch (NumberFormatException e) {
+            // 输入的为日期格式，精确到毫秒
+            timestamp = UtilAll.parseDate(value, UtilAll.yyyy_MM_dd_HH_mm_ss_SSS).getTime();
+        }
+
+        return timestamp;
+    }
 
     @Override
     public String commandName() {
         return "printMsg";
     }
 
-
     @Override
     public String commandDesc() {
         return "Print Message Detail";
     }
-
 
     @Override
     public Options buildCommandlineOptions(Options options) {
@@ -68,46 +89,18 @@ public class PrintMessageSubCommand implements SubCommand {
 
         opt =
                 new Option("b", "beginTimestamp ", true,
-                    "Begin timestamp[currentTimeMillis|yyyy-MM-dd#HH:mm:ss:SSS]");
+                        "Begin timestamp[currentTimeMillis|yyyy-MM-dd#HH:mm:ss:SSS]");
         opt.setRequired(false);
         options.addOption(opt);
 
         opt =
                 new Option("e", "endTimestamp ", true,
-                    "End timestamp[currentTimeMillis|yyyy-MM-dd#HH:mm:ss:SSS]");
+                        "End timestamp[currentTimeMillis|yyyy-MM-dd#HH:mm:ss:SSS]");
         opt.setRequired(false);
         options.addOption(opt);
 
         return options;
     }
-
-
-    public static void printMessage(final List<MessageExt> msgs, final String charsetName) {
-        for (MessageExt msg : msgs) {
-            try {
-                System.out.printf("MSGID: %s %s BODY: %s\n", msg.getMsgId(), msg.toString(),
-                    new String(msg.getBody(), charsetName));
-            }
-            catch (UnsupportedEncodingException e) {
-            }
-        }
-    }
-
-
-    public static long timestampFormat(final String value) {
-        long timestamp = 0;
-        try {
-            // 直接输入 long 类型的 timestamp
-            timestamp = Long.valueOf(value);
-        }
-        catch (NumberFormatException e) {
-            // 输入的为日期格式，精确到毫秒
-            timestamp = UtilAll.parseDate(value, UtilAll.yyyy_MM_dd_HH_mm_ss_SSS).getTime();
-        }
-
-        return timestamp;
-    }
-
 
     @Override
     public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
@@ -141,31 +134,29 @@ public class PrintMessageSubCommand implements SubCommand {
                     maxOffset = consumer.searchOffset(mq, timeValue);
                 }
 
-                READQ: for (long offset = minOffset; offset < maxOffset;) {
+                READQ:
+                for (long offset = minOffset; offset < maxOffset; ) {
                     try {
                         PullResult pullResult = consumer.pull(mq, subExpression, offset, 32);
                         offset = pullResult.getNextBeginOffset();
                         switch (pullResult.getPullStatus()) {
-                        case FOUND:
-                            printMessage(pullResult.getMsgFoundList(), charsetName);
-                            break;
-                        case NO_MATCHED_MSG:
-                        case NO_NEW_MSG:
-                        case OFFSET_ILLEGAL:
-                            break READQ;
+                            case FOUND:
+                                printMessage(pullResult.getMsgFoundList(), charsetName);
+                                break;
+                            case NO_MATCHED_MSG:
+                            case NO_NEW_MSG:
+                            case OFFSET_ILLEGAL:
+                                break READQ;
                         }
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         break;
                     }
                 }
             }
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             consumer.shutdown();
         }
     }

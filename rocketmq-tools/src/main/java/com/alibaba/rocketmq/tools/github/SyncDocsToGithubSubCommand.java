@@ -20,17 +20,32 @@ import java.util.Arrays;
  */
 public class SyncDocsToGithubSubCommand implements SubCommand {
 
+    private static boolean syncIssue(final GHRepository rep, final int issueId, final String body) {
+        try {
+            GHIssue issue = rep.getIssue(issueId);
+            issue.setBody(body);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    private static boolean syncWiki(final GHRepository rep, final String wikiName, final String body) {
+
+        return false;
+    }
+
     @Override
     public String commandName() {
         return "syncDocs";
     }
 
-
     @Override
     public String commandDesc() {
         return "Synchronize wiki and issue to github.com";
     }
-
 
     @Override
     public Options buildCommandlineOptions(Options options) {
@@ -44,27 +59,6 @@ public class SyncDocsToGithubSubCommand implements SubCommand {
 
         return options;
     }
-
-
-    private static boolean syncIssue(final GHRepository rep, final int issueId, final String body) {
-        try {
-            GHIssue issue = rep.getIssue(issueId);
-            issue.setBody(body);
-            return true;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
-
-    private static boolean syncWiki(final GHRepository rep, final String wikiName, final String body) {
-
-        return false;
-    }
-
 
     @Override
     public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
@@ -116,8 +110,7 @@ public class SyncDocsToGithubSubCommand implements SubCommand {
                     }
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

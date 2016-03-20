@@ -68,11 +68,11 @@ public class Store {
                     for (File fileQueueId : fileQueueIdList) {
                         int queueId = Integer.parseInt(fileQueueId.getName());
                         ConsumeQueue logic = new ConsumeQueue(//
-                            topic,//
-                            queueId,//
-                            StorePathConfigHelper.getStorePathConsumeQueue(lStorePath),//
-                            lSize,//
-                            null);
+                                topic,//
+                                queueId,//
+                                StorePathConfigHelper.getStorePathConsumeQueue(lStorePath),//
+                                lSize,//
+                                null);
                         this.putConsumeQueue(topic, queueId, logic);
                         if (!logic.load()) {
                             return false;
@@ -92,8 +92,7 @@ public class Store {
             map = new ConcurrentHashMap<Integer/* queueId */, ConsumeQueue>();
             map.put(queueId, consumeQueue);
             this.consumeQueueTable.put(topic, map);
-        }
-        else {
+        } else {
             map.put(queueId, consumeQueue);
         }
     }
@@ -107,24 +106,22 @@ public class Store {
             ConcurrentHashMap<Integer, ConsumeQueue> oldMap = consumeQueueTable.putIfAbsent(topic, newMap);
             if (oldMap != null) {
                 map = oldMap;
-            }
-            else {
+            } else {
                 map = newMap;
             }
         }
         ConsumeQueue logic = map.get(queueId);
         if (null == logic) {
             ConsumeQueue newLogic = new ConsumeQueue(//
-                topic,//
-                queueId,//
-                StorePathConfigHelper.getStorePathConsumeQueue(lStorePath),//
-                lSize,//
-                null);
+                    topic,//
+                    queueId,//
+                    StorePathConfigHelper.getStorePathConsumeQueue(lStorePath),//
+                    lSize,//
+                    null);
             ConsumeQueue oldLogic = map.putIfAbsent(queueId, newLogic);
             if (oldLogic != null) {
                 logic = oldLogic;
-            }
-            else {
+            } else {
                 logic = newLogic;
             }
         }
@@ -136,7 +133,8 @@ public class Store {
         boolean success = true;
         byte[] bytesContent = new byte[1024];
         List<MapedFile> mapedFiles = this.mapedFileQueue.getMapedFiles();
-        ALL: for (MapedFile mapedFile : mapedFiles) {
+        ALL:
+        for (MapedFile mapedFile : mapedFiles) {
             long startOffset = mapedFile.getFileFromOffset();
             int position = 0;
             int msgCount = 0;
@@ -244,8 +242,7 @@ public class Store {
                             break ALL;
                         }
                     }
-                }
-                finally {
+                } finally {
                     smb.release();
                 }
 

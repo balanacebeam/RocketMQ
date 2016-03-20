@@ -17,7 +17,7 @@ public class FilterAPITest {
                 FilterAPI.buildSubscriptionData("ConsumerGroup1", "TestTopic", "TAG1 || Tag2 || tag3");
         System.out.println(subscriptionData);
     }
-    
+
     @Test
     public void testSubscriptionData() throws Exception {
         SubscriptionData subscriptionData =

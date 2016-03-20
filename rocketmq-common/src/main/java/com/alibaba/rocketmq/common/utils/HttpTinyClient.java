@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * HTTP 简易客户端
- * 
+ *
  * @author manhong.yqd<jodie.yqd@gmail.com>
  */
 
@@ -23,7 +23,7 @@ public class HttpTinyClient {
      * 发送GET请求。
      */
     static public HttpResult httpGet(String url, List<String> headers, List<String> paramValues,
-            String encoding, long readTimeoutMs) throws IOException {
+                                     String encoding, long readTimeoutMs) throws IOException {
         String encodedContent = encodingParams(paramValues, encoding);
         url += (null == encodedContent) ? "" : ("?" + encodedContent);
 
@@ -41,13 +41,11 @@ public class HttpTinyClient {
 
             if (HttpURLConnection.HTTP_OK == respCode) {
                 resp = IOTinyUtils.toString(conn.getInputStream(), encoding);
-            }
-            else {
+            } else {
                 resp = IOTinyUtils.toString(conn.getErrorStream(), encoding);
             }
             return new HttpResult(respCode, resp);
-        }
-        finally {
+        } finally {
             if (conn != null) {
                 conn.disconnect();
             }
@@ -57,21 +55,17 @@ public class HttpTinyClient {
 
     /**
      * 发送POST请求。
-     * 
+     *
      * @param url
-     * @param headers
-     *            请求Header，可以为null
-     * @param paramValues
-     *            参数，可以为null
-     * @param encoding
-     *            URL编码使用的字符集
-     * @param readTimeoutMs
-     *            响应超时
+     * @param headers       请求Header，可以为null
+     * @param paramValues   参数，可以为null
+     * @param encoding      URL编码使用的字符集
+     * @param readTimeoutMs 响应超时
      * @return
      * @throws java.io.IOException
      */
     static public HttpResult httpPost(String url, List<String> headers, List<String> paramValues,
-            String encoding, long readTimeoutMs) throws IOException {
+                                      String encoding, long readTimeoutMs) throws IOException {
         String encodedContent = encodingParams(paramValues, encoding);
 
         HttpURLConnection conn = null;
@@ -91,13 +85,11 @@ public class HttpTinyClient {
 
             if (HttpURLConnection.HTTP_OK == respCode) {
                 resp = IOTinyUtils.toString(conn.getInputStream(), encoding);
-            }
-            else {
+            } else {
                 resp = IOTinyUtils.toString(conn.getErrorStream(), encoding);
             }
             return new HttpResult(respCode, resp);
-        }
-        finally {
+        } finally {
             if (null != conn) {
                 conn.disconnect();
             }
@@ -107,7 +99,7 @@ public class HttpTinyClient {
 
     static private void setHeaders(HttpURLConnection conn, List<String> headers, String encoding) {
         if (null != headers) {
-            for (Iterator<String> iter = headers.iterator(); iter.hasNext();) {
+            for (Iterator<String> iter = headers.iterator(); iter.hasNext(); ) {
                 conn.addRequestProperty(iter.next(), iter.next());
             }
         }
@@ -127,7 +119,7 @@ public class HttpTinyClient {
             return null;
         }
 
-        for (Iterator<String> iter = paramValues.iterator(); iter.hasNext();) {
+        for (Iterator<String> iter = paramValues.iterator(); iter.hasNext(); ) {
             sb.append(iter.next()).append("=");
             sb.append(URLEncoder.encode(iter.next(), encoding));
             if (iter.hasNext()) {

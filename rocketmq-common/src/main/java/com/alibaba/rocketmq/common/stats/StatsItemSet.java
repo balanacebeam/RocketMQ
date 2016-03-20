@@ -89,8 +89,7 @@ public class StatsItemSet {
             public void run() {
                 try {
                     samplingInSeconds();
-                }
-                catch (Throwable e) {
+                } catch (Throwable e) {
                 }
             }
         }, 0, 10, TimeUnit.SECONDS);
@@ -101,8 +100,7 @@ public class StatsItemSet {
             public void run() {
                 try {
                     samplingInMinutes();
-                }
-                catch (Throwable e) {
+                } catch (Throwable e) {
                 }
             }
         }, 0, 10, TimeUnit.MINUTES);
@@ -113,50 +111,46 @@ public class StatsItemSet {
             public void run() {
                 try {
                     samplingInHour();
-                }
-                catch (Throwable e) {
+                } catch (Throwable e) {
                 }
             }
         }, 0, 1, TimeUnit.HOURS);
 
         // 分钟整点执行
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    printAtMinutes();
-                }
-                catch (Throwable e) {
-                }
-            }
-        }, Math.abs(UtilAll.computNextMinutesTimeMillis() - System.currentTimeMillis()), //
-            1000 * 60, TimeUnit.MILLISECONDS);
+                                                              @Override
+                                                              public void run() {
+                                                                  try {
+                                                                      printAtMinutes();
+                                                                  } catch (Throwable e) {
+                                                                  }
+                                                              }
+                                                          }, Math.abs(UtilAll.computNextMinutesTimeMillis() - System.currentTimeMillis()), //
+                1000 * 60, TimeUnit.MILLISECONDS);
 
         // 小时整点执行
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    printAtHour();
-                }
-                catch (Throwable e) {
-                }
-            }
-        }, Math.abs(UtilAll.computNextHourTimeMillis() - System.currentTimeMillis()), //
-            1000 * 60 * 60, TimeUnit.MILLISECONDS);
+                                                              @Override
+                                                              public void run() {
+                                                                  try {
+                                                                      printAtHour();
+                                                                  } catch (Throwable e) {
+                                                                  }
+                                                              }
+                                                          }, Math.abs(UtilAll.computNextHourTimeMillis() - System.currentTimeMillis()), //
+                1000 * 60 * 60, TimeUnit.MILLISECONDS);
 
         // 每天0点执行
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    printAtDay();
-                }
-                catch (Throwable e) {
-                }
-            }
-        }, Math.abs(UtilAll.computNextMorningTimeMillis() - System.currentTimeMillis()), //
-            1000 * 60 * 60 * 24, TimeUnit.MILLISECONDS);
+                                                              @Override
+                                                              public void run() {
+                                                                  try {
+                                                                      printAtDay();
+                                                                  } catch (Throwable e) {
+                                                                  }
+                                                              }
+                                                          }, Math.abs(UtilAll.computNextMorningTimeMillis() - System.currentTimeMillis()), //
+                1000 * 60 * 60 * 24, TimeUnit.MILLISECONDS);
     }
 
 

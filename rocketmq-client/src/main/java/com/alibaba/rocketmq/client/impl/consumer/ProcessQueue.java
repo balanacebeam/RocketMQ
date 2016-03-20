@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,37 +34,31 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Queue consumption snapshot
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-24
  */
 public class ProcessQueue {
     public final static long RebalanceLockMaxLiveTime = Long.parseLong(System.getProperty(
-        "rocketmq.client.rebalance.lockMaxLiveTime", "30000"));
+            "rocketmq.client.rebalance.lockMaxLiveTime", "30000"));
     public final static long RebalanceLockInterval = Long.parseLong(System.getProperty(
-        "rocketmq.client.rebalance.lockInterval", "20000"));
-
+            "rocketmq.client.rebalance.lockInterval", "20000"));
+    private final static long PullMaxIdleTime = Long.parseLong(System.getProperty(
+            "rocketmq.client.pull.pullMaxIdleTime", "120000"));
     private final Logger log = ClientLogger.getLog();
     private final ReadWriteLock lockTreeMap = new ReentrantReadWriteLock();
     private final TreeMap<Long, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
-    private volatile long queueOffsetMax = 0L;
     private final AtomicLong msgCount = new AtomicLong();
-
+    private final Lock lockConsume = new ReentrantLock();
+    private final TreeMap<Long, MessageExt> msgTreeMapTemp = new TreeMap<Long, MessageExt>();
+    private final AtomicLong tryUnlockTimes = new AtomicLong(0);
+    private volatile long queueOffsetMax = 0L;
     private volatile boolean dropped = false;
     private volatile long lastPullTimestamp = System.currentTimeMillis();
-    private final static long PullMaxIdleTime = Long.parseLong(System.getProperty(
-        "rocketmq.client.pull.pullMaxIdleTime", "120000"));
-
     private volatile long lastConsumeTimestamp = System.currentTimeMillis();
-
-    private final Lock lockConsume = new ReentrantLock();
-
     private volatile boolean locked = false;
     private volatile long lastLockTimestamp = System.currentTimeMillis();
     private volatile boolean consuming = false;
-    private final TreeMap<Long, MessageExt> msgTreeMapTemp = new TreeMap<Long, MessageExt>();
-    private final AtomicLong tryUnlockTimes = new AtomicLong(0);
-
     private volatile long msgAccCnt = 0;
 
 
@@ -109,12 +103,10 @@ public class ProcessQueue {
                         }
                     }
                 }
-            }
-            finally {
+            } finally {
                 this.lockTreeMap.writeLock().unlock();
             }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             log.error("putMessage exception", e);
         }
 
@@ -129,12 +121,10 @@ public class ProcessQueue {
                 if (!this.msgTreeMap.isEmpty()) {
                     return this.msgTreeMap.lastKey() - this.msgTreeMap.firstKey();
                 }
-            }
-            finally {
+            } finally {
                 this.lockTreeMap.readLock().unlock();
             }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             log.error("getMaxSpan exception", e);
         }
 
@@ -163,12 +153,10 @@ public class ProcessQueue {
                         result = msgTreeMap.firstKey();
                     }
                 }
-            }
-            finally {
+            } finally {
                 this.lockTreeMap.writeLock().unlock();
             }
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             log.error("removeMessage exception", t);
         }
 
@@ -195,15 +183,13 @@ public class ProcessQueue {
         this.dropped = dropped;
     }
 
-    public void setLocked(boolean locked) {
-        this.locked = locked;
-    }
-
-
     public boolean isLocked() {
         return locked;
     }
 
+    public void setLocked(boolean locked) {
+        this.locked = locked;
+    }
 
     public void rollback() {
         try {
@@ -211,12 +197,10 @@ public class ProcessQueue {
             try {
                 this.msgTreeMap.putAll(this.msgTreeMapTemp);
                 this.msgTreeMapTemp.clear();
-            }
-            finally {
+            } finally {
                 this.lockTreeMap.writeLock().unlock();
             }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             log.error("rollback exception", e);
         }
     }
@@ -232,12 +216,10 @@ public class ProcessQueue {
                 if (offset != null) {
                     return offset + 1;
                 }
-            }
-            finally {
+            } finally {
                 this.lockTreeMap.writeLock().unlock();
             }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             log.error("commit exception", e);
         }
 
@@ -253,12 +235,10 @@ public class ProcessQueue {
                     this.msgTreeMapTemp.remove(msg.getQueueOffset());
                     this.msgTreeMap.put(msg.getQueueOffset(), msg);
                 }
-            }
-            finally {
+            } finally {
                 this.lockTreeMap.writeLock().unlock();
             }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             log.error("makeMessageToCosumeAgain exception", e);
         }
     }
@@ -276,8 +256,7 @@ public class ProcessQueue {
                         if (entry != null) {
                             result.add(entry.getValue());
                             msgTreeMapTemp.put(entry.getKey(), entry.getValue());
-                        }
-                        else {
+                        } else {
                             break;
                         }
                     }
@@ -286,12 +265,10 @@ public class ProcessQueue {
                 if (result.isEmpty()) {
                     consuming = false;
                 }
-            }
-            finally {
+            } finally {
                 this.lockTreeMap.writeLock().unlock();
             }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             log.error("take Messages exception", e);
         }
 
@@ -307,12 +284,10 @@ public class ProcessQueue {
                 this.msgTreeMapTemp.clear();
                 this.msgCount.set(0);
                 this.queueOffsetMax = 0L;
-            }
-            finally {
+            } finally {
                 this.lockTreeMap.writeLock().unlock();
             }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             log.error("rollback exception", e);
         }
     }
@@ -386,10 +361,8 @@ public class ProcessQueue {
             info.setDroped(this.dropped);
             info.setLastPullTimestamp(this.lastPullTimestamp);
             info.setLastConsumeTimestamp(this.lastConsumeTimestamp);
-        }
-        catch (Exception e) {
-        }
-        finally {
+        } catch (Exception e) {
+        } finally {
             this.lockTreeMap.readLock().unlock();
         }
     }

@@ -23,10 +23,10 @@ public class TopicConfigManagerTest {
     @Test
     public void test_flushTopicConfig() throws Exception {
         BrokerController brokerController = new BrokerController(//
-            new BrokerConfig(), //
-            new NettyServerConfig(), //
-            new NettyClientConfig(), //
-            new MessageStoreConfig(), new Config());
+                new BrokerConfig(), //
+                new NettyServerConfig(), //
+                new NettyClientConfig(), //
+                new MessageStoreConfig(), new Config());
         boolean initResult = brokerController.initialize();
         System.out.println("initialize " + initResult);
         brokerController.start();
@@ -35,7 +35,7 @@ public class TopicConfigManagerTest {
 
         TopicConfig topicConfig =
                 topicConfigManager.createTopicInSendMessageMethod("TestTopic_SEND", MixAll.DEFAULT_TOPIC,
-                    null, 4, 0);
+                        null, 4, 0);
         assertTrue(topicConfig != null);
 
         System.out.println(topicConfig);
@@ -44,7 +44,7 @@ public class TopicConfigManagerTest {
             String topic = "UNITTEST-" + i;
             topicConfig =
                     topicConfigManager
-                        .createTopicInSendMessageMethod(topic, MixAll.DEFAULT_TOPIC, null, 4, 0);
+                            .createTopicInSendMessageMethod(topic, MixAll.DEFAULT_TOPIC, null, 4, 0);
             assertTrue(topicConfig != null);
         }
 

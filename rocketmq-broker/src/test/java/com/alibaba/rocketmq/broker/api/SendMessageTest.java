@@ -26,10 +26,10 @@ public class SendMessageTest {
     @Test
     public void test_sendMessage() throws Exception {
         BrokerController brokerController = new BrokerController(//
-            new BrokerConfig(), //
-            new NettyServerConfig(), //
-            new NettyClientConfig(), //
-            new MessageStoreConfig(), new Config());
+                new BrokerConfig(), //
+                new NettyServerConfig(), //
+                new NettyClientConfig(), //
+                new MessageStoreConfig(), new Config());
         boolean initResult = brokerController.initialize();
         System.out.println("initialize " + initResult);
 
@@ -58,10 +58,9 @@ public class SendMessageTest {
 
                 SendResult result =
                         client.sendMessage("127.0.0.1:10911", "brokerName", msg, requestHeader, 1000 * 5,
-                            CommunicationMode.SYNC, null);
+                                CommunicationMode.SYNC, null);
                 System.out.println(i + "\t" + result);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

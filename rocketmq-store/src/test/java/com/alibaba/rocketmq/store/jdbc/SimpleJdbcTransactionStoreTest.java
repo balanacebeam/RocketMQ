@@ -21,15 +21,11 @@ import java.util.Map;
 
 public class SimpleJdbcTransactionStoreTest {
 
-    private YamlConfigurationLoader yamlConfigurationLoader;
-
-    private BasicDataSource dataSource;
-
-    private SimpleJdbcTransactionStore simpleJdbcTransactionStore;
-
     private static final String BROKER_NAME = "test_broker_name";
-
     private static final String PRODUCER_GROUP = "test_producer_group";
+    private YamlConfigurationLoader yamlConfigurationLoader;
+    private BasicDataSource dataSource;
+    private SimpleJdbcTransactionStore simpleJdbcTransactionStore;
 
     @Before
     public void before() {

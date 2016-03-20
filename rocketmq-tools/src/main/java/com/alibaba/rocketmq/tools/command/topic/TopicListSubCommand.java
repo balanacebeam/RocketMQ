@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import java.util.Set;
 
 /**
  * 查看Topic统计信息，包括offset、最后更新时间
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-8-3
  */
@@ -67,7 +67,7 @@ public class TopicListSubCommand implements SubCommand {
 
 
     private String findTopicBelongToWhichCluster(final String topic, final ClusterInfo clusterInfo,
-            final DefaultMQAdminExt defaultMQAdminExt) throws RemotingException, MQClientException,
+                                                 final DefaultMQAdminExt defaultMQAdminExt) throws RemotingException, MQClientException,
             InterruptedException {
         TopicRouteData topicRouteData = defaultMQAdminExt.examineTopicRouteInfo(topic);
 
@@ -100,9 +100,9 @@ public class TopicListSubCommand implements SubCommand {
                 ClusterInfo clusterInfo = defaultMQAdminExt.examineBrokerClusterInfo();
 
                 System.out.printf("%-20s  %-48s  %-48s\n",//
-                    "#Cluster Name",//
-                    "#Topic",//
-                    "#Consumer Group"//
+                        "#Cluster Name",//
+                        "#Topic",//
+                        "#Consumer Group"//
                 );
 
                 TopicList topicList = defaultMQAdminExt.fetchAllTopicList();
@@ -119,8 +119,7 @@ public class TopicListSubCommand implements SubCommand {
                         clusterName =
                                 this.findTopicBelongToWhichCluster(topic, clusterInfo, defaultMQAdminExt);
                         groupList = defaultMQAdminExt.queryTopicConsumeByWho(topic);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                     }
 
                     if (null == groupList || groupList.getGroupList().isEmpty()) {
@@ -130,24 +129,21 @@ public class TopicListSubCommand implements SubCommand {
 
                     for (String group : groupList.getGroupList()) {
                         System.out.printf("%-20s  %-48s  %-48s\n",//
-                            UtilAll.frontStringAtLeast(clusterName, 20),//
-                            UtilAll.frontStringAtLeast(topic, 48),//
-                            UtilAll.frontStringAtLeast(group, 48)//
-                            );
+                                UtilAll.frontStringAtLeast(clusterName, 20),//
+                                UtilAll.frontStringAtLeast(topic, 48),//
+                                UtilAll.frontStringAtLeast(group, 48)//
+                        );
                     }
                 }
-            }
-            else {
+            } else {
                 TopicList topicList = defaultMQAdminExt.fetchAllTopicList();
                 for (String topic : topicList.getTopicList()) {
                     System.out.println(topic);
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             defaultMQAdminExt.shutdown();
         }
     }

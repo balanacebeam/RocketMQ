@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,11 +76,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MQClientAPIImpl {
 
+    private final static Logger log = ClientLogger.getLog();
+    public static boolean sendSmartMsg = //
+            Boolean.parseBoolean(System.getProperty("com.alibaba.rocketmq.client.sendSmartMsg", "true"));
+
     static {
         System.setProperty(RemotingCommand.RemotingVersionKey, Integer.toString(MQVersion.CurrentVersion));
     }
 
-    private final static Logger log = ClientLogger.getLog();
     private final RemotingClient remotingClient;
     private final TopAddressing topAddressing = new TopAddressing(MixAll.WS_ADDR);
     private final ClientRemotingProcessor clientRemotingProcessor;
@@ -89,46 +92,43 @@ public class MQClientAPIImpl {
 
 
     public MQClientAPIImpl(final NettyClientConfig nettyClientConfig,
-            final ClientRemotingProcessor clientRemotingProcessor, RPCHook rpcHook) {
+                           final ClientRemotingProcessor clientRemotingProcessor, RPCHook rpcHook) {
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, null);
         this.clientRemotingProcessor = clientRemotingProcessor;
 
         this.remotingClient.registerRPCHook(rpcHook);
         this.remotingClient.registerProcessor(RequestCode.CHECK_TRANSACTION_STATE,
-            this.clientRemotingProcessor, null);
+                this.clientRemotingProcessor, null);
 
         this.remotingClient.registerProcessor(RequestCode.NOTIFY_CONSUMER_IDS_CHANGED,
-            this.clientRemotingProcessor, null);
+                this.clientRemotingProcessor, null);
 
         this.remotingClient.registerProcessor(RequestCode.RESET_CONSUMER_CLIENT_OFFSET,
-            this.clientRemotingProcessor, null);
+                this.clientRemotingProcessor, null);
 
         this.remotingClient.registerProcessor(RequestCode.GET_CONSUMER_STATUS_FROM_CLIENT,
-            this.clientRemotingProcessor, null);
+                this.clientRemotingProcessor, null);
 
         this.remotingClient.registerProcessor(RequestCode.GET_CONSUMER_RUNNING_INFO,
-            this.clientRemotingProcessor, null);
+                this.clientRemotingProcessor, null);
 
         this.remotingClient.registerProcessor(RequestCode.CONSUME_MESSAGE_DIRECTLY,
-            this.clientRemotingProcessor, null);
+                this.clientRemotingProcessor, null);
     }
 
 
     public MQClientAPIImpl(final NettyClientConfig nettyClientConfig,
-            final ClientRemotingProcessor clientRemotingProcessor) {
+                           final ClientRemotingProcessor clientRemotingProcessor) {
         this(nettyClientConfig, clientRemotingProcessor, null);
     }
-
 
     public List<String> getNameServerAddressList() {
         return this.remotingClient.getNameServerAddressList();
     }
 
-
     public RemotingClient getRemotingClient() {
         return remotingClient;
     }
-
 
     public String fetchNameServerAddr() {
         try {
@@ -141,13 +141,11 @@ public class MQClientAPIImpl {
                     return nameSrvAddr;
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("fetchNameServerAddr Exception", e);
         }
         return nameSrvAddr;
     }
-
 
     public void updateNameServerAddressList(final String addrs) {
         List<String> lst = new ArrayList<String>();
@@ -161,7 +159,6 @@ public class MQClientAPIImpl {
         }
     }
 
-
     public void start() {
         this.remotingClient.start();
         //Get app info
@@ -169,23 +166,20 @@ public class MQClientAPIImpl {
             String localAddress = RemotingUtil.getLocalAddress();
             projectGroupPrefix = this.getProjectGroupByIp(localAddress, 3000);
             log.info("The client[{}] in project group: {}", localAddress, projectGroupPrefix);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
         }
     }
-
 
     public void shutdown() {
         this.remotingClient.shutdown();
     }
 
-
     public void createSubscriptionGroup(final String addr, final SubscriptionGroupConfig config,
-            final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException,
+                                        final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException,
             MQClientException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             config.setGroupName(VirtualEnvUtil.buildWithProjectGroup(config.getGroupName(),
-                projectGroupPrefix));
+                    projectGroupPrefix));
         }
 
         RemotingCommand request =
@@ -197,20 +191,19 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
 
     }
 
-
     public void createTopic(final String addr, final String defaultTopic, final TopicConfig topicConfig,
-            final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException,
+                            final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException,
             MQClientException {
         String topicWithProjectGroup = topicConfig.getTopicName();
         if (!UtilAll.isBlank(projectGroupPrefix)) {
@@ -234,35 +227,31 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
     }
 
-    public static boolean sendSmartMsg = //
-            Boolean.parseBoolean(System.getProperty("com.alibaba.rocketmq.client.sendSmartMsg", "true"));
-
-
     public SendResult sendMessage(//
-            final String addr,// 1
-            final String brokerName,// 2
-            final Message msg,// 3
-            final SendMessageRequestHeader requestHeader,// 4
-            final long timeoutMillis,// 5
-            final CommunicationMode communicationMode,// 6
-            final SendCallback sendCallback// 7
+                                  final String addr,// 1
+                                  final String brokerName,// 2
+                                  final Message msg,// 3
+                                  final SendMessageRequestHeader requestHeader,// 4
+                                  final long timeoutMillis,// 5
+                                  final CommunicationMode communicationMode,// 6
+                                  final SendCallback sendCallback// 7
     ) throws RemotingException, MQBrokerException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             msg.setTopic(VirtualEnvUtil.buildWithProjectGroup(msg.getTopic(), projectGroupPrefix));
             requestHeader.setProducerGroup(VirtualEnvUtil.buildWithProjectGroup(
-                requestHeader.getProducerGroup(), projectGroupPrefix));
+                    requestHeader.getProducerGroup(), projectGroupPrefix));
             requestHeader.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeader.getTopic(),
-                projectGroupPrefix));
+                    projectGroupPrefix));
         }
 
         RemotingCommand request = null;
@@ -270,25 +259,24 @@ public class MQClientAPIImpl {
             SendMessageRequestHeaderV2 requestHeaderV2 =
                     SendMessageRequestHeaderV2.createSendMessageRequestHeaderV2(requestHeader);
             request = RemotingCommand.createRequestCommand(RequestCode.SEND_MESSAGE_V2, requestHeaderV2);
-        }
-        else {
+        } else {
             request = RemotingCommand.createRequestCommand(RequestCode.SEND_MESSAGE, requestHeader);
         }
 
         request.setBody(msg.getBody());
 
         switch (communicationMode) {
-        case ONEWAY:
-            this.remotingClient.invokeOneway(addr, request, timeoutMillis);
-            return null;
-        case ASYNC:
-            this.sendMessageAsync(addr, brokerName, msg, timeoutMillis, request, sendCallback);
-            return null;
-        case SYNC:
-            return this.sendMessageSync(addr, brokerName, msg, timeoutMillis, request);
-        default:
-            assert false;
-            break;
+            case ONEWAY:
+                this.remotingClient.invokeOneway(addr, request, timeoutMillis);
+                return null;
+            case ASYNC:
+                this.sendMessageAsync(addr, brokerName, msg, timeoutMillis, request, sendCallback);
+                return null;
+            case SYNC:
+                return this.sendMessageSync(addr, brokerName, msg, timeoutMillis, request);
+            default:
+                assert false;
+                break;
         }
 
         return null;
@@ -296,11 +284,11 @@ public class MQClientAPIImpl {
 
 
     private SendResult sendMessageSync(//
-            final String addr,//
-            final String brokerName,//
-            final Message msg,//
-            final long timeoutMillis,//
-            final RemotingCommand request//
+                                       final String addr,//
+                                       final String brokerName,//
+                                       final Message msg,//
+                                       final long timeoutMillis,//
+                                       final RemotingCommand request//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
@@ -309,12 +297,12 @@ public class MQClientAPIImpl {
 
 
     private void sendMessageAsync(//
-            final String addr,//
-            final String brokerName,//
-            final Message msg,//
-            final long timeoutMillis,//
-            final RemotingCommand request,//
-            final SendCallback sendCallback//
+                                  final String addr,//
+                                  final String brokerName,//
+                                  final Message msg,//
+                                  final long timeoutMillis,//
+                                  final RemotingCommand request,//
+                                  final SendCallback sendCallback//
     ) throws RemotingException, InterruptedException {
         this.remotingClient.invokeAsync(addr, request, timeoutMillis, new InvokeCallback() {
             @Override
@@ -329,23 +317,19 @@ public class MQClientAPIImpl {
                                 MQClientAPIImpl.this.processSendResponse(brokerName, msg, response);
                         assert sendResult != null;
                         sendCallback.onSuccess(sendResult);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         sendCallback.onException(e);
                     }
-                }
-                else {
+                } else {
                     if (!responseFuture.isSendRequestOK()) {
                         sendCallback.onException(new MQClientException("send request failed", responseFuture
-                            .getCause()));
-                    }
-                    else if (responseFuture.isTimeout()) {
+                                .getCause()));
+                    } else if (responseFuture.isTimeout()) {
                         sendCallback.onException(new MQClientException("wait response timeout "
                                 + responseFuture.getTimeoutMillis() + "ms", responseFuture.getCause()));
-                    }
-                    else {
+                    } else {
                         sendCallback.onException(new MQClientException("unknow reseaon", responseFuture
-                            .getCause()));
+                                .getCause()));
                     }
                 }
             }
@@ -354,50 +338,50 @@ public class MQClientAPIImpl {
 
 
     private SendResult processSendResponse(//
-            final String brokerName,//
-            final Message msg,//
-            final RemotingCommand response//
+                                           final String brokerName,//
+                                           final Message msg,//
+                                           final RemotingCommand response//
     ) throws MQBrokerException, RemotingCommandException {
         switch (response.getCode()) {
-        case ResponseCode.FLUSH_DISK_TIMEOUT:
-        case ResponseCode.FLUSH_SLAVE_TIMEOUT:
-        case ResponseCode.SLAVE_NOT_AVAILABLE: {
-            // TODO LOG
-        }
-        case ResponseCode.SUCCESS: {
-            SendStatus sendStatus = SendStatus.SEND_OK;
-            switch (response.getCode()) {
             case ResponseCode.FLUSH_DISK_TIMEOUT:
-                sendStatus = SendStatus.FLUSH_DISK_TIMEOUT;
-                break;
             case ResponseCode.FLUSH_SLAVE_TIMEOUT:
-                sendStatus = SendStatus.FLUSH_SLAVE_TIMEOUT;
-                break;
-            case ResponseCode.SLAVE_NOT_AVAILABLE:
-                sendStatus = SendStatus.SLAVE_NOT_AVAILABLE;
-                break;
-            case ResponseCode.SUCCESS:
-                sendStatus = SendStatus.SEND_OK;
-                break;
-            default:
-                assert false;
-                break;
+            case ResponseCode.SLAVE_NOT_AVAILABLE: {
+                // TODO LOG
             }
+            case ResponseCode.SUCCESS: {
+                SendStatus sendStatus = SendStatus.SEND_OK;
+                switch (response.getCode()) {
+                    case ResponseCode.FLUSH_DISK_TIMEOUT:
+                        sendStatus = SendStatus.FLUSH_DISK_TIMEOUT;
+                        break;
+                    case ResponseCode.FLUSH_SLAVE_TIMEOUT:
+                        sendStatus = SendStatus.FLUSH_SLAVE_TIMEOUT;
+                        break;
+                    case ResponseCode.SLAVE_NOT_AVAILABLE:
+                        sendStatus = SendStatus.SLAVE_NOT_AVAILABLE;
+                        break;
+                    case ResponseCode.SUCCESS:
+                        sendStatus = SendStatus.SEND_OK;
+                        break;
+                    default:
+                        assert false;
+                        break;
+                }
 
-            SendMessageResponseHeader responseHeader =
-                    (SendMessageResponseHeader) response
-                        .decodeCommandCustomHeader(SendMessageResponseHeader.class);
+                SendMessageResponseHeader responseHeader =
+                        (SendMessageResponseHeader) response
+                                .decodeCommandCustomHeader(SendMessageResponseHeader.class);
 
-            MessageQueue messageQueue =
-                    new MessageQueue(msg.getTopic(), brokerName, responseHeader.getQueueId());
+                MessageQueue messageQueue =
+                        new MessageQueue(msg.getTopic(), brokerName, responseHeader.getQueueId());
 
-            SendResult sendResult = new SendResult(sendStatus, responseHeader.getMsgId(), messageQueue,
-                responseHeader.getQueueOffset(), projectGroupPrefix);
-            sendResult.setTransactionId(responseHeader.getTransactionId());
-            return sendResult;
-        }
-        default:
-            break;
+                SendResult sendResult = new SendResult(sendStatus, responseHeader.getMsgId(), messageQueue,
+                        responseHeader.getQueueOffset(), projectGroupPrefix);
+                sendResult.setTransactionId(responseHeader.getTransactionId());
+                return sendResult;
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -405,34 +389,34 @@ public class MQClientAPIImpl {
 
 
     public PullResult pullMessage(//
-            final String addr,//
-            final PullMessageRequestHeader requestHeader,//
-            final long timeoutMillis,//
-            final CommunicationMode communicationMode,//
-            final PullCallback pullCallback//
+                                  final String addr,//
+                                  final PullMessageRequestHeader requestHeader,//
+                                  final long timeoutMillis,//
+                                  final CommunicationMode communicationMode,//
+                                  final PullCallback pullCallback//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             requestHeader.setConsumerGroup(VirtualEnvUtil.buildWithProjectGroup(
-                requestHeader.getConsumerGroup(), projectGroupPrefix));
+                    requestHeader.getConsumerGroup(), projectGroupPrefix));
             requestHeader.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeader.getTopic(),
-                projectGroupPrefix));
+                    projectGroupPrefix));
         }
 
         RemotingCommand request =
                 RemotingCommand.createRequestCommand(RequestCode.PULL_MESSAGE, requestHeader);
 
         switch (communicationMode) {
-        case ONEWAY:
-            assert false;
-            return null;
-        case ASYNC:
-            this.pullMessageAsync(addr, request, timeoutMillis, pullCallback);
-            return null;
-        case SYNC:
-            return this.pullMessageSync(addr, request, timeoutMillis);
-        default:
-            assert false;
-            break;
+            case ONEWAY:
+                assert false;
+                return null;
+            case ASYNC:
+                this.pullMessageAsync(addr, request, timeoutMillis, pullCallback);
+                return null;
+            case SYNC:
+                return this.pullMessageSync(addr, request, timeoutMillis);
+            default:
+                assert false;
+                break;
         }
 
         return null;
@@ -440,10 +424,10 @@ public class MQClientAPIImpl {
 
 
     private void pullMessageAsync(//
-            final String addr,// 1
-            final RemotingCommand request,//
-            final long timeoutMillis,//
-            final PullCallback pullCallback//
+                                  final String addr,// 1
+                                  final RemotingCommand request,//
+                                  final long timeoutMillis,//
+                                  final PullCallback pullCallback//
     ) throws RemotingException, InterruptedException {
         this.remotingClient.invokeAsync(addr, request, timeoutMillis, new InvokeCallback() {
             @Override
@@ -454,23 +438,19 @@ public class MQClientAPIImpl {
                         PullResult pullResult = MQClientAPIImpl.this.processPullResponse(response);
                         assert pullResult != null;
                         pullCallback.onSuccess(pullResult);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         pullCallback.onException(e);
                     }
-                }
-                else {
+                } else {
                     if (!responseFuture.isSendRequestOK()) {
                         pullCallback.onException(new MQClientException("send request failed", responseFuture
-                            .getCause()));
-                    }
-                    else if (responseFuture.isTimeout()) {
+                                .getCause()));
+                    } else if (responseFuture.isTimeout()) {
                         pullCallback.onException(new MQClientException("wait response timeout "
                                 + responseFuture.getTimeoutMillis() + "ms", responseFuture.getCause()));
-                    }
-                    else {
+                    } else {
                         pullCallback.onException(new MQClientException("unknow reseaon", responseFuture
-                            .getCause()));
+                                .getCause()));
                     }
                 }
             }
@@ -482,37 +462,37 @@ public class MQClientAPIImpl {
             RemotingCommandException {
         PullStatus pullStatus = PullStatus.NO_NEW_MSG;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS:
-            pullStatus = PullStatus.FOUND;
-            break;
-        case ResponseCode.PULL_NOT_FOUND:
-            pullStatus = PullStatus.NO_NEW_MSG;
-            break;
-        case ResponseCode.PULL_RETRY_IMMEDIATELY:
-            pullStatus = PullStatus.NO_MATCHED_MSG;
-            break;
-        case ResponseCode.PULL_OFFSET_MOVED:
-            pullStatus = PullStatus.OFFSET_ILLEGAL;
-            break;
+            case ResponseCode.SUCCESS:
+                pullStatus = PullStatus.FOUND;
+                break;
+            case ResponseCode.PULL_NOT_FOUND:
+                pullStatus = PullStatus.NO_NEW_MSG;
+                break;
+            case ResponseCode.PULL_RETRY_IMMEDIATELY:
+                pullStatus = PullStatus.NO_MATCHED_MSG;
+                break;
+            case ResponseCode.PULL_OFFSET_MOVED:
+                pullStatus = PullStatus.OFFSET_ILLEGAL;
+                break;
 
-        default:
-            throw new MQBrokerException(response.getCode(), response.getRemark());
+            default:
+                throw new MQBrokerException(response.getCode(), response.getRemark());
         }
 
         PullMessageResponseHeader responseHeader =
                 (PullMessageResponseHeader) response
-                    .decodeCommandCustomHeader(PullMessageResponseHeader.class);
+                        .decodeCommandCustomHeader(PullMessageResponseHeader.class);
 
         return new PullResultExt(pullStatus, responseHeader.getNextBeginOffset(),
-            responseHeader.getMinOffset(), responseHeader.getMaxOffset(), null,
-            responseHeader.getSuggestWhichBrokerId(), response.getBody());
+                responseHeader.getMinOffset(), responseHeader.getMaxOffset(), null,
+                responseHeader.getSuggestWhichBrokerId(), response.getBody());
     }
 
 
     private PullResult pullMessageSync(//
-            final String addr,// 1
-            final RemotingCommand request,// 2
-            final long timeoutMillis// 3
+                                       final String addr,// 1
+                                       final RemotingCommand request,// 2
+                                       final long timeoutMillis// 3
     ) throws RemotingException, InterruptedException, MQBrokerException {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
@@ -529,24 +509,24 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            ByteBuffer byteBuffer = ByteBuffer.wrap(response.getBody());
-            MessageExt messageExt = MessageDecoder.decode(byteBuffer);
-            if (!UtilAll.isBlank(projectGroupPrefix)) {
-                messageExt.setTopic(VirtualEnvUtil.clearProjectGroup(messageExt.getTopic(),
-                    projectGroupPrefix));
+            case ResponseCode.SUCCESS: {
+                ByteBuffer byteBuffer = ByteBuffer.wrap(response.getBody());
+                MessageExt messageExt = MessageDecoder.decode(byteBuffer);
+                if (!UtilAll.isBlank(projectGroupPrefix)) {
+                    messageExt.setTopic(VirtualEnvUtil.clearProjectGroup(messageExt.getTopic(),
+                            projectGroupPrefix));
+                }
+                return messageExt;
             }
-            return messageExt;
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public long searchOffset(final String addr, final String topic, final int queueId, final long timestamp,
-            final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
+                             final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
         String topicWithProjectGroup = topic;
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             topicWithProjectGroup = VirtualEnvUtil.buildWithProjectGroup(topic, projectGroupPrefix);
@@ -562,21 +542,21 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            SearchOffsetResponseHeader responseHeader =
-                    (SearchOffsetResponseHeader) response
-                        .decodeCommandCustomHeader(SearchOffsetResponseHeader.class);
-            return responseHeader.getOffset();
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                SearchOffsetResponseHeader responseHeader =
+                        (SearchOffsetResponseHeader) response
+                                .decodeCommandCustomHeader(SearchOffsetResponseHeader.class);
+                return responseHeader.getOffset();
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public long getMaxOffset(final String addr, final String topic, final int queueId,
-            final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
+                             final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
         String topicWithProjectGroup = topic;
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             topicWithProjectGroup = VirtualEnvUtil.buildWithProjectGroup(topic, projectGroupPrefix);
@@ -591,24 +571,24 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            GetMaxOffsetResponseHeader responseHeader =
-                    (GetMaxOffsetResponseHeader) response
-                        .decodeCommandCustomHeader(GetMaxOffsetResponseHeader.class);
+            case ResponseCode.SUCCESS: {
+                GetMaxOffsetResponseHeader responseHeader =
+                        (GetMaxOffsetResponseHeader) response
+                                .decodeCommandCustomHeader(GetMaxOffsetResponseHeader.class);
 
-            return responseHeader.getOffset();
-        }
-        default:
-            break;
+                return responseHeader.getOffset();
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public List<String> getConsumerIdListByGroup(//
-            final String addr, //
-            final String consumerGroup, //
-            final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
+                                                 final String addr, //
+                                                 final String consumerGroup, //
+                                                 final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, MQBrokerException, InterruptedException {
         String consumerGroupWithProjectGroup = consumerGroup;
         if (!UtilAll.isBlank(projectGroupPrefix)) {
@@ -624,16 +604,16 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            if (response.getBody() != null) {
-                GetConsumerListByGroupResponseBody body =
-                        GetConsumerListByGroupResponseBody.decode(response.getBody(),
-                            GetConsumerListByGroupResponseBody.class);
-                return body.getConsumerIdList();
+            case ResponseCode.SUCCESS: {
+                if (response.getBody() != null) {
+                    GetConsumerListByGroupResponseBody body =
+                            GetConsumerListByGroupResponseBody.decode(response.getBody(),
+                                    GetConsumerListByGroupResponseBody.class);
+                    return body.getConsumerIdList();
+                }
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -641,7 +621,7 @@ public class MQClientAPIImpl {
 
 
     public long getMinOffset(final String addr, final String topic, final int queueId,
-            final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
+                             final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
         String topicWithProjectGroup = topic;
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             topicWithProjectGroup = VirtualEnvUtil.buildWithProjectGroup(topic, projectGroupPrefix);
@@ -656,22 +636,22 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            GetMinOffsetResponseHeader responseHeader =
-                    (GetMinOffsetResponseHeader) response
-                        .decodeCommandCustomHeader(GetMinOffsetResponseHeader.class);
+            case ResponseCode.SUCCESS: {
+                GetMinOffsetResponseHeader responseHeader =
+                        (GetMinOffsetResponseHeader) response
+                                .decodeCommandCustomHeader(GetMinOffsetResponseHeader.class);
 
-            return responseHeader.getOffset();
-        }
-        default:
-            break;
+                return responseHeader.getOffset();
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public long getEarliestMsgStoretime(final String addr, final String topic, final int queueId,
-            final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
+                                        final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
         String topicWithProjectGroup = topic;
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             topicWithProjectGroup = VirtualEnvUtil.buildWithProjectGroup(topic, projectGroupPrefix);
@@ -686,30 +666,30 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            GetEarliestMsgStoretimeResponseHeader responseHeader =
-                    (GetEarliestMsgStoretimeResponseHeader) response
-                        .decodeCommandCustomHeader(GetEarliestMsgStoretimeResponseHeader.class);
+            case ResponseCode.SUCCESS: {
+                GetEarliestMsgStoretimeResponseHeader responseHeader =
+                        (GetEarliestMsgStoretimeResponseHeader) response
+                                .decodeCommandCustomHeader(GetEarliestMsgStoretimeResponseHeader.class);
 
-            return responseHeader.getTimestamp();
-        }
-        default:
-            break;
+                return responseHeader.getTimestamp();
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public long queryConsumerOffset(//
-            final String addr,//
-            final QueryConsumerOffsetRequestHeader requestHeader,//
-            final long timeoutMillis//
+                                    final String addr,//
+                                    final QueryConsumerOffsetRequestHeader requestHeader,//
+                                    final long timeoutMillis//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             requestHeader.setConsumerGroup(VirtualEnvUtil.buildWithProjectGroup(
-                requestHeader.getConsumerGroup(), projectGroupPrefix));
+                    requestHeader.getConsumerGroup(), projectGroupPrefix));
             requestHeader.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeader.getTopic(),
-                projectGroupPrefix));
+                    projectGroupPrefix));
         }
 
         RemotingCommand request =
@@ -718,30 +698,30 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            QueryConsumerOffsetResponseHeader responseHeader =
-                    (QueryConsumerOffsetResponseHeader) response
-                        .decodeCommandCustomHeader(QueryConsumerOffsetResponseHeader.class);
+            case ResponseCode.SUCCESS: {
+                QueryConsumerOffsetResponseHeader responseHeader =
+                        (QueryConsumerOffsetResponseHeader) response
+                                .decodeCommandCustomHeader(QueryConsumerOffsetResponseHeader.class);
 
-            return responseHeader.getOffset();
-        }
-        default:
-            break;
+                return responseHeader.getOffset();
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public void updateConsumerOffset(//
-            final String addr,//
-            final UpdateConsumerOffsetRequestHeader requestHeader,//
-            final long timeoutMillis//
+                                     final String addr,//
+                                     final UpdateConsumerOffsetRequestHeader requestHeader,//
+                                     final long timeoutMillis//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             requestHeader.setConsumerGroup(VirtualEnvUtil.buildWithProjectGroup(
-                requestHeader.getConsumerGroup(), projectGroupPrefix));
+                    requestHeader.getConsumerGroup(), projectGroupPrefix));
             requestHeader.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeader.getTopic(),
-                projectGroupPrefix));
+                    projectGroupPrefix));
         }
 
         RemotingCommand request =
@@ -750,27 +730,27 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public void updateConsumerOffsetOneway(//
-            final String addr,//
-            final UpdateConsumerOffsetRequestHeader requestHeader,//
-            final long timeoutMillis//
+                                           final String addr,//
+                                           final UpdateConsumerOffsetRequestHeader requestHeader,//
+                                           final long timeoutMillis//
     ) throws RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException,
             RemotingSendRequestException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             requestHeader.setConsumerGroup(VirtualEnvUtil.buildWithProjectGroup(
-                requestHeader.getConsumerGroup(), projectGroupPrefix));
+                    requestHeader.getConsumerGroup(), projectGroupPrefix));
             requestHeader.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeader.getTopic(),
-                projectGroupPrefix));
+                    projectGroupPrefix));
         }
 
         RemotingCommand request =
@@ -781,25 +761,25 @@ public class MQClientAPIImpl {
 
 
     public void sendHearbeat(//
-            final String addr,//
-            final HeartbeatData heartbeatData,//
-            final long timeoutMillis//
+                             final String addr,//
+                             final HeartbeatData heartbeatData,//
+                             final long timeoutMillis//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             Set<ConsumerData> consumerDatas = heartbeatData.getConsumerDataSet();
             for (ConsumerData consumerData : consumerDatas) {
                 consumerData.setGroupName(VirtualEnvUtil.buildWithProjectGroup(consumerData.getGroupName(),
-                    projectGroupPrefix));
+                        projectGroupPrefix));
                 Set<SubscriptionData> subscriptionDatas = consumerData.getSubscriptionDataSet();
                 for (SubscriptionData subscriptionData : subscriptionDatas) {
                     subscriptionData.setTopic(VirtualEnvUtil.buildWithProjectGroup(
-                        subscriptionData.getTopic(), projectGroupPrefix));
+                            subscriptionData.getTopic(), projectGroupPrefix));
                 }
             }
             Set<ProducerData> producerDatas = heartbeatData.getProducerDataSet();
             for (ProducerData producerData : producerDatas) {
                 producerData.setGroupName(VirtualEnvUtil.buildWithProjectGroup(producerData.getGroupName(),
-                    projectGroupPrefix));
+                        projectGroupPrefix));
             }
         }
 
@@ -809,11 +789,11 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -821,11 +801,11 @@ public class MQClientAPIImpl {
 
 
     public void unregisterClient(//
-            final String addr,//
-            final String clientID,//
-            final String producerGroup,//
-            final String consumerGroup,//
-            final long timeoutMillis//
+                                 final String addr,//
+                                 final String clientID,//
+                                 final String producerGroup,//
+                                 final String consumerGroup,//
+                                 final long timeoutMillis//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         String producerGroupWithProjectGroup = producerGroup;
         String consumerGroupWithProjectGroup = consumerGroup;
@@ -846,25 +826,25 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public void endTransactionOneway(//
-            final String addr,//
-            final EndTransactionRequestHeader requestHeader,//
-            final String remark,//
-            final long timeoutMillis//
+                                     final String addr,//
+                                     final EndTransactionRequestHeader requestHeader,//
+                                     final String remark,//
+                                     final long timeoutMillis//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             requestHeader.setProducerGroup(VirtualEnvUtil.buildWithProjectGroup(
-                requestHeader.getProducerGroup(), projectGroupPrefix));
+                    requestHeader.getProducerGroup(), projectGroupPrefix));
         }
 
         RemotingCommand request =
@@ -875,14 +855,14 @@ public class MQClientAPIImpl {
     }
 
     public void queryMessage(//
-            final String addr,//
-            final QueryMessageRequestHeader requestHeader,//
-            final long timeoutMillis,//
-            final InvokeCallback invokeCallback//
+                             final String addr,//
+                             final QueryMessageRequestHeader requestHeader,//
+                             final long timeoutMillis,//
+                             final InvokeCallback invokeCallback//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             requestHeader.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeader.getTopic(),
-                projectGroupPrefix));
+                    projectGroupPrefix));
         }
 
         RemotingCommand request =
@@ -898,17 +878,17 @@ public class MQClientAPIImpl {
             Set<ConsumerData> consumerDatas = heartbeat.getConsumerDataSet();
             for (ConsumerData consumerData : consumerDatas) {
                 consumerData.setGroupName(VirtualEnvUtil.buildWithProjectGroup(consumerData.getGroupName(),
-                    projectGroupPrefix));
+                        projectGroupPrefix));
                 Set<SubscriptionData> subscriptionDatas = consumerData.getSubscriptionDataSet();
                 for (SubscriptionData subscriptionData : subscriptionDatas) {
                     subscriptionData.setTopic(VirtualEnvUtil.buildWithProjectGroup(
-                        subscriptionData.getTopic(), projectGroupPrefix));
+                            subscriptionData.getTopic(), projectGroupPrefix));
                 }
             }
             Set<ProducerData> producerDatas = heartbeat.getProducerDataSet();
             for (ProducerData producerData : producerDatas) {
                 producerData.setGroupName(VirtualEnvUtil.buildWithProjectGroup(producerData.getGroupName(),
-                    projectGroupPrefix));
+                        projectGroupPrefix));
             }
         }
 
@@ -920,11 +900,11 @@ public class MQClientAPIImpl {
     }
 
     public void consumerSendMessageBack(//
-            final String addr, //
-            final MessageExt msg,//
-            final String consumerGroup,//
-            final int delayLevel,//
-            final long timeoutMillis//
+                                        final String addr, //
+                                        final MessageExt msg,//
+                                        final String consumerGroup,//
+                                        final int delayLevel,//
+                                        final long timeoutMillis//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         String consumerGroupWithProjectGroup = consumerGroup;
         if (!UtilAll.isBlank(projectGroupPrefix)) {
@@ -946,11 +926,11 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -958,16 +938,16 @@ public class MQClientAPIImpl {
 
 
     public Set<MessageQueue> lockBatchMQ(//
-            final String addr,//
-            final LockBatchRequestBody requestBody,//
-            final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
+                                         final String addr,//
+                                         final LockBatchRequestBody requestBody,//
+                                         final long timeoutMillis) throws RemotingException, MQBrokerException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             requestBody.setConsumerGroup((VirtualEnvUtil.buildWithProjectGroup(
-                requestBody.getConsumerGroup(), projectGroupPrefix)));
+                    requestBody.getConsumerGroup(), projectGroupPrefix)));
             Set<MessageQueue> messageQueues = requestBody.getMqSet();
             for (MessageQueue messageQueue : messageQueues) {
                 messageQueue.setTopic(VirtualEnvUtil.buildWithProjectGroup(messageQueue.getTopic(),
-                    projectGroupPrefix));
+                        projectGroupPrefix));
             }
         }
 
@@ -976,20 +956,20 @@ public class MQClientAPIImpl {
         request.setBody(requestBody.encode());
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            LockBatchResponseBody responseBody =
-                    LockBatchResponseBody.decode(response.getBody(), LockBatchResponseBody.class);
-            Set<MessageQueue> messageQueues = responseBody.getLockOKMQSet();
-            if (!UtilAll.isBlank(projectGroupPrefix)) {
-                for (MessageQueue messageQueue : messageQueues) {
-                    messageQueue.setTopic(VirtualEnvUtil.clearProjectGroup(messageQueue.getTopic(),
-                        projectGroupPrefix));
+            case ResponseCode.SUCCESS: {
+                LockBatchResponseBody responseBody =
+                        LockBatchResponseBody.decode(response.getBody(), LockBatchResponseBody.class);
+                Set<MessageQueue> messageQueues = responseBody.getLockOKMQSet();
+                if (!UtilAll.isBlank(projectGroupPrefix)) {
+                    for (MessageQueue messageQueue : messageQueues) {
+                        messageQueue.setTopic(VirtualEnvUtil.clearProjectGroup(messageQueue.getTopic(),
+                                projectGroupPrefix));
+                    }
                 }
+                return messageQueues;
             }
-            return messageQueues;
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -997,18 +977,18 @@ public class MQClientAPIImpl {
 
 
     public void unlockBatchMQ(//
-            final String addr,//
-            final UnlockBatchRequestBody requestBody,//
-            final long timeoutMillis,//
-            final boolean oneway//
+                              final String addr,//
+                              final UnlockBatchRequestBody requestBody,//
+                              final long timeoutMillis,//
+                              final boolean oneway//
     ) throws RemotingException, MQBrokerException, InterruptedException {
         if (!UtilAll.isBlank(projectGroupPrefix)) {
             requestBody.setConsumerGroup(VirtualEnvUtil.buildWithProjectGroup(requestBody.getConsumerGroup(),
-                projectGroupPrefix));
+                    projectGroupPrefix));
             Set<MessageQueue> messageQueues = requestBody.getMqSet();
             for (MessageQueue messageQueue : messageQueues) {
                 messageQueue.setTopic(VirtualEnvUtil.buildWithProjectGroup(messageQueue.getTopic(),
-                    projectGroupPrefix));
+                        projectGroupPrefix));
             }
         }
 
@@ -1018,15 +998,14 @@ public class MQClientAPIImpl {
 
         if (oneway) {
             this.remotingClient.invokeOneway(addr, request, timeoutMillis);
-        }
-        else {
+        } else {
             RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
             switch (response.getCode()) {
-            case ResponseCode.SUCCESS: {
-                return;
-            }
-            default:
-                break;
+                case ResponseCode.SUCCESS: {
+                    return;
+                }
+                default:
+                    break;
             }
 
             throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -1050,24 +1029,24 @@ public class MQClientAPIImpl {
 
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            TopicStatsTable topicStatsTable =
-                    TopicStatsTable.decode(response.getBody(), TopicStatsTable.class);
-            if (!UtilAll.isBlank(projectGroupPrefix)) {
-                HashMap<MessageQueue, TopicOffset> newTopicOffsetMap =
-                        new HashMap<MessageQueue, TopicOffset>();
-                for (Map.Entry<MessageQueue, TopicOffset> messageQueue : topicStatsTable.getOffsetTable()
-                    .entrySet()) {
-                    MessageQueue key = messageQueue.getKey();
-                    key.setTopic(VirtualEnvUtil.clearProjectGroup(key.getTopic(), projectGroupPrefix));
-                    newTopicOffsetMap.put(key, messageQueue.getValue());
+            case ResponseCode.SUCCESS: {
+                TopicStatsTable topicStatsTable =
+                        TopicStatsTable.decode(response.getBody(), TopicStatsTable.class);
+                if (!UtilAll.isBlank(projectGroupPrefix)) {
+                    HashMap<MessageQueue, TopicOffset> newTopicOffsetMap =
+                            new HashMap<MessageQueue, TopicOffset>();
+                    for (Map.Entry<MessageQueue, TopicOffset> messageQueue : topicStatsTable.getOffsetTable()
+                            .entrySet()) {
+                        MessageQueue key = messageQueue.getKey();
+                        key.setTopic(VirtualEnvUtil.clearProjectGroup(key.getTopic(), projectGroupPrefix));
+                        newTopicOffsetMap.put(key, messageQueue.getValue());
+                    }
+                    topicStatsTable.setOffsetTable(newTopicOffsetMap);
                 }
-                topicStatsTable.setOffsetTable(newTopicOffsetMap);
+                return topicStatsTable;
             }
-            return topicStatsTable;
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -1075,14 +1054,14 @@ public class MQClientAPIImpl {
 
 
     public ConsumeStats getConsumeStats(final String addr, final String consumerGroup,
-            final long timeoutMillis) throws InterruptedException, RemotingTimeoutException,
+                                        final long timeoutMillis) throws InterruptedException, RemotingTimeoutException,
             RemotingSendRequestException, RemotingConnectException, MQBrokerException {
         return getConsumeStats(addr, consumerGroup, null, timeoutMillis);
     }
 
 
     public ConsumeStats getConsumeStats(final String addr, final String consumerGroup, final String topic,
-            final long timeoutMillis) throws InterruptedException, RemotingTimeoutException,
+                                        final long timeoutMillis) throws InterruptedException, RemotingTimeoutException,
             RemotingSendRequestException, RemotingConnectException, MQBrokerException {
         String consumerGroupWithProjectGroup = consumerGroup;
         if (!UtilAll.isBlank(projectGroupPrefix)) {
@@ -1099,31 +1078,31 @@ public class MQClientAPIImpl {
 
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            ConsumeStats consumeStats = ConsumeStats.decode(response.getBody(), ConsumeStats.class);
-            if (!UtilAll.isBlank(projectGroupPrefix)) {
-                HashMap<MessageQueue, OffsetWrapper> newTopicOffsetMap =
-                        new HashMap<MessageQueue, OffsetWrapper>();
-                for (Map.Entry<MessageQueue, OffsetWrapper> messageQueue : consumeStats.getOffsetTable()
-                    .entrySet()) {
-                    MessageQueue key = messageQueue.getKey();
-                    key.setTopic(VirtualEnvUtil.clearProjectGroup(key.getTopic(), projectGroupPrefix));
-                    newTopicOffsetMap.put(key, messageQueue.getValue());
+            case ResponseCode.SUCCESS: {
+                ConsumeStats consumeStats = ConsumeStats.decode(response.getBody(), ConsumeStats.class);
+                if (!UtilAll.isBlank(projectGroupPrefix)) {
+                    HashMap<MessageQueue, OffsetWrapper> newTopicOffsetMap =
+                            new HashMap<MessageQueue, OffsetWrapper>();
+                    for (Map.Entry<MessageQueue, OffsetWrapper> messageQueue : consumeStats.getOffsetTable()
+                            .entrySet()) {
+                        MessageQueue key = messageQueue.getKey();
+                        key.setTopic(VirtualEnvUtil.clearProjectGroup(key.getTopic(), projectGroupPrefix));
+                        newTopicOffsetMap.put(key, messageQueue.getValue());
+                    }
+                    consumeStats.setOffsetTable(newTopicOffsetMap);
                 }
-                consumeStats.setOffsetTable(newTopicOffsetMap);
-            }
 
-            return consumeStats;
-        }
-        default:
-            break;
+                return consumeStats;
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public ProducerConnection getProducerConnectionList(final String addr, final String producerGroup,
-            final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
+                                                        final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQBrokerException {
         String producerGroupWithProjectGroup = producerGroup;
         if (!UtilAll.isBlank(projectGroupPrefix)) {
@@ -1139,18 +1118,18 @@ public class MQClientAPIImpl {
 
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return ProducerConnection.decode(response.getBody(), ProducerConnection.class);
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return ProducerConnection.decode(response.getBody(), ProducerConnection.class);
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
     }
 
     public ConsumerConnection getConsumerConnectionList(final String addr, final String consumerGroup,
-            final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
+                                                        final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQBrokerException {
         String consumerGroupWithProjectGroup = consumerGroup;
         if (!UtilAll.isBlank(projectGroupPrefix)) {
@@ -1166,23 +1145,23 @@ public class MQClientAPIImpl {
 
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            ConsumerConnection consumerConnection =
-                    ConsumerConnection.decode(response.getBody(), ConsumerConnection.class);
-            if (!UtilAll.isBlank(projectGroupPrefix)) {
-                ConcurrentHashMap<String, SubscriptionData> subscriptionDataConcurrentHashMap =
-                        consumerConnection.getSubscriptionTable();
-                for (Map.Entry<String, SubscriptionData> subscriptionDataEntry : subscriptionDataConcurrentHashMap
-                    .entrySet()) {
-                    SubscriptionData subscriptionData = subscriptionDataEntry.getValue();
-                    subscriptionDataEntry.getValue().setTopic(
-                        VirtualEnvUtil.clearProjectGroup(subscriptionData.getTopic(), projectGroupPrefix));
+            case ResponseCode.SUCCESS: {
+                ConsumerConnection consumerConnection =
+                        ConsumerConnection.decode(response.getBody(), ConsumerConnection.class);
+                if (!UtilAll.isBlank(projectGroupPrefix)) {
+                    ConcurrentHashMap<String, SubscriptionData> subscriptionDataConcurrentHashMap =
+                            consumerConnection.getSubscriptionTable();
+                    for (Map.Entry<String, SubscriptionData> subscriptionDataEntry : subscriptionDataConcurrentHashMap
+                            .entrySet()) {
+                        SubscriptionData subscriptionData = subscriptionDataEntry.getValue();
+                        subscriptionDataEntry.getValue().setTopic(
+                                VirtualEnvUtil.clearProjectGroup(subscriptionData.getTopic(), projectGroupPrefix));
+                    }
                 }
+                return consumerConnection;
             }
-            return consumerConnection;
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -1198,11 +1177,11 @@ public class MQClientAPIImpl {
 
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return KVTable.decode(response.getBody(), KVTable.class);
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return KVTable.decode(response.getBody(), KVTable.class);
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -1220,11 +1199,11 @@ public class MQClientAPIImpl {
             request.setBody(str.getBytes(MixAll.DEFAULT_CHARSET));
             RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
             switch (response.getCode()) {
-            case ResponseCode.SUCCESS: {
-                return;
-            }
-            default:
-                break;
+                case ResponseCode.SUCCESS: {
+                    return;
+                }
+                default:
+                    break;
             }
 
             throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -1240,12 +1219,12 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            ClusterInfo responseBody = ClusterInfo.decode(response.getBody(), ClusterInfo.class);
-            return responseBody;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                ClusterInfo responseBody = ClusterInfo.decode(response.getBody(), ClusterInfo.class);
+                return responseBody;
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -1263,18 +1242,18 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.TOPIC_NOT_EXIST: {
-            // TODO LOG
-            break;
-        }
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                return TopicRouteData.decode(body, TopicRouteData.class);
+            case ResponseCode.TOPIC_NOT_EXIST: {
+                // TODO LOG
+                break;
             }
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    return TopicRouteData.decode(body, TopicRouteData.class);
+                }
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1297,18 +1276,18 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.TOPIC_NOT_EXIST: {
-            log.warn("get Topic [{}] RouteInfoFromNameServer is not exist value", topic);
-            break;
-        }
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                return TopicRouteData.decode(body, TopicRouteData.class);
+            case ResponseCode.TOPIC_NOT_EXIST: {
+                log.warn("get Topic [{}] RouteInfoFromNameServer is not exist value", topic);
+                break;
             }
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    return TopicRouteData.decode(body, TopicRouteData.class);
+                }
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1323,23 +1302,23 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                TopicList topicList = TopicList.decode(body, TopicList.class);
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    TopicList topicList = TopicList.decode(body, TopicList.class);
 
-                if (!UtilAll.isBlank(projectGroupPrefix)) {
-                    HashSet<String> newTopicSet = new HashSet<String>();
-                    for (String topic : topicList.getTopicList()) {
-                        newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+                    if (!UtilAll.isBlank(projectGroupPrefix)) {
+                        HashSet<String> newTopicSet = new HashSet<String>();
+                        for (String topic : topicList.getTopicList()) {
+                            newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+                        }
+                        topicList.setTopicList(newTopicSet);
                     }
-                    topicList.setTopicList(newTopicSet);
+                    return topicList;
                 }
-                return topicList;
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1358,14 +1337,14 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(namesrvAddr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            WipeWritePermOfBrokerResponseHeader responseHeader =
-                    (WipeWritePermOfBrokerResponseHeader) response
-                        .decodeCommandCustomHeader(WipeWritePermOfBrokerResponseHeader.class);
-            return responseHeader.getWipeTopicCount();
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                WipeWritePermOfBrokerResponseHeader responseHeader =
+                        (WipeWritePermOfBrokerResponseHeader) response
+                                .decodeCommandCustomHeader(WipeWritePermOfBrokerResponseHeader.class);
+                return responseHeader.getWipeTopicCount();
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1387,11 +1366,11 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1413,11 +1392,11 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1439,11 +1418,11 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1461,14 +1440,14 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            GetKVConfigResponseHeader responseHeader =
-                    (GetKVConfigResponseHeader) response
-                        .decodeCommandCustomHeader(GetKVConfigResponseHeader.class);
-            return responseHeader.getValue();
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                GetKVConfigResponseHeader responseHeader =
+                        (GetKVConfigResponseHeader) response
+                                .decodeCommandCustomHeader(GetKVConfigResponseHeader.class);
+                return responseHeader.getValue();
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1476,7 +1455,7 @@ public class MQClientAPIImpl {
 
 
     public void putKVConfigValue(final String namespace, final String key, final String value,
-            final long timeoutMillis) throws RemotingException, MQClientException, InterruptedException {
+                                 final long timeoutMillis) throws RemotingException, MQClientException, InterruptedException {
         PutKVConfigRequestHeader requestHeader = new PutKVConfigRequestHeader();
         requestHeader.setNamespace(namespace);
         requestHeader.setKey(key);
@@ -1493,11 +1472,11 @@ public class MQClientAPIImpl {
                         this.remotingClient.invokeSync(namesrvAddr, request, timeoutMillis);
                 assert response != null;
                 switch (response.getCode()) {
-                case ResponseCode.SUCCESS: {
-                    break;
-                }
-                default:
-                    errResponse = response;
+                    case ResponseCode.SUCCESS: {
+                        break;
+                    }
+                    default:
+                        errResponse = response;
                 }
             }
 
@@ -1525,11 +1504,11 @@ public class MQClientAPIImpl {
                         this.remotingClient.invokeSync(namesrvAddr, request, timeoutMillis);
                 assert response != null;
                 switch (response.getCode()) {
-                case ResponseCode.SUCCESS: {
-                    break;
-                }
-                default:
-                    errResponse = response;
+                    case ResponseCode.SUCCESS: {
+                        break;
+                    }
+                    default:
+                        errResponse = response;
                 }
             }
             if (errResponse != null) {
@@ -1556,14 +1535,14 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            GetKVConfigResponseHeader responseHeader =
-                    (GetKVConfigResponseHeader) response
-                        .decodeCommandCustomHeader(GetKVConfigResponseHeader.class);
-            return responseHeader.getValue();
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                GetKVConfigResponseHeader responseHeader =
+                        (GetKVConfigResponseHeader) response
+                                .decodeCommandCustomHeader(GetKVConfigResponseHeader.class);
+                return responseHeader.getValue();
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1581,11 +1560,11 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return KVTable.decode(response.getBody(), KVTable.class);
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return KVTable.decode(response.getBody(), KVTable.class);
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1593,7 +1572,7 @@ public class MQClientAPIImpl {
 
 
     public void deleteKVConfigByValue(final String namespace, final String projectGroup,
-            final long timeoutMillis) throws RemotingException, MQClientException, InterruptedException {
+                                      final long timeoutMillis) throws RemotingException, MQClientException, InterruptedException {
         DeleteKVConfigRequestHeader requestHeader = new DeleteKVConfigRequestHeader();
         requestHeader.setNamespace(namespace);
         requestHeader.setKey(projectGroup);
@@ -1610,11 +1589,11 @@ public class MQClientAPIImpl {
                         this.remotingClient.invokeSync(namesrvAddr, request, timeoutMillis);
                 assert response != null;
                 switch (response.getCode()) {
-                case ResponseCode.SUCCESS: {
-                    break;
-                }
-                default:
-                    errResponse = response;
+                    case ResponseCode.SUCCESS: {
+                        break;
+                    }
+                    default:
+                        errResponse = response;
                 }
             }
             if (errResponse != null) {
@@ -1625,7 +1604,7 @@ public class MQClientAPIImpl {
 
 
     public Map<MessageQueue, Long> invokeBrokerToResetOffset(final String addr, final String topic,
-            final String group, final long timestamp, final boolean isForce, final long timeoutMillis)
+                                                             final String group, final long timestamp, final boolean isForce, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
         ResetOffsetRequestHeader requestHeader = new ResetOffsetRequestHeader();
         requestHeader.setTopic(topic);
@@ -1635,19 +1614,19 @@ public class MQClientAPIImpl {
 
         RemotingCommand request =
                 RemotingCommand
-                    .createRequestCommand(RequestCode.INVOKE_BROKER_TO_RESET_OFFSET, requestHeader);
+                        .createRequestCommand(RequestCode.INVOKE_BROKER_TO_RESET_OFFSET, requestHeader);
 
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            if (response.getBody() != null) {
-                ResetOffsetBody body = ResetOffsetBody.decode(response.getBody(), ResetOffsetBody.class);
-                return body.getOffsetTable();
+            case ResponseCode.SUCCESS: {
+                if (response.getBody() != null) {
+                    ResetOffsetBody body = ResetOffsetBody.decode(response.getBody(), ResetOffsetBody.class);
+                    return body.getOffsetTable();
+                }
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1655,7 +1634,7 @@ public class MQClientAPIImpl {
 
 
     public Map<String, Map<MessageQueue, Long>> invokeBrokerToGetConsumerStatus(final String addr,
-            final String topic, final String group, final String clientAddr, final long timeoutMillis)
+                                                                                final String topic, final String group, final String clientAddr, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
         GetConsumerStatusRequestHeader requestHeader = new GetConsumerStatusRequestHeader();
         requestHeader.setTopic(topic);
@@ -1664,20 +1643,20 @@ public class MQClientAPIImpl {
 
         RemotingCommand request =
                 RemotingCommand.createRequestCommand(RequestCode.INVOKE_BROKER_TO_GET_CONSUMER_STATUS,
-                    requestHeader);
+                        requestHeader);
 
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            if (response.getBody() != null) {
-                GetConsumerStatusBody body =
-                        GetConsumerStatusBody.decode(response.getBody(), GetConsumerStatusBody.class);
-                return body.getConsumerTable();
+            case ResponseCode.SUCCESS: {
+                if (response.getBody() != null) {
+                    GetConsumerStatusBody body =
+                            GetConsumerStatusBody.decode(response.getBody(), GetConsumerStatusBody.class);
+                    return body.getConsumerTable();
+                }
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1695,12 +1674,12 @@ public class MQClientAPIImpl {
 
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            GroupList groupList = GroupList.decode(response.getBody(), GroupList.class);
-            return groupList;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                GroupList groupList = GroupList.decode(response.getBody(), GroupList.class);
+                return groupList;
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -1708,7 +1687,7 @@ public class MQClientAPIImpl {
 
 
     public Set<QueueTimeSpan> queryConsumeTimeSpan(final String addr, final String topic, final String group,
-            final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
+                                                   final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQBrokerException {
         QueryConsumeTimeSpanRequestHeader requestHeader = new QueryConsumeTimeSpanRequestHeader();
         requestHeader.setTopic(topic);
@@ -1719,13 +1698,13 @@ public class MQClientAPIImpl {
 
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            QueryConsumeTimeSpanBody consumeTimeSpanBody =
-                    GroupList.decode(response.getBody(), QueryConsumeTimeSpanBody.class);
-            return consumeTimeSpanBody.getConsumeTimeSpanSet();
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                QueryConsumeTimeSpanBody consumeTimeSpanBody =
+                        GroupList.decode(response.getBody(), QueryConsumeTimeSpanBody.class);
+                return consumeTimeSpanBody.getConsumeTimeSpanSet();
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -1742,35 +1721,35 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                TopicList topicList = TopicList.decode(body, TopicList.class);
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    TopicList topicList = TopicList.decode(body, TopicList.class);
 
-                if (!UtilAll.isBlank(projectGroupPrefix)) {
-                    HashSet<String> newTopicSet = new HashSet<String>();
-                    for (String topic : topicList.getTopicList()) {
-                        newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+                    if (!UtilAll.isBlank(projectGroupPrefix)) {
+                        HashSet<String> newTopicSet = new HashSet<String>();
+                        for (String topic : topicList.getTopicList()) {
+                            newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+                        }
+                        topicList.setTopicList(newTopicSet);
                     }
-                    topicList.setTopicList(newTopicSet);
+                    return topicList;
                 }
-                return topicList;
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
     }
 
     public void registerMessageFilterClass(final String addr,//
-            final String consumerGroup,//
-            final String topic,//
-            final String className,//
-            final int classCRC,//
-            final byte[] classBody,//
-            final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
+                                           final String consumerGroup,//
+                                           final String topic,//
+                                           final String className,//
+                                           final int classCRC,//
+                                           final byte[] classBody,//
+                                           final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQBrokerException {
         RegisterMessageFilterClassRequestHeader requestHeader = new RegisterMessageFilterClassRequestHeader();
         requestHeader.setConsumerGroup(consumerGroup);
@@ -1780,15 +1759,15 @@ public class MQClientAPIImpl {
 
         RemotingCommand request =
                 RemotingCommand
-                    .createRequestCommand(RequestCode.REGISTER_MESSAGE_FILTER_CLASS, requestHeader);
+                        .createRequestCommand(RequestCode.REGISTER_MESSAGE_FILTER_CLASS, requestHeader);
         request.setBody(classBody);
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQBrokerException(response.getCode(), response.getRemark());
@@ -1802,30 +1781,30 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                TopicList topicList = TopicList.decode(response.getBody(), TopicList.class);
-                if (!UtilAll.isBlank(projectGroupPrefix)) {
-                    HashSet<String> newTopicSet = new HashSet<String>();
-                    for (String topic : topicList.getTopicList()) {
-                        newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    TopicList topicList = TopicList.decode(response.getBody(), TopicList.class);
+                    if (!UtilAll.isBlank(projectGroupPrefix)) {
+                        HashSet<String> newTopicSet = new HashSet<String>();
+                        for (String topic : topicList.getTopicList()) {
+                            newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+                        }
+                        topicList.setTopicList(newTopicSet);
                     }
-                    topicList.setTopicList(newTopicSet);
-                }
 
-                if (topicList.getTopicList() != null && !topicList.getTopicList().isEmpty()
-                        && !UtilAll.isBlank(topicList.getBrokerAddr())) {
-                    TopicList tmp = getSystemTopicListFromBroker(topicList.getBrokerAddr(), timeoutMillis);
-                    if (tmp.getTopicList() != null && !tmp.getTopicList().isEmpty()) {
-                        topicList.getTopicList().addAll(tmp.getTopicList());
+                    if (topicList.getTopicList() != null && !topicList.getTopicList().isEmpty()
+                            && !UtilAll.isBlank(topicList.getBrokerAddr())) {
+                        TopicList tmp = getSystemTopicListFromBroker(topicList.getBrokerAddr(), timeoutMillis);
+                        if (tmp.getTopicList() != null && !tmp.getTopicList().isEmpty()) {
+                            topicList.getTopicList().addAll(tmp.getTopicList());
+                        }
                     }
+                    return topicList;
                 }
-                return topicList;
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1839,22 +1818,22 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                TopicList topicList = TopicList.decode(body, TopicList.class);
-                if (!UtilAll.isBlank(projectGroupPrefix)) {
-                    HashSet<String> newTopicSet = new HashSet<String>();
-                    for (String topic : topicList.getTopicList()) {
-                        newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    TopicList topicList = TopicList.decode(body, TopicList.class);
+                    if (!UtilAll.isBlank(projectGroupPrefix)) {
+                        HashSet<String> newTopicSet = new HashSet<String>();
+                        for (String topic : topicList.getTopicList()) {
+                            newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+                        }
+                        topicList.setTopicList(newTopicSet);
                     }
-                    topicList.setTopicList(newTopicSet);
+                    return topicList;
                 }
-                return topicList;
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1868,18 +1847,18 @@ public class MQClientAPIImpl {
                 RemotingCommand.createRequestCommand(RequestCode.CLEAN_EXPIRED_CONSUMEQUEUE, null);
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return true;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return true;
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
     }
 
     public ConsumerRunningInfo getConsumerRunningInfo(final String addr, String consumerGroup,
-            String clientId, boolean jstack, final long timeoutMillis) throws RemotingException,
+                                                      String clientId, boolean jstack, final long timeoutMillis) throws RemotingException,
             MQClientException, InterruptedException {
         GetConsumerRunningInfoRequestHeader requestHeader = new GetConsumerRunningInfoRequestHeader();
         requestHeader.setConsumerGroup(consumerGroup);
@@ -1892,25 +1871,25 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                ConsumerRunningInfo info = ConsumerRunningInfo.decode(body, ConsumerRunningInfo.class);
-                return info;
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    ConsumerRunningInfo info = ConsumerRunningInfo.decode(body, ConsumerRunningInfo.class);
+                    return info;
+                }
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
     }
 
     public ConsumeMessageDirectlyResult consumeMessageDirectly(final String addr, //
-            String consumerGroup, //
-            String clientId, //
-            String msgId, //
-            final long timeoutMillis) throws RemotingException, MQClientException, InterruptedException {
+                                                               String consumerGroup, //
+                                                               String clientId, //
+                                                               String msgId, //
+                                                               final long timeoutMillis) throws RemotingException, MQClientException, InterruptedException {
         ConsumeMessageDirectlyResultRequestHeader requestHeader =
                 new ConsumeMessageDirectlyResultRequestHeader();
         requestHeader.setConsumerGroup(consumerGroup);
@@ -1923,16 +1902,16 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                ConsumeMessageDirectlyResult info =
-                        ConsumeMessageDirectlyResult.decode(body, ConsumeMessageDirectlyResult.class);
-                return info;
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    ConsumeMessageDirectlyResult info =
+                            ConsumeMessageDirectlyResult.decode(body, ConsumeMessageDirectlyResult.class);
+                    return info;
+                }
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1945,7 +1924,7 @@ public class MQClientAPIImpl {
 
 
     public Map<Integer, Long> queryCorrectionOffset(final String addr, final String topic,
-            final String group, Set<String> filterGroup, long timeoutMillis) throws MQClientException,
+                                                    final String group, Set<String> filterGroup, long timeoutMillis) throws MQClientException,
             RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
             InterruptedException {
         QueryCorrectionOffsetHeader requestHeader = new QueryCorrectionOffsetHeader();
@@ -1966,15 +1945,15 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            if (response.getBody() != null) {
-                QueryCorrectionOffsetBody body =
-                        QueryCorrectionOffsetBody.decode(response.getBody(), QueryCorrectionOffsetBody.class);
-                return body.getCorrectionOffsets();
+            case ResponseCode.SUCCESS: {
+                if (response.getBody() != null) {
+                    QueryCorrectionOffsetBody body =
+                            QueryCorrectionOffsetBody.decode(response.getBody(), QueryCorrectionOffsetBody.class);
+                    return body.getCorrectionOffsets();
+                }
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -1987,31 +1966,31 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                TopicList topicList = TopicList.decode(response.getBody(), TopicList.class);
-                if (!UtilAll.isBlank(projectGroupPrefix)) {
-                    HashSet<String> newTopicSet = new HashSet<String>();
-                    for (String topic : topicList.getTopicList()) {
-                        newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    TopicList topicList = TopicList.decode(response.getBody(), TopicList.class);
+                    if (!UtilAll.isBlank(projectGroupPrefix)) {
+                        HashSet<String> newTopicSet = new HashSet<String>();
+                        for (String topic : topicList.getTopicList()) {
+                            newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+                        }
+                        topicList.setTopicList(newTopicSet);
                     }
-                    topicList.setTopicList(newTopicSet);
-                }
-                if (!containRetry) {
-                    Iterator<String> it = topicList.getTopicList().iterator();
-                    while (it.hasNext()) {
-                        String topic = it.next();
-                        if (topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX))
-                            it.remove();
+                    if (!containRetry) {
+                        Iterator<String> it = topicList.getTopicList().iterator();
+                        while (it.hasNext()) {
+                            String topic = it.next();
+                            if (topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX))
+                                it.remove();
+                        }
                     }
-                }
 
-                return topicList;
+                    return topicList;
+                }
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -2025,30 +2004,30 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                TopicList topicList = TopicList.decode(response.getBody(), TopicList.class);
-                if (!UtilAll.isBlank(projectGroupPrefix)) {
-                    HashSet<String> newTopicSet = new HashSet<String>();
-                    for (String topic : topicList.getTopicList()) {
-                        newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    TopicList topicList = TopicList.decode(response.getBody(), TopicList.class);
+                    if (!UtilAll.isBlank(projectGroupPrefix)) {
+                        HashSet<String> newTopicSet = new HashSet<String>();
+                        for (String topic : topicList.getTopicList()) {
+                            newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+                        }
+                        topicList.setTopicList(newTopicSet);
                     }
-                    topicList.setTopicList(newTopicSet);
-                }
-                if (!containRetry) {
-                    Iterator<String> it = topicList.getTopicList().iterator();
-                    while (it.hasNext()) {
-                        String topic = it.next();
-                        if (topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX))
-                            it.remove();
+                    if (!containRetry) {
+                        Iterator<String> it = topicList.getTopicList().iterator();
+                        while (it.hasNext()) {
+                            String topic = it.next();
+                            if (topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX))
+                                it.remove();
+                        }
                     }
+                    return topicList;
                 }
-                return topicList;
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -2062,37 +2041,37 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                TopicList topicList = TopicList.decode(response.getBody(), TopicList.class);
-                if (!UtilAll.isBlank(projectGroupPrefix)) {
-                    HashSet<String> newTopicSet = new HashSet<String>();
-                    for (String topic : topicList.getTopicList()) {
-                        newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    TopicList topicList = TopicList.decode(response.getBody(), TopicList.class);
+                    if (!UtilAll.isBlank(projectGroupPrefix)) {
+                        HashSet<String> newTopicSet = new HashSet<String>();
+                        for (String topic : topicList.getTopicList()) {
+                            newTopicSet.add(VirtualEnvUtil.clearProjectGroup(topic, projectGroupPrefix));
+                        }
+                        topicList.setTopicList(newTopicSet);
                     }
-                    topicList.setTopicList(newTopicSet);
-                }
-                if (!containRetry) {
-                    Iterator<String> it = topicList.getTopicList().iterator();
-                    while (it.hasNext()) {
-                        String topic = it.next();
-                        if (topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX))
-                            it.remove();
+                    if (!containRetry) {
+                        Iterator<String> it = topicList.getTopicList().iterator();
+                        while (it.hasNext()) {
+                            String topic = it.next();
+                            if (topic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX))
+                                it.remove();
+                        }
                     }
+                    return topicList;
                 }
-                return topicList;
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
     }
 
     public void cloneGroupOffset(final String addr, final String srcGroup, final String destGroup,
-            final String topic, final boolean isOffline, final long timeoutMillis) throws RemotingException,
+                                 final String topic, final boolean isOffline, final long timeoutMillis) throws RemotingException,
             MQClientException, InterruptedException {
         CloneGroupOffsetRequestHeader requestHeader = new CloneGroupOffsetRequestHeader();
         requestHeader.setSrcGroup(srcGroup);
@@ -2104,11 +2083,11 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            return;
-        }
-        default:
-            break;
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());
@@ -2116,7 +2095,7 @@ public class MQClientAPIImpl {
 
 
     public BrokerStatsData ViewBrokerStatsData(String brokerAddr, String statsName, String statsKey,
-            long timeoutMillis) throws MQClientException, RemotingConnectException,
+                                               long timeoutMillis) throws MQClientException, RemotingConnectException,
             RemotingSendRequestException, RemotingTimeoutException, InterruptedException {
         ViewBrokerStatsDataRequestHeader requestHeader = new ViewBrokerStatsDataRequestHeader();
         requestHeader.setStatsName(statsName);
@@ -2128,14 +2107,14 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(brokerAddr, request, timeoutMillis);
         assert response != null;
         switch (response.getCode()) {
-        case ResponseCode.SUCCESS: {
-            byte[] body = response.getBody();
-            if (body != null) {
-                return BrokerStatsData.decode(body, BrokerStatsData.class);
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    return BrokerStatsData.decode(body, BrokerStatsData.class);
+                }
             }
-        }
-        default:
-            break;
+            default:
+                break;
         }
 
         throw new MQClientException(response.getCode(), response.getRemark());

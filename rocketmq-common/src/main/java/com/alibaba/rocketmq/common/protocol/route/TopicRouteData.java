@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Topic路由数据，从Name Server获取
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  */
 public class TopicRouteData extends RemotingSerializable {
@@ -99,26 +99,22 @@ public class TopicRouteData extends RemotingSerializable {
         if (brokerDatas == null) {
             if (other.brokerDatas != null)
                 return false;
-        }
-        else if (!brokerDatas.equals(other.brokerDatas))
+        } else if (!brokerDatas.equals(other.brokerDatas))
             return false;
         if (orderTopicConf == null) {
             if (other.orderTopicConf != null)
                 return false;
-        }
-        else if (!orderTopicConf.equals(other.orderTopicConf))
+        } else if (!orderTopicConf.equals(other.orderTopicConf))
             return false;
         if (queueDatas == null) {
             if (other.queueDatas != null)
                 return false;
-        }
-        else if (!queueDatas.equals(other.queueDatas))
+        } else if (!queueDatas.equals(other.queueDatas))
             return false;
         if (filterServerTable == null) {
             if (other.filterServerTable != null)
                 return false;
-        }
-        else if (!filterServerTable.equals(other.filterServerTable))
+        } else if (!filterServerTable.equals(other.filterServerTable))
             return false;
         return true;
     }

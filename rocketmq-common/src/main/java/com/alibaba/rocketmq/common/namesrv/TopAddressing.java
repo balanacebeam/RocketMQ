@@ -16,7 +16,7 @@ import java.io.IOException;
 
 /**
  * 寻址服务
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @author manhong.yqd<jodie.yqd@gmail.com>
  */
@@ -59,16 +59,13 @@ public class TopAddressing {
                 String responseStr = result.content;
                 if (responseStr != null) {
                     return clearNewLine(responseStr);
-                }
-                else {
+                } else {
                     log.error("fetch nameserver address is null");
                 }
-            }
-            else {
+            } else {
                 log.error("fetch nameserver address failed. statusCode={}", result.code);
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             if (verbose) {
                 log.error("fetchZKAddr exception", e);
             }

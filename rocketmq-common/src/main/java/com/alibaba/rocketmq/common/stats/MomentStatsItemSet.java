@@ -53,16 +53,15 @@ public class MomentStatsItemSet {
     public void init() {
         // 分钟整点执行
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    printAtMinutes();
-                }
-                catch (Throwable e) {
-                }
-            }
-        }, Math.abs(UtilAll.computNextMinutesTimeMillis() - System.currentTimeMillis()), //
-            1000 * 60 * 5, TimeUnit.MILLISECONDS);
+                                                              @Override
+                                                              public void run() {
+                                                                  try {
+                                                                      printAtMinutes();
+                                                                  } catch (Throwable e) {
+                                                                  }
+                                                              }
+                                                          }, Math.abs(UtilAll.computNextMinutesTimeMillis() - System.currentTimeMillis()), //
+                1000 * 60 * 5, TimeUnit.MILLISECONDS);
     }
 
 

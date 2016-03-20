@@ -13,14 +13,6 @@ public class ShardContextHolder {
 
     private static final ThreadLocal<String> SHARD_HOLDER = new ThreadLocal<String>();
 
-    public static void setShardDataSourceName(String dataSourceName) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("setShardDataSourceName : " + dataSourceName);
-        }
-
-        SHARD_HOLDER.set(dataSourceName);
-    }
-
     public static String getShardDataSourceName() {
         String shardDataSourceName = SHARD_HOLDER.get();
 
@@ -29,6 +21,14 @@ public class ShardContextHolder {
         }
 
         return shardDataSourceName;
+    }
+
+    public static void setShardDataSourceName(String dataSourceName) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("setShardDataSourceName : " + dataSourceName);
+        }
+
+        SHARD_HOLDER.set(dataSourceName);
     }
 
     public static void clearShardDataSourceName() {

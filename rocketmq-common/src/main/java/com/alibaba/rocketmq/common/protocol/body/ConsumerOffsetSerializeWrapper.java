@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Consumer消费进度，序列化包装
- * 
+ *
  * @author manhong.yqd<manhong.yqd@taobao.com>
  * @since 2013-8-19
  */

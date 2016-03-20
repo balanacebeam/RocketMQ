@@ -26,15 +26,15 @@ public class PullScheduleService {
                     PullResult pullResult = consumer.pull(mq, "*", offset, 32);
                     System.out.println(offset + "\t" + mq + "\t" + pullResult);
                     switch (pullResult.getPullStatus()) {
-                    case FOUND:
-                        break;
-                    case NO_MATCHED_MSG:
-                        break;
-                    case NO_NEW_MSG:
-                    case OFFSET_ILLEGAL:
-                        break;
-                    default:
-                        break;
+                        case FOUND:
+                            break;
+                        case NO_MATCHED_MSG:
+                            break;
+                        case NO_NEW_MSG:
+                        case OFFSET_ILLEGAL:
+                            break;
+                        default:
+                            break;
                     }
 
                     // 存储Offset，客户端每隔5s会定时刷新到Broker
@@ -42,8 +42,7 @@ public class PullScheduleService {
 
                     // 设置再过100ms后重新拉取
                     context.setPullNextDelayTimeMillis(100);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }

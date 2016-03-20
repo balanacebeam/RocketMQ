@@ -34,166 +34,6 @@ public class ConsumerRunningInfo extends RemotingSerializable {
     // jstack的结果
     private String jstack;
 
-
-    public Properties getProperties() {
-        return properties;
-    }
-
-
-    public void setProperties(Properties properties) {
-        this.properties = properties;
-    }
-
-
-    public TreeMap<MessageQueue, ProcessQueueInfo> getMqTable() {
-        return mqTable;
-    }
-
-
-    public void setMqTable(TreeMap<MessageQueue, ProcessQueueInfo> mqTable) {
-        this.mqTable = mqTable;
-    }
-
-
-    public TreeMap<String, ConsumeStatus> getStatusTable() {
-        return statusTable;
-    }
-
-
-    public void setStatusTable(TreeMap<String, ConsumeStatus> statusTable) {
-        this.statusTable = statusTable;
-    }
-
-
-    public TreeSet<SubscriptionData> getSubscriptionSet() {
-        return subscriptionSet;
-    }
-
-
-    public void setSubscriptionSet(TreeSet<SubscriptionData> subscriptionSet) {
-        this.subscriptionSet = subscriptionSet;
-    }
-
-
-    public String formatString() {
-        StringBuilder sb = new StringBuilder();
-
-        // 1
-        {
-            sb.append("#Consumer Properties#\n");
-            Iterator<Entry<Object, Object>> it = this.properties.entrySet().iterator();
-            while (it.hasNext()) {
-                Entry<Object, Object> next = it.next();
-                String item =
-                        String.format("%-40s: %s\n", next.getKey().toString(), next.getValue().toString());
-                sb.append(item);
-            }
-        }
-
-        // 2
-        {
-            sb.append("\n\n#Consumer Subscription#\n");
-
-            Iterator<SubscriptionData> it = this.subscriptionSet.iterator();
-            int i = 0;
-            while (it.hasNext()) {
-                SubscriptionData next = it.next();
-                String item = String.format("%03d Topic: %-40s ClassFilter: %-8s SubExpression: %s\n", //
-                    ++i,//
-                    next.getTopic(),//
-                    next.isClassFilterMode(),//
-                    next.getSubString());
-
-                sb.append(item);
-            }
-        }
-
-        // 3
-        {
-            sb.append("\n\n#Consumer Offset#\n");
-            sb.append(String.format("%-32s  %-32s  %-4s  %-20s\n",//
-                "#Topic",//
-                "#Broker Name",//
-                "#QID",//
-                "#Consumer Offset"//
-            ));
-
-            Iterator<Entry<MessageQueue, ProcessQueueInfo>> it = this.mqTable.entrySet().iterator();
-            while (it.hasNext()) {
-                Entry<MessageQueue, ProcessQueueInfo> next = it.next();
-                String item = String.format("%-32s  %-32s  %-4d  %-20d\n",//
-                    next.getKey().getTopic(),//
-                    next.getKey().getBrokerName(),//
-                    next.getKey().getQueueId(),//
-                    next.getValue().getCommitOffset());
-
-                sb.append(item);
-            }
-        }
-
-        // 4
-        {
-            sb.append("\n\n#Consumer MQ Detail#\n");
-            sb.append(String.format("%-32s  %-32s  %-4s  %-20s\n",//
-                "#Topic",//
-                "#Broker Name",//
-                "#QID",//
-                "#ProcessQueueInfo"//
-            ));
-
-            Iterator<Entry<MessageQueue, ProcessQueueInfo>> it = this.mqTable.entrySet().iterator();
-            while (it.hasNext()) {
-                Entry<MessageQueue, ProcessQueueInfo> next = it.next();
-                String item = String.format("%-32s  %-32s  %-4d  %s\n",//
-                    next.getKey().getTopic(),//
-                    next.getKey().getBrokerName(),//
-                    next.getKey().getQueueId(),//
-                    next.getValue().toString());
-
-                sb.append(item);
-            }
-        }
-
-        // 5
-        {
-            sb.append("\n\n#Consumer RT&TPS#\n");
-            sb.append(String.format("%-32s  %14s %14s %14s %14s %18s %25s\n",//
-                "#Topic",//
-                "#Pull RT",//
-                "#Pull TPS",//
-                "#Consume RT",//
-                "#ConsumeOK TPS",//
-                "#ConsumeFailed TPS",//
-                "#ConsumeFailedMsgsInHour"//
-            ));
-
-            Iterator<Entry<String, ConsumeStatus>> it = this.statusTable.entrySet().iterator();
-            while (it.hasNext()) {
-                Entry<String, ConsumeStatus> next = it.next();
-                String item = String.format("%-32s  %14.2f %14.2f %14.2f %14.2f %18.2f %25d\n",//
-                    next.getKey(),//
-                    next.getValue().getPullRT(),//
-                    next.getValue().getPullTPS(),//
-                    next.getValue().getConsumeRT(),//
-                    next.getValue().getConsumeOKTPS(),//
-                    next.getValue().getConsumeFailedTPS(),//
-                    next.getValue().getConsumeFailedMsgs()//
-                    );
-
-                sb.append(item);
-            }
-        }
-
-        // 6
-        if (this.jstack != null) {
-            sb.append("\n\n#Consumer jstack#\n");
-            sb.append(this.jstack);
-        }
-
-        return sb.toString();
-    }
-
-
     /**
      * 分析订阅关系是否相同
      */
@@ -245,11 +85,9 @@ public class ConsumerRunningInfo extends RemotingSerializable {
         return true;
     }
 
-
     public static boolean analyzeRebalance(final TreeMap<String/* clientId */, ConsumerRunningInfo> criTable) {
         return true;
     }
-
 
     public static String analyzeProcessQueue(final String clientId, ConsumerRunningInfo info) {
         StringBuilder sb = new StringBuilder();
@@ -277,18 +115,18 @@ public class ConsumerRunningInfo extends RemotingSerializable {
                     // 没锁住
                     if (!pq.isLocked()) {
                         sb.append(String.format("%s %s can't lock for a while, %dms\n", //
-                            clientId,//
-                            mq,//
-                            System.currentTimeMillis() - pq.getLastLockTimestamp()));
+                                clientId,//
+                                mq,//
+                                System.currentTimeMillis() - pq.getLastLockTimestamp()));
                     }
                     // 锁住
                     else {
                         // Rebalance已经丢弃此队列，但是没有正常释放Lock
                         if (pq.isDroped() && (pq.getTryUnlockTimes() > 0)) {
                             sb.append(String.format("%s %s unlock %d times, still failed\n",//
-                                clientId,//
-                                mq,//
-                                pq.getTryUnlockTimes()));
+                                    clientId,//
+                                    mq,//
+                                    pq.getTryUnlockTimes()));
                         }
                     }
 
@@ -300,9 +138,9 @@ public class ConsumerRunningInfo extends RemotingSerializable {
                     // 在有消息的情况下，超过1分钟没再消费消息了
                     if (diff > (1000 * 60) && pq.getCachedMsgCount() > 0) {
                         sb.append(String.format("%s %s can't consume for a while, maybe blocked, %dms\n",//
-                            clientId,//
-                            mq, //
-                            diff));
+                                clientId,//
+                                mq, //
+                                diff));
                     }
                 }
             }
@@ -311,6 +149,155 @@ public class ConsumerRunningInfo extends RemotingSerializable {
         return sb.toString();
     }
 
+    public Properties getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Properties properties) {
+        this.properties = properties;
+    }
+
+    public TreeMap<MessageQueue, ProcessQueueInfo> getMqTable() {
+        return mqTable;
+    }
+
+    public void setMqTable(TreeMap<MessageQueue, ProcessQueueInfo> mqTable) {
+        this.mqTable = mqTable;
+    }
+
+    public TreeMap<String, ConsumeStatus> getStatusTable() {
+        return statusTable;
+    }
+
+    public void setStatusTable(TreeMap<String, ConsumeStatus> statusTable) {
+        this.statusTable = statusTable;
+    }
+
+    public TreeSet<SubscriptionData> getSubscriptionSet() {
+        return subscriptionSet;
+    }
+
+    public void setSubscriptionSet(TreeSet<SubscriptionData> subscriptionSet) {
+        this.subscriptionSet = subscriptionSet;
+    }
+
+    public String formatString() {
+        StringBuilder sb = new StringBuilder();
+
+        // 1
+        {
+            sb.append("#Consumer Properties#\n");
+            Iterator<Entry<Object, Object>> it = this.properties.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<Object, Object> next = it.next();
+                String item =
+                        String.format("%-40s: %s\n", next.getKey().toString(), next.getValue().toString());
+                sb.append(item);
+            }
+        }
+
+        // 2
+        {
+            sb.append("\n\n#Consumer Subscription#\n");
+
+            Iterator<SubscriptionData> it = this.subscriptionSet.iterator();
+            int i = 0;
+            while (it.hasNext()) {
+                SubscriptionData next = it.next();
+                String item = String.format("%03d Topic: %-40s ClassFilter: %-8s SubExpression: %s\n", //
+                        ++i,//
+                        next.getTopic(),//
+                        next.isClassFilterMode(),//
+                        next.getSubString());
+
+                sb.append(item);
+            }
+        }
+
+        // 3
+        {
+            sb.append("\n\n#Consumer Offset#\n");
+            sb.append(String.format("%-32s  %-32s  %-4s  %-20s\n",//
+                    "#Topic",//
+                    "#Broker Name",//
+                    "#QID",//
+                    "#Consumer Offset"//
+            ));
+
+            Iterator<Entry<MessageQueue, ProcessQueueInfo>> it = this.mqTable.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<MessageQueue, ProcessQueueInfo> next = it.next();
+                String item = String.format("%-32s  %-32s  %-4d  %-20d\n",//
+                        next.getKey().getTopic(),//
+                        next.getKey().getBrokerName(),//
+                        next.getKey().getQueueId(),//
+                        next.getValue().getCommitOffset());
+
+                sb.append(item);
+            }
+        }
+
+        // 4
+        {
+            sb.append("\n\n#Consumer MQ Detail#\n");
+            sb.append(String.format("%-32s  %-32s  %-4s  %-20s\n",//
+                    "#Topic",//
+                    "#Broker Name",//
+                    "#QID",//
+                    "#ProcessQueueInfo"//
+            ));
+
+            Iterator<Entry<MessageQueue, ProcessQueueInfo>> it = this.mqTable.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<MessageQueue, ProcessQueueInfo> next = it.next();
+                String item = String.format("%-32s  %-32s  %-4d  %s\n",//
+                        next.getKey().getTopic(),//
+                        next.getKey().getBrokerName(),//
+                        next.getKey().getQueueId(),//
+                        next.getValue().toString());
+
+                sb.append(item);
+            }
+        }
+
+        // 5
+        {
+            sb.append("\n\n#Consumer RT&TPS#\n");
+            sb.append(String.format("%-32s  %14s %14s %14s %14s %18s %25s\n",//
+                    "#Topic",//
+                    "#Pull RT",//
+                    "#Pull TPS",//
+                    "#Consume RT",//
+                    "#ConsumeOK TPS",//
+                    "#ConsumeFailed TPS",//
+                    "#ConsumeFailedMsgsInHour"//
+            ));
+
+            Iterator<Entry<String, ConsumeStatus>> it = this.statusTable.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<String, ConsumeStatus> next = it.next();
+                String item = String.format("%-32s  %14.2f %14.2f %14.2f %14.2f %18.2f %25d\n",//
+                        next.getKey(),//
+                        next.getValue().getPullRT(),//
+                        next.getValue().getPullTPS(),//
+                        next.getValue().getConsumeRT(),//
+                        next.getValue().getConsumeOKTPS(),//
+                        next.getValue().getConsumeFailedTPS(),//
+                        next.getValue().getConsumeFailedMsgs()//
+                );
+
+                sb.append(item);
+            }
+        }
+
+        // 6
+        if (this.jstack != null) {
+            sb.append("\n\n#Consumer jstack#\n");
+            sb.append(this.jstack);
+        }
+
+        return sb.toString();
+    }
 
     public String getJstack() {
         return jstack;

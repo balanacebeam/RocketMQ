@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 
 
 public class ScheduleMessageTest {
+    private static final String StoreMessage = "Once, there was a chance for me!";
     // 队列个数
     private static int QUEUE_TOTAL = 100;
     // 发往哪个队列
@@ -30,8 +31,15 @@ public class ScheduleMessageTest {
     // 消息体
     private static byte[] MessageBody;
 
-    private static final String StoreMessage = "Once, there was a chance for me!";
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        StoreHost = new InetSocketAddress(InetAddress.getLocalHost(), 8123);
+        BornHost = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0);
+    }
 
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+    }
 
     public MessageExtBrokerInner buildMessage() {
         MessageExtBrokerInner msg = new MessageExtBrokerInner();
@@ -48,19 +56,6 @@ public class ScheduleMessageTest {
 
         return msg;
     }
-
-
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        StoreHost = new InetSocketAddress(InetAddress.getLocalHost(), 8123);
-        BornHost = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0);
-    }
-
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-    }
-
 
     @Test
     public void test_delay_message() throws Exception {
@@ -106,8 +101,7 @@ public class ScheduleMessageTest {
                 assertTrue(result != null);
                 result.release();
                 System.out.println("read " + i + " OK");
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 

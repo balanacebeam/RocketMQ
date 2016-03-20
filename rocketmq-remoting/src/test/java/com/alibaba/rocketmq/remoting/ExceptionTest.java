@@ -55,17 +55,13 @@ public class ExceptionTest {
         RemotingCommand response = null;
         try {
             response = client.invokeSync("localhost:8888", request, 1000 * 3);
-        }
-        catch (RemotingConnectException e) {
+        } catch (RemotingConnectException e) {
             e.printStackTrace();
-        }
-        catch (RemotingSendRequestException e) {
+        } catch (RemotingSendRequestException e) {
             e.printStackTrace();
-        }
-        catch (RemotingTimeoutException e) {
+        } catch (RemotingTimeoutException e) {
             e.printStackTrace();
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         System.out.println("invoke result = " + response);

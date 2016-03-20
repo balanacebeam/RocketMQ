@@ -17,16 +17,50 @@ import java.util.Map;
 
 public abstract class AbstractJdbcTransactionStore implements TransactionStore {
 
-    protected static final Logger log = LoggerFactory.getLogger(LoggerName.TransactionLoggerName);
-
     public static final String ID = "id";
-
+    protected static final Logger log = LoggerFactory.getLogger(LoggerName.TransactionLoggerName);
     protected final Config config;
 
     private DataSource dataSource;
 
     public AbstractJdbcTransactionStore(Config config) {
         this.config = config;
+    }
+
+    private static void closeResultSet(ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                log.debug("Could not close JDBC ResultSet", e);
+            } catch (Throwable e) {
+                log.debug("Unexpected exception on closing JDBC ResultSet", e);
+            }
+        }
+    }
+
+    private static void closeStatement(Statement stmt) {
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                log.debug("Could not close JDBC Statement", e);
+            } catch (Throwable e) {
+                log.debug("Unexpected exception on closing JDBC Statement", e);
+            }
+        }
+    }
+
+    private static void closeConnection(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                log.debug("Could not close JDBC Connection", e);
+            } catch (Throwable e) {
+                log.debug("Unexpected exception on closing JDBC Connection", e);
+            }
+        }
     }
 
     @Override
@@ -131,7 +165,6 @@ public abstract class AbstractJdbcTransactionStore implements TransactionStore {
         }
     }
 
-
     @Override
     public boolean put(List<TransactionRecord> transactionRecordList) {
         if (CollectionUtils.isEmpty(transactionRecordList)) {
@@ -167,47 +200,11 @@ public abstract class AbstractJdbcTransactionStore implements TransactionStore {
         }
     }
 
-    private static void closeResultSet(ResultSet rs) {
-        if (rs != null) {
-            try {
-                rs.close();
-            } catch (SQLException e) {
-                log.debug("Could not close JDBC ResultSet", e);
-            } catch (Throwable e) {
-                log.debug("Unexpected exception on closing JDBC ResultSet", e);
-            }
-        }
-    }
-
-    private static void closeStatement(Statement stmt) {
-        if (stmt != null) {
-            try {
-                stmt.close();
-            } catch (SQLException e) {
-                log.debug("Could not close JDBC Statement", e);
-            } catch (Throwable e) {
-                log.debug("Unexpected exception on closing JDBC Statement", e);
-            }
-        }
-    }
-
-    private static void closeConnection(Connection conn) {
-        if (conn != null) {
-            try {
-                conn.close();
-            } catch (SQLException e) {
-                log.debug("Could not close JDBC Connection", e);
-            } catch (Throwable e) {
-                log.debug("Unexpected exception on closing JDBC Connection", e);
-            }
-        }
+    public DataSource getDataSource() {
+        return dataSource;
     }
 
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
-    }
-
-    public DataSource getDataSource() {
-        return dataSource;
     }
 }

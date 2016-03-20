@@ -8,7 +8,7 @@ import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
 
 /**
  * 为减少网络传输数量准备
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  */
 public class SendMessageRequestHeaderV2 implements CommandCustomHeader {
@@ -35,12 +35,6 @@ public class SendMessageRequestHeaderV2 implements CommandCustomHeader {
     @CFNullable
     private boolean k;// unitMode = false;
 
-
-    @Override
-    public void checkFields() throws RemotingCommandException {
-    }
-
-
     public static SendMessageRequestHeader createSendMessageRequestHeaderV1(
             final SendMessageRequestHeaderV2 v2) {
         SendMessageRequestHeader v1 = new SendMessageRequestHeader();
@@ -57,7 +51,6 @@ public class SendMessageRequestHeaderV2 implements CommandCustomHeader {
         v1.setUnitMode(v2.k);
         return v1;
     }
-
 
     public static SendMessageRequestHeaderV2 createSendMessageRequestHeaderV2(
             final SendMessageRequestHeader v1) {
@@ -76,6 +69,9 @@ public class SendMessageRequestHeaderV2 implements CommandCustomHeader {
         return v2;
     }
 
+    @Override
+    public void checkFields() throws RemotingCommandException {
+    }
 
     public String getA() {
         return a;

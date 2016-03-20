@@ -26,10 +26,9 @@ public class HttpFilterClassFetchMethod implements FilterClassFetchMethod {
             if (200 == result.code) {
                 return result.content;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error(
-                String.format("call <%s> exception, Topic: %s Group: %s", thisUrl, topic, consumerGroup), e);
+                    String.format("call <%s> exception, Topic: %s Group: %s", thisUrl, topic, consumerGroup), e);
         }
 
         return null;

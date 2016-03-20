@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import java.util.Set;
 
 /**
  * 删除订阅组配置命令
- * 
+ *
  * @author manhong.yqd<manhong.yqd@alibaba-inc.com>
  * @since 2013-8-22
  */
@@ -80,11 +80,10 @@ public class DeleteSubscriptionGroupCommand implements SubCommand {
 
                 adminExt.deleteSubscriptionGroup(addr, groupName);
                 System.out.printf("delete subscription group [%s] from broker [%s] success.\n", groupName,
-                    addr);
+                        addr);
 
                 return;
-            }
-            else if (commandLine.hasOption('c')) {
+            } else if (commandLine.hasOption('c')) {
                 String clusterName = commandLine.getOptionValue('c').trim();
                 adminExt.start();
 
@@ -92,8 +91,8 @@ public class DeleteSubscriptionGroupCommand implements SubCommand {
                 for (String master : masterSet) {
                     adminExt.deleteSubscriptionGroup(master, groupName);
                     System.out.printf(
-                        "delete subscription group [%s] from broker [%s] in cluster [%s] success.\n",
-                        groupName, master, clusterName);
+                            "delete subscription group [%s] from broker [%s] in cluster [%s] success.\n",
+                            groupName, master, clusterName);
                 }
 
                 // 删除%RETRY%打头的Topic
@@ -102,18 +101,15 @@ public class DeleteSubscriptionGroupCommand implements SubCommand {
                             + groupName);
                     DeleteTopicSubCommand.deleteTopic(adminExt, clusterName, MixAll.DLQ_GROUP_TOPIC_PREFIX
                             + groupName);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                 }
                 return;
             }
 
             ServerUtil.printCommandLineHelp("mqadmin " + this.commandName(), options);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             adminExt.shutdown();
         }
     }

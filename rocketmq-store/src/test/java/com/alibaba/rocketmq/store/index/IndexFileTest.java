@@ -34,8 +34,7 @@ public class IndexFileTest {
 
             // 删除文件
             indexFile.destroy(0);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assertTrue(false);
         }
@@ -68,8 +67,7 @@ public class IndexFileTest {
 
             // 删除文件
             indexFile.destroy(0);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assertTrue(false);
         }

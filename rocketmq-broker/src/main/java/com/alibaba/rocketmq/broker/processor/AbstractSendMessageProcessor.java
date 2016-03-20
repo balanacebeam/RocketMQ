@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ import java.util.Random;
 
 /**
  * 澶勭悊瀹㈡埛绔彂閫佹秷鎭殑璇锋眰
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-26
  */
@@ -63,66 +63,67 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
     protected final BrokerController brokerController;
     protected final Random random = new Random(System.currentTimeMillis());
     protected final SocketAddress storeHost;
+    /**
+     * 鍙戦�佹瘡鏉℃秷鎭細鍥炶皟
+     */
+    private List<SendMessageHook> sendMessageHookList;
 
 
     public AbstractSendMessageProcessor(final BrokerController brokerController) {
         this.brokerController = brokerController;
         this.storeHost =
                 new InetSocketAddress(brokerController.getBrokerConfig().getBrokerIP1(), brokerController
-                    .getNettyServerConfig().getListenPort());
+                        .getNettyServerConfig().getListenPort());
     }
 
+    protected SendMessageContext buildMsgContext(ChannelHandlerContext ctx, SendMessageRequestHeader requestHeader) {
+        if (!this.hasSendMessageHook()) {
+            return null;
+        }
+        SendMessageContext mqtraceContext;
+        mqtraceContext = new SendMessageContext();
+        mqtraceContext.setProducerGroup(requestHeader.getProducerGroup());
+        mqtraceContext.setTopic(requestHeader.getTopic());
+        mqtraceContext.setMsgProps(requestHeader.getProperties());
+        mqtraceContext.setBornHost(RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
+        mqtraceContext.setBrokerAddr(this.brokerController.getBrokerAddr());
+        return mqtraceContext;
+    }
 
-   
-
-	protected SendMessageContext buildMsgContext(ChannelHandlerContext ctx, SendMessageRequestHeader requestHeader) {
-		if (!this.hasSendMessageHook()) {
-			return null;
-		}
-		SendMessageContext mqtraceContext;
-		mqtraceContext = new SendMessageContext();
-		mqtraceContext.setProducerGroup(requestHeader.getProducerGroup());
-		mqtraceContext.setTopic(requestHeader.getTopic());
-		mqtraceContext.setMsgProps(requestHeader.getProperties());
-		mqtraceContext.setBornHost(RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
-		mqtraceContext.setBrokerAddr(this.brokerController.getBrokerAddr());
-		return mqtraceContext;
-	}
     protected SendMessageRequestHeader parseRequestHeader(RemotingCommand request) throws RemotingCommandException {
 
         SendMessageRequestHeaderV2 requestHeaderV2 = null;
         SendMessageRequestHeader requestHeader = null;
         switch (request.getCode()) {
-        case RequestCode.SEND_MESSAGE_V2:
-            requestHeaderV2 =
-                    (SendMessageRequestHeaderV2) request
-                        .decodeCommandCustomHeader(SendMessageRequestHeaderV2.class);
-        case RequestCode.SEND_MESSAGE:
-            if (null == requestHeaderV2) {
-                requestHeader =
-                        (SendMessageRequestHeader) request
-                            .decodeCommandCustomHeader(SendMessageRequestHeader.class);
-            }
-            else {
-                requestHeader = SendMessageRequestHeaderV2.createSendMessageRequestHeaderV1(requestHeaderV2);
-            }
-        default:
-            break;
+            case RequestCode.SEND_MESSAGE_V2:
+                requestHeaderV2 =
+                        (SendMessageRequestHeaderV2) request
+                                .decodeCommandCustomHeader(SendMessageRequestHeaderV2.class);
+            case RequestCode.SEND_MESSAGE:
+                if (null == requestHeaderV2) {
+                    requestHeader =
+                            (SendMessageRequestHeader) request
+                                    .decodeCommandCustomHeader(SendMessageRequestHeader.class);
+                } else {
+                    requestHeader = SendMessageRequestHeaderV2.createSendMessageRequestHeaderV1(requestHeaderV2);
+                }
+            default:
+                break;
         }
         return requestHeader;
-	}
+    }
 
     protected MessageExtBrokerInner buildInnerMsg(
-			final ChannelHandlerContext ctx,
-			final SendMessageRequestHeader requestHeader, final byte[] body,
-			TopicConfig topicConfig) {
-        int queueIdInt=requestHeader.getQueueId();
-		// 闅忔満鎸囧畾涓�涓槦鍒�
+            final ChannelHandlerContext ctx,
+            final SendMessageRequestHeader requestHeader, final byte[] body,
+            TopicConfig topicConfig) {
+        int queueIdInt = requestHeader.getQueueId();
+        // 闅忔満鎸囧畾涓�涓槦鍒�
         if (queueIdInt < 0) {
             queueIdInt = Math.abs(this.random.nextInt() % 99999999) % topicConfig.getWriteQueueNums();
         }
-		int sysFlag = requestHeader.getSysFlag();
-		
+        int sysFlag = requestHeader.getSysFlag();
+
         // 澶氭爣绛捐繃婊ら渶瑕佺疆浣�
         if (TopicFilterType.MULTI_TAG == topicConfig.getTopicFilterType()) {
             sysFlag |= MessageSysFlag.MultiTagsFlag;
@@ -133,10 +134,10 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
         msgInner.setBody(body);
         msgInner.setFlag(requestHeader.getFlag());
         MessageAccessor.setProperties(msgInner,
-            MessageDecoder.string2messageProperties(requestHeader.getProperties()));
+                MessageDecoder.string2messageProperties(requestHeader.getProperties()));
         msgInner.setPropertiesString(requestHeader.getProperties());
         msgInner.setTagsCode(MessageExtBrokerInner.tagsString2tagsCode(topicConfig.getTopicFilterType(),
-            msgInner.getTags()));
+                msgInner.getTags()));
 
         msgInner.setQueueId(queueIdInt);
         msgInner.setSysFlag(sysFlag);
@@ -144,11 +145,12 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
         msgInner.setBornHost(ctx.channel().remoteAddress());
         msgInner.setStoreHost(this.getStoreHost());
         msgInner.setReconsumeTimes(requestHeader.getReconsumeTimes() == null ? 0 : requestHeader
-            .getReconsumeTimes());
-		return msgInner;
-	}
-    protected RemotingCommand msgContentCheck(final ChannelHandlerContext ctx,final SendMessageRequestHeader requestHeader,RemotingCommand request,
-			final RemotingCommand response) {
+                .getReconsumeTimes());
+        return msgInner;
+    }
+
+    protected RemotingCommand msgContentCheck(final ChannelHandlerContext ctx, final SendMessageRequestHeader requestHeader, RemotingCommand request,
+                                              final RemotingCommand response) {
         // message topic长度校验
         if (requestHeader.getTopic().length() > Byte.MAX_VALUE) {
             log.warn("putMessage message topic length too long " + requestHeader.getTopic().length());
@@ -170,9 +172,9 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
         return response;
     }
 
-	protected RemotingCommand msgCheck(final ChannelHandlerContext ctx,final SendMessageRequestHeader requestHeader,
-			final RemotingCommand response) {
-		// 妫�鏌roker鏉冮檺, 椤哄簭娑堟伅绂佸啓锛涢潪椤哄簭娑堟伅閫氳繃 nameserver 閫氱煡瀹㈡埛绔墧闄ょ鍐欏垎鍖�
+    protected RemotingCommand msgCheck(final ChannelHandlerContext ctx, final SendMessageRequestHeader requestHeader,
+                                       final RemotingCommand response) {
+        // 妫�鏌roker鏉冮檺, 椤哄簭娑堟伅绂佸啓锛涢潪椤哄簭娑堟伅閫氳繃 nameserver 閫氱煡瀹㈡埛绔墧闄ょ鍐欏垎鍖�
         if (!PermName.isWriteable(this.brokerController.getBrokerConfig().getBrokerPermission())
                 && this.brokerController.getTopicConfigManager().isOrderTopic(requestHeader.getTopic())) {
             response.setCode(ResponseCode.NO_PERMISSION);
@@ -199,8 +201,7 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
             if (requestHeader.isUnitMode()) {
                 if (requestHeader.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
                     topicSysFlag = TopicSysFlag.buildSysFlag(false, true);
-                }
-                else {
+                } else {
                     topicSysFlag = TopicSysFlag.buildSysFlag(true, false);
                 }
             }
@@ -208,18 +209,18 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
             log.warn("the topic " + requestHeader.getTopic() + " not exist, producer: "
                     + ctx.channel().remoteAddress());
             topicConfig = this.brokerController.getTopicConfigManager().createTopicInSendMessageMethod(//
-                requestHeader.getTopic(), //
-                requestHeader.getDefaultTopic(), //
-                RemotingHelper.parseChannelRemoteAddr(ctx.channel()), //
-                requestHeader.getDefaultTopicQueueNums(), topicSysFlag);
+                    requestHeader.getTopic(), //
+                    requestHeader.getDefaultTopic(), //
+                    RemotingHelper.parseChannelRemoteAddr(ctx.channel()), //
+                    requestHeader.getDefaultTopicQueueNums(), topicSysFlag);
 
             // 灏濊瘯鐪嬩笅鏄惁鏄け璐ユ秷鎭彂鍥�
             if (null == topicConfig) {
                 if (requestHeader.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
                     topicConfig =
                             this.brokerController.getTopicConfigManager().createTopicInSendMessageBackMethod(
-                                requestHeader.getTopic(), 1, PermName.PERM_WRITE | PermName.PERM_READ,
-                                topicSysFlag);
+                                    requestHeader.getTopic(), 1, PermName.PERM_WRITE | PermName.PERM_READ,
+                                    topicSysFlag);
                 }
             }
 
@@ -247,9 +248,9 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
         int idValid = Math.max(topicConfig.getWriteQueueNums(), topicConfig.getReadQueueNums());
         if (queueIdInt >= idValid) {
             String errorInfo = String.format("request queueId[%d] is illagal, %s Producer: %s",//
-                queueIdInt,//
-                topicConfig.toString(),//
-                RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
+                    queueIdInt,//
+                    topicConfig.toString(),//
+                    RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
 
             log.warn(errorInfo);
             response.setCode(ResponseCode.SYSTEM_ERROR);
@@ -258,18 +259,11 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
             return response;
         }
         return response;
-	}
-
+    }
 
     public SocketAddress getStoreHost() {
         return storeHost;
     }
-
-    /**
-     * 鍙戦�佹瘡鏉℃秷鎭細鍥炶皟
-     */
-    private List<SendMessageHook> sendMessageHookList;
-
 
     public boolean hasSendMessageHook() {
         return sendMessageHookList != null && !this.sendMessageHookList.isEmpty();
@@ -279,26 +273,27 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
     public void registerSendMessageHook(List<SendMessageHook> sendMessageHookList) {
         this.sendMessageHookList = sendMessageHookList;
     }
-	protected void doResponse(ChannelHandlerContext ctx, RemotingCommand request, final RemotingCommand response) {
-		if (!request.isOnewayRPC()) {
-			try {
-				ctx.writeAndFlush(response);
-			} catch (Throwable e) {
-				log.error("SendMessageProcessor process request over, but response failed", e);
-				log.error(request.toString());
-				log.error(response.toString());
-			}
-		}
-	}
+
+    protected void doResponse(ChannelHandlerContext ctx, RemotingCommand request, final RemotingCommand response) {
+        if (!request.isOnewayRPC()) {
+            try {
+                ctx.writeAndFlush(response);
+            } catch (Throwable e) {
+                log.error("SendMessageProcessor process request over, but response failed", e);
+                log.error(request.toString());
+                log.error(response.toString());
+            }
+        }
+    }
 
     public void executeSendMessageHookBefore(final ChannelHandlerContext ctx, final RemotingCommand request,
-            SendMessageContext context) {
+                                             SendMessageContext context) {
         if (hasSendMessageHook()) {
             for (SendMessageHook hook : this.sendMessageHookList) {
                 try {
                     final SendMessageRequestHeader requestHeader =
                             (SendMessageRequestHeader) request
-                                .decodeCommandCustomHeader(SendMessageRequestHeader.class);
+                                    .decodeCommandCustomHeader(SendMessageRequestHeader.class);
                     context.setProducerGroup(requestHeader.getProducerGroup());
                     context.setTopic(requestHeader.getTopic());
                     context.setBodyLength(request.getBody().length);
@@ -308,8 +303,7 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
                     context.setQueueId(requestHeader.getQueueId());
                     hook.sendMessageBefore(context);
                     requestHeader.setProperties(context.getMsgProps());
-                }
-                catch (Throwable e) {
+                } catch (Throwable e) {
                 }
             }
         }
@@ -330,13 +324,12 @@ public abstract class AbstractSendMessageProcessor implements NettyRequestProces
                         context.setErrorMsg(response.getRemark());
                     }
                     hook.sendMessageAfter(context);
-                }
-                catch (Throwable e) {
-                	
+                } catch (Throwable e) {
+
                 }
             }
         }
     }
 
-   
+
 }

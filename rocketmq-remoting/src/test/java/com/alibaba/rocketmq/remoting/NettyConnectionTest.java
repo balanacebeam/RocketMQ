@@ -11,7 +11,7 @@ import org.junit.Test;
 
 /**
  * 连接超时测试
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-6
  */
@@ -34,8 +34,7 @@ public class NettyConnectionTest {
             try {
                 RemotingCommand request = RemotingCommand.createRequestCommand(0, null);
                 RemotingCommand response = client.invokeSync("localhost:8888", request, 1000 * 3);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

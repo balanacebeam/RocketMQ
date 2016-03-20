@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.util.Map;
 
 /**
  * 消息，Producer与Consumer使用
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-18
  */
@@ -101,7 +101,7 @@ public class Message implements Serializable {
     public void putUserProperty(final String name, final String value) {
         if (MessageConst.systemKeySet.contains(name)) {
             throw new RuntimeException(String.format(
-                "The Property<%s> is used by system, input another please", name));
+                    "The Property<%s> is used by system, input another please", name));
         }
         this.putProperty(name, value);
     }
@@ -145,12 +145,6 @@ public class Message implements Serializable {
         return this.getProperty(MessageConst.PROPERTY_KEYS);
     }
 
-
-    public void setKeys(String keys) {
-        this.putProperty(MessageConst.PROPERTY_KEYS, keys);
-    }
-
-
     public void setKeys(Collection<String> keys) {
         StringBuffer sb = new StringBuffer();
         for (String k : keys) {
@@ -161,6 +155,9 @@ public class Message implements Serializable {
         this.setKeys(sb.toString().trim());
     }
 
+    public void setKeys(String keys) {
+        this.putProperty(MessageConst.PROPERTY_KEYS, keys);
+    }
 
     public int getDelayTimeLevel() {
         String t = this.getProperty(MessageConst.PROPERTY_DELAY_TIME_LEVEL);
@@ -220,16 +217,13 @@ public class Message implements Serializable {
         this.properties = properties;
     }
 
-
-    public void setBuyerId(String buyerId) {
-        putProperty(MessageConst.PROPERTY_BUYER_ID, buyerId);
-    }
-
-
     public String getBuyerId() {
         return getProperty(MessageConst.PROPERTY_BUYER_ID);
     }
 
+    public void setBuyerId(String buyerId) {
+        putProperty(MessageConst.PROPERTY_BUYER_ID, buyerId);
+    }
 
     @Override
     public String toString() {

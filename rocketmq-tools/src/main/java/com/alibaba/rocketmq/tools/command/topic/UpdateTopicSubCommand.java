@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import java.util.Set;
 
 /**
  * 修改、创建Topic配置命令
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-21
  */
@@ -148,14 +148,13 @@ public class UpdateTopicSubCommand implements SubCommand {
                     String orderConf = brokerName + ":" + topicConfig.getWriteQueueNums();
                     defaultMQAdminExt.createOrUpdateOrderConf(topicConfig.getTopicName(), orderConf, false);
                     System.out.println(String.format("set broker orderConf. isOrder=%s, orderConf=[%s]",
-                        isOrder, orderConf.toString()));
+                            isOrder, orderConf.toString()));
                 }
                 System.out.printf("create topic to %s success.\n", addr);
                 System.out.println(topicConfig);
                 return;
 
-            }
-            else if (commandLine.hasOption('c')) {
+            } else if (commandLine.hasOption('c')) {
                 String clusterName = commandLine.getOptionValue('c').trim();
 
                 defaultMQAdminExt.start();
@@ -175,13 +174,13 @@ public class UpdateTopicSubCommand implements SubCommand {
                     String splitor = "";
                     for (String s : brokerNameSet) {
                         orderConf.append(splitor).append(s).append(":")
-                            .append(topicConfig.getWriteQueueNums());
+                                .append(topicConfig.getWriteQueueNums());
                         splitor = ";";
                     }
                     defaultMQAdminExt.createOrUpdateOrderConf(topicConfig.getTopicName(),
-                        orderConf.toString(), true);
+                            orderConf.toString(), true);
                     System.out.println(String.format("set cluster orderConf. isOrder=%s, orderConf=[%s]",
-                        isOrder, orderConf.toString()));
+                            isOrder, orderConf.toString()));
                 }
 
                 System.out.println(topicConfig);
@@ -189,11 +188,9 @@ public class UpdateTopicSubCommand implements SubCommand {
             }
 
             ServerUtil.printCommandLineHelp("mqadmin " + this.commandName(), options);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             defaultMQAdminExt.shutdown();
         }
     }

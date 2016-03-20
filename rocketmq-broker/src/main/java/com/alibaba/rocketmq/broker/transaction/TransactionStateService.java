@@ -34,12 +34,9 @@ public class TransactionStateService {
     private final BrokerController brokerController;
 
     private final DefaultMessageStore messageStore;
-
-    private ScheduledExecutorService scheduledExecutorService;
-
-    private ExecutorService executorService;
-
     private final Random random = new Random(System.currentTimeMillis());
+    private ScheduledExecutorService scheduledExecutorService;
+    private ExecutorService executorService;
 
     public TransactionStateService(Config config, BrokerController brokerController, DefaultMessageStore messageStore) {
         this.config = config;

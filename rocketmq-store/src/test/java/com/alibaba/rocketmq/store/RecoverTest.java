@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 
 public class RecoverTest {
+    private static final String StoreMessage = "Once, there was a chance for me!aaaaaaaaaaaaaaaaaaaaaaaa";
     // 队列个数
     private static int QUEUE_TOTAL = 10;
     // 发往哪个队列
@@ -32,9 +33,19 @@ public class RecoverTest {
     private static SocketAddress StoreHost;
     // 消息体
     private static byte[] MessageBody;
+    private MessageStore storeWrite1;
+    private MessageStore storeWrite2;
+    private MessageStore storeRead;
 
-    private static final String StoreMessage = "Once, there was a chance for me!aaaaaaaaaaaaaaaaaaaaaaaa";
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        StoreHost = new InetSocketAddress(InetAddress.getLocalHost(), 8123);
+        BornHost = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0);
+    }
 
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+    }
 
     public MessageExtBrokerInner buildMessage() {
         MessageExtBrokerInner msg = new MessageExtBrokerInner();
@@ -51,23 +62,6 @@ public class RecoverTest {
 
         return msg;
     }
-
-
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        StoreHost = new InetSocketAddress(InetAddress.getLocalHost(), 8123);
-        BornHost = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0);
-    }
-
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-    }
-
-    private MessageStore storeWrite1;
-    private MessageStore storeWrite2;
-    private MessageStore storeRead;
-
 
     private void destroy() {
         if (storeWrite1 != null) {
@@ -111,8 +105,7 @@ public class RecoverTest {
         MessageStore messageStore = new DefaultMessageStore(messageStoreConfig, null, new Config());
         if (first) {
             this.storeWrite1 = messageStore;
-        }
-        else {
+        } else {
             this.storeWrite2 = messageStore;
         }
 
@@ -178,7 +171,7 @@ public class RecoverTest {
         // 第三步，收消息
         long readCnt = 0;
         for (int queueId = 0; queueId < QUEUE_TOTAL; queueId++) {
-            for (long offset = 0;;) {
+            for (long offset = 0; ; ) {
                 GetMessageResult result =
                         storeRead.getMessage("GROUP_A", "TOPIC_A", queueId, offset, 1024 * 1024, null);
                 if (result.getStatus() == GetMessageStatus.FOUND) {
@@ -187,8 +180,7 @@ public class RecoverTest {
                     offset += result.getMessageCount();
                     readCnt += result.getMessageCount();
                     result.release();
-                }
-                else {
+                } else {
                     break;
                 }
             }

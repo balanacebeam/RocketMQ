@@ -122,14 +122,11 @@ public class NettyRPCTest {
             public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
                 try {
                     return server.invokeSync(ctx.channel(), request, 1000 * 10);
-                }
-                catch (InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
-                }
-                catch (RemotingSendRequestException e) {
+                } catch (RemotingSendRequestException e) {
                     e.printStackTrace();
-                }
-                catch (RemotingTimeoutException e) {
+                } catch (RemotingTimeoutException e) {
                     e.printStackTrace();
                 }
 

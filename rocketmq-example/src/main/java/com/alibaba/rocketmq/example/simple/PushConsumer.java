@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ public class PushConsumer {
              */
             @Override
             public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
-                    ConsumeConcurrentlyContext context) {
+                                                            ConsumeConcurrentlyContext context) {
                 System.out.println(Thread.currentThread().getName() + " Receive New Messages: " + msgs);
 
                 MessageExt msg = msgs.get(0);
@@ -73,15 +73,12 @@ public class PushConsumer {
                     // 执行TopicTest1的消费逻辑
                     if (msg.getTags() != null && msg.getTags().equals("TagA")) {
                         // 执行TagA的消费
-                    }
-                    else if (msg.getTags() != null && msg.getTags().equals("TagC")) {
+                    } else if (msg.getTags() != null && msg.getTags().equals("TagC")) {
                         // 执行TagC的消费
-                    }
-                    else if (msg.getTags() != null && msg.getTags().equals("TagD")) {
+                    } else if (msg.getTags() != null && msg.getTags().equals("TagD")) {
                         // 执行TagD的消费
                     }
-                }
-                else if (msg.getTopic().equals("TopicTest2")) {
+                } else if (msg.getTopic().equals("TopicTest2")) {
                     // 执行TopicTest2的消费逻辑
                 }
 

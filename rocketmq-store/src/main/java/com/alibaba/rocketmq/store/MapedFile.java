@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Pagecache文件访问封装
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-21
  */
@@ -84,16 +84,13 @@ public class MapedFile extends ReferenceResource {
             TotalMapedVitualMemory.addAndGet(fileSize);
             TotalMapedFiles.incrementAndGet();
             ok = true;
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             log.error("create file channel " + this.fileName + " Failed. ", e);
             throw e;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.error("map file " + this.fileName + " Failed. ", e);
             throw e;
-        }
-        finally {
+        } finally {
             if (!ok && this.fileChannel != null) {
                 this.fileChannel.close();
             }
@@ -126,8 +123,7 @@ public class MapedFile extends ReferenceResource {
                     Method method = method(target, methodName, args);
                     method.setAccessible(true);
                     return method.invoke(target);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }
             }
@@ -139,8 +135,7 @@ public class MapedFile extends ReferenceResource {
             throws NoSuchMethodException {
         try {
             return target.getClass().getMethod(methodName, args);
-        }
-        catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException e) {
             return target.getClass().getDeclaredMethod(methodName, args);
         }
     }
@@ -201,7 +196,7 @@ public class MapedFile extends ReferenceResource {
 
     /**
      * 向MapedBuffer追加消息<br>
-     * 
+     *
      * @param msg
      *            要追加的消息
      * @param cb
@@ -242,7 +237,7 @@ public class MapedFile extends ReferenceResource {
 
     /**
      * 向存储层追加数据，一般在SLAVE存储结构中使用
-     * 
+     *
      * @return 返回写入了多少数据
      */
     public boolean appendMessage(final byte[] data) {
@@ -263,7 +258,7 @@ public class MapedFile extends ReferenceResource {
 
     /**
      * 消息刷盘
-     * 
+     *
      * @param flushLeastPages
      *            至少刷几个page
      * @return
@@ -275,8 +270,7 @@ public class MapedFile extends ReferenceResource {
                 this.mappedByteBuffer.force();
                 this.committedPosition.set(value);
                 this.release();
-            }
-            else {
+            } else {
                 log.warn("in commit, hold failed, commit offset = " + this.committedPosition.get());
                 this.committedPosition.set(this.wrotePostion.get());
             }
@@ -329,8 +323,7 @@ public class MapedFile extends ReferenceResource {
                 ByteBuffer byteBufferNew = byteBuffer.slice();
                 byteBufferNew.limit(size);
                 return new SelectMapedBufferResult(this.fileFromOffset + pos, byteBufferNew, size, this);
-            }
-            else {
+            } else {
                 log.warn("matched, but hold failed, request pos: " + pos + ", fileFromOffset: "
                         + this.fileFromOffset);
             }
@@ -393,7 +386,7 @@ public class MapedFile extends ReferenceResource {
 
     /**
      * 清理资源，destroy与调用shutdown的线程必须是同一个
-     * 
+     *
      * @return 是否被destory成功，上层调用需要对失败情况处理，失败后尝试重试
      */
     public boolean destroy(final long intervalForcibly) {
@@ -410,14 +403,12 @@ public class MapedFile extends ReferenceResource {
                         + (result ? " OK, " : " Failed, ") + "W:" + this.getWrotePostion() + " M:"
                         + this.getCommittedPosition() + ", "
                         + UtilAll.computeEclipseTimeMilliseconds(beginTime));
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.warn("close file channel " + this.fileName + " Failed. ", e);
             }
 
             return true;
-        }
-        else {
+        } else {
             log.warn("destroy maped file[REF:" + this.getRefCount() + "] " + this.fileName
                     + " Failed. cleanupOver: " + this.cleanupOver);
         }

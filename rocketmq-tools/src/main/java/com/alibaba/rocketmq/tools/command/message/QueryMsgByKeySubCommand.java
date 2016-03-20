@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import org.apache.commons.cli.Options;
 
 /**
  * 根据消息Key查询消息
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-8-12
  */
@@ -66,9 +66,9 @@ public class QueryMsgByKeySubCommand implements SubCommand {
 
         QueryResult queryResult = admin.queryMessage(topic, key, 64, 0, Long.MAX_VALUE);
         System.out.printf("%-50s %4s %40s\n",//
-            "#Message ID",//
-            "#QID",//
-            "#Offset");
+                "#Message ID",//
+                "#QID",//
+                "#Offset");
         for (MessageExt msg : queryResult.getMessageList()) {
             System.out.printf("%-50s %4d %40d\n", msg.getMsgId(), msg.getQueueId(), msg.getQueueOffset());
         }
@@ -86,11 +86,9 @@ public class QueryMsgByKeySubCommand implements SubCommand {
             final String key = commandLine.getOptionValue('k').trim();
 
             this.queryByKey(defaultMQAdminExt, topic, key);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             defaultMQAdminExt.shutdown();
         }
     }

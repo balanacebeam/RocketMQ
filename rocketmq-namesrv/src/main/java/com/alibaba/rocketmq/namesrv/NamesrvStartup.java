@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Name server 启动入口
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-5
  */
@@ -90,7 +90,7 @@ public class NamesrvStartup {
             Options options = ServerUtil.buildCommandlineOptions(new Options());
             commandLine =
                     ServerUtil.parseCmdLine("mqnamesrv", args, buildCommandlineOptions(options),
-                        new PosixParser());
+                            new PosixParser());
             if (null == commandLine) {
                 System.exit(-1);
                 return null;
@@ -176,8 +176,7 @@ public class NamesrvStartup {
             System.out.println(tip);
 
             return controller;
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             System.exit(-1);
         }

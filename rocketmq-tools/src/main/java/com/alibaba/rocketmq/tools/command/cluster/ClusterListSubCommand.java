@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import java.util.TreeSet;
 
 /**
  * 查看集群信息
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-25
  */
@@ -72,13 +72,13 @@ public class ClusterListSubCommand implements SubCommand {
         ClusterInfo clusterInfoSerializeWrapper = defaultMQAdminExt.examineBrokerClusterInfo();
 
         System.out.printf("%-16s  %-32s  %-4s  %-22s %-22s %11s %11s\n",//
-            "#Cluster Name",//
-            "#Broker Name",//
-            "#BID",//
-            "#Addr",//
-            "#Version",//
-            "#InTPS",//
-            "#OutTPS"//
+                "#Cluster Name",//
+                "#Broker Name",//
+                "#BID",//
+                "#Addr",//
+                "#Version",//
+                "#InTPS",//
+                "#OutTPS"//
         );
 
         Iterator<Map.Entry<String, Set<String>>> itCluster =
@@ -119,19 +119,18 @@ public class ClusterListSubCommand implements SubCommand {
                                     out = Double.parseDouble(tpss[0]);
                                 }
                             }
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                         }
 
                         System.out.printf("%-16s  %-32s  %-4s  %-22s %-22s %11.2f %11.2f\n",//
-                            clusterName,//
-                            brokerName,//
-                            next1.getKey().longValue(),//
-                            next1.getValue(),//
-                            version,//
-                            in,//
-                            out//
-                            );
+                                clusterName,//
+                                brokerName,//
+                                next1.getKey().longValue(),//
+                                next1.getValue(),//
+                                version,//
+                                in,//
+                                out//
+                        );
                     }
                 }
             }
@@ -150,12 +149,12 @@ public class ClusterListSubCommand implements SubCommand {
         ClusterInfo clusterInfoSerializeWrapper = defaultMQAdminExt.examineBrokerClusterInfo();
 
         System.out.printf("%-16s  %-32s %14s %14s %14s %14s\n",//
-            "#Cluster Name",//
-            "#Broker Name",//
-            "#InTotalYest",//
-            "#OutTotalYest",//
-            "#InTotalToday",//
-            "#OutTotalToday"//
+                "#Cluster Name",//
+                "#Broker Name",//
+                "#InTotalYest",//
+                "#OutTotalYest",//
+                "#InTotalToday",//
+                "#OutTotalToday"//
         );
 
         Iterator<Map.Entry<String, Set<String>>> itCluster =
@@ -206,18 +205,17 @@ public class ClusterListSubCommand implements SubCommand {
                                     Long.parseLong(msgGetTotalTodayNow)
                                             - Long.parseLong(msgGetTotalTodayMorning);
 
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                         }
 
                         System.out.printf("%-16s  %-32s %14d %14d %14d %14d\n",//
-                            clusterName,//
-                            brokerName,//
-                            InTotalYest,//
-                            OutTotalYest,//
-                            InTotalToday,//
-                            OutTotalToday//
-                            );
+                                clusterName,//
+                                brokerName,//
+                                InTotalYest,//
+                                OutTotalYest,//
+                                InTotalToday,//
+                                OutTotalToday//
+                        );
                     }
                 }
             }
@@ -240,15 +238,12 @@ public class ClusterListSubCommand implements SubCommand {
 
             if (commandLine.hasOption('m')) {
                 this.printClusterMoreStats(defaultMQAdminExt);
-            }
-            else {
+            } else {
                 this.printClusterBaseInfo(defaultMQAdminExt);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             defaultMQAdminExt.shutdown();
         }
     }

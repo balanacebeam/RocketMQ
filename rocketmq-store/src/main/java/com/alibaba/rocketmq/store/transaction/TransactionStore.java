@@ -17,7 +17,7 @@ public interface TransactionStore {
     boolean put(final List<TransactionRecord> transactionRecordList);
 
     void remove(final List<TransactionRecord> transactionRecordList);
-    
+
     Date getStoreTime(String producerGroup);
 
     List<TransactionRecord> traverse(Map<String, Object> context, final TransactionRecord transactionRecord, final int pageSize);

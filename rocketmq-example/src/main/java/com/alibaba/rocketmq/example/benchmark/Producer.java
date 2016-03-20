@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class Producer {
         final boolean keyEnable = args.length >= 3 ? Boolean.parseBoolean(args[2]) : false;
 
         System.out
-            .printf("threadCount %d messageSize %d keyEnable %s\n", threadCount, messageSize, keyEnable);
+                .printf("threadCount %d messageSize %d keyEnable %s\n", threadCount, messageSize, keyEnable);
 
         final Message msg = buildMessage(messageSize);
 
@@ -72,13 +72,13 @@ public class Producer {
                     final double averageRT = ((end[5] - begin[5]) / (double) (end[3] - begin[3]));
 
                     System.out.printf(
-                        "Send TPS: %d Max RT: %d Average RT: %7.3f Send Failed: %d Response Failed: %d\n"//
-                        , sendTps//
-                        , statsBenchmark.getSendMessageMaxRT().get()//
-                        , averageRT//
-                        , end[2]//
-                        , end[4]//
-                        );
+                            "Send TPS: %d Max RT: %d Average RT: %7.3f Send Failed: %d Response Failed: %d\n"//
+                            , sendTps//
+                            , statsBenchmark.getSendMessageMaxRT().get()//
+                            , averageRT//
+                            , end[2]//
+                            , end[4]//
+                    );
                 }
             }
 
@@ -87,8 +87,7 @@ public class Producer {
             public void run() {
                 try {
                     this.printStats();
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -121,41 +120,34 @@ public class Producer {
                             while (currentRT > prevMaxRT) {
                                 boolean updated =
                                         statsBenchmark.getSendMessageMaxRT().compareAndSet(prevMaxRT,
-                                            currentRT);
+                                                currentRT);
                                 if (updated)
                                     break;
 
                                 prevMaxRT = statsBenchmark.getSendMessageMaxRT().get();
                             }
-                        }
-                        catch (RemotingException e) {
+                        } catch (RemotingException e) {
                             statsBenchmark.getSendRequestFailedCount().incrementAndGet();
                             e.printStackTrace();
 
                             try {
                                 Thread.sleep(3000);
+                            } catch (InterruptedException e1) {
                             }
-                            catch (InterruptedException e1) {
-                            }
-                        }
-                        catch (InterruptedException e) {
+                        } catch (InterruptedException e) {
                             statsBenchmark.getSendRequestFailedCount().incrementAndGet();
                             try {
                                 Thread.sleep(3000);
+                            } catch (InterruptedException e1) {
                             }
-                            catch (InterruptedException e1) {
-                            }
-                        }
-                        catch (MQClientException e) {
+                        } catch (MQClientException e) {
                             statsBenchmark.getSendRequestFailedCount().incrementAndGet();
                             e.printStackTrace();
-                        }
-                        catch (MQBrokerException e) {
+                        } catch (MQBrokerException e) {
                             statsBenchmark.getReceiveResponseFailedCount().incrementAndGet();
                             try {
                                 Thread.sleep(3000);
-                            }
-                            catch (InterruptedException e1) {
+                            } catch (InterruptedException e1) {
                             }
                         }
                     }
@@ -197,14 +189,14 @@ class StatsBenchmarkProducer {
 
 
     public Long[] createSnapshot() {
-        Long[] snap = new Long[] {//
+        Long[] snap = new Long[]{//
                 System.currentTimeMillis(),//
-                        this.sendRequestSuccessCount.get(),//
-                        this.sendRequestFailedCount.get(),//
-                        this.receiveResponseSuccessCount.get(),//
-                        this.receiveResponseFailedCount.get(),//
-                        this.sendMessageSuccessTimeTotal.get(), //
-                };
+                this.sendRequestSuccessCount.get(),//
+                this.sendRequestFailedCount.get(),//
+                this.receiveResponseSuccessCount.get(),//
+                this.receiveResponseFailedCount.get(),//
+                this.sendMessageSuccessTimeTotal.get(), //
+        };
 
         return snap;
     }

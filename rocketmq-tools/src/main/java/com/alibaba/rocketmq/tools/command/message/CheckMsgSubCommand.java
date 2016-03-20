@@ -48,9 +48,9 @@ public class CheckMsgSubCommand implements SubCommand {
     @Override
     public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
         Store store = new Store(commandLine.getOptionValue("cStorePath").trim(), //
-            Integer.parseInt(commandLine.getOptionValue("cSize").trim()),//
-            commandLine.getOptionValue("lStorePath").trim(), //
-            Integer.parseInt(commandLine.getOptionValue("lSize").trim()));
+                Integer.parseInt(commandLine.getOptionValue("cSize").trim()),//
+                commandLine.getOptionValue("lStorePath").trim(), //
+                Integer.parseInt(commandLine.getOptionValue("lSize").trim()));
         store.load();
         store.traval(false);
     }

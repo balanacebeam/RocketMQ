@@ -22,28 +22,6 @@ import org.apache.commons.cli.Options;
 
 public class StatsAllSubCommand implements SubCommand {
 
-    @Override
-    public String commandName() {
-        return "statsAll";
-    }
-
-
-    @Override
-    public String commandDesc() {
-        return "Topic and Consumer tps stats";
-    }
-
-
-    @Override
-    public Options buildCommandlineOptions(Options options) {
-        Option opt = new Option("a", "activeTopic", false, "print active topic only");
-        opt.setRequired(false);
-        options.addOption(opt);
-
-        return options;
-    }
-
-
     public static long compute24HourSum(BrokerStatsData bsd) {
         if (bsd.getStatsDay().getSum() != 0) {
             return bsd.getStatsDay().getSum();
@@ -60,9 +38,8 @@ public class StatsAllSubCommand implements SubCommand {
         return 0;
     }
 
-
     public static void printTopicDetail(final DefaultMQAdminExt admin, final String topic,
-            final boolean activeTopic) throws RemotingException, MQClientException, InterruptedException,
+                                        final boolean activeTopic) throws RemotingException, MQClientException, InterruptedException,
             MQBrokerException {
         TopicRouteData topicRouteData = admin.examineTopicRouteInfo(topic);
 
@@ -81,8 +58,7 @@ public class StatsAllSubCommand implements SubCommand {
                             admin.ViewBrokerStatsData(masterAddr, BrokerStatsManager.TOPIC_PUT_NUMS, topic);
                     inTPS += bsd.getStatsMinute().getTps();
                     inMsgCntToday += compute24HourSum(bsd);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                 }
             }
         }
@@ -100,11 +76,10 @@ public class StatsAllSubCommand implements SubCommand {
                             String statsKey = String.format("%s@%s", topic, group);
                             BrokerStatsData bsd =
                                     admin.ViewBrokerStatsData(masterAddr, BrokerStatsManager.GROUP_GET_NUMS,
-                                        statsKey);
+                                            statsKey);
                             outTPS += bsd.getStatsMinute().getTps();
                             outMsgCntToday += compute24HourSum(bsd);
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                         }
                     }
                 }
@@ -113,13 +88,13 @@ public class StatsAllSubCommand implements SubCommand {
                         (outMsgCntToday > 0)) {
                     // 打印
                     System.out.printf("%-32s  %-32s %11.2f %11.2f %14d %14d\n",//
-                        UtilAll.frontStringAtLeast(topic, 32),//
-                        UtilAll.frontStringAtLeast(group, 32),//
-                        inTPS,//
-                        outTPS,//
-                        inMsgCntToday,//
-                        outMsgCntToday//
-                        );
+                            UtilAll.frontStringAtLeast(topic, 32),//
+                            UtilAll.frontStringAtLeast(group, 32),//
+                            inTPS,//
+                            outTPS,//
+                            inMsgCntToday,//
+                            outMsgCntToday//
+                    );
                 }
             }
         }
@@ -128,17 +103,40 @@ public class StatsAllSubCommand implements SubCommand {
             if (!activeTopic || (inMsgCntToday > 0)) {
                 // 打印
                 System.out.printf("%-32s  %-32s %11.2f %11s %14d %14s\n",//
-                    UtilAll.frontStringAtLeast(topic, 32),//
-                    "",//
-                    inTPS,//
-                    "",//
-                    inMsgCntToday,//
-                    "NO_CONSUMER"//
+                        UtilAll.frontStringAtLeast(topic, 32),//
+                        "",//
+                        inTPS,//
+                        "",//
+                        inMsgCntToday,//
+                        "NO_CONSUMER"//
                 );
             }
         }
     }
 
+    public static void main(String[] args) {
+        System.setProperty(MixAll.NAMESRV_ADDR_PROPERTY, "10.101.87.102:9876");
+        MQAdminStartup.main(new String[]{new StatsAllSubCommand().commandName()});
+    }
+
+    @Override
+    public String commandName() {
+        return "statsAll";
+    }
+
+    @Override
+    public String commandDesc() {
+        return "Topic and Consumer tps stats";
+    }
+
+    @Override
+    public Options buildCommandlineOptions(Options options) {
+        Option opt = new Option("a", "activeTopic", false, "print active topic only");
+        opt.setRequired(false);
+        options.addOption(opt);
+
+        return options;
+    }
 
     @Override
     public void execute(CommandLine commandLine, Options options, RPCHook rpcHook) {
@@ -152,12 +150,12 @@ public class StatsAllSubCommand implements SubCommand {
             TopicList topicList = defaultMQAdminExt.fetchAllTopicList();
 
             System.out.printf("%-32s  %-32s %11s %11s %14s %14s\n",//
-                "#Topic",//
-                "#Consumer Group",//
-                "#InTPS",//
-                "#OutTPS",//
-                "#InMsg24Hour",//
-                "#OutMsg24Hour"//
+                    "#Topic",//
+                    "#Consumer Group",//
+                    "#InTPS",//
+                    "#OutTPS",//
+                    "#InMsg24Hour",//
+                    "#OutMsg24Hour"//
             );
 
             boolean activeTopic = commandLine.hasOption('a');
@@ -170,22 +168,13 @@ public class StatsAllSubCommand implements SubCommand {
 
                 try {
                     printTopicDetail(defaultMQAdminExt, topic, activeTopic);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             defaultMQAdminExt.shutdown();
         }
-    }
-
-
-    public static void main(String[] args) {
-        System.setProperty(MixAll.NAMESRV_ADDR_PROPERTY, "10.101.87.102:9876");
-        MQAdminStartup.main(new String[] { new StatsAllSubCommand().commandName() });
     }
 }

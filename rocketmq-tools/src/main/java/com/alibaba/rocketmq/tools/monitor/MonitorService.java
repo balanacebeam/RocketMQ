@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class MonitorService {
     private final Logger log = ClientLogger.getLog();
     private final ScheduledExecutorService scheduledExecutorService = Executors
-        .newSingleThreadScheduledExecutor(new ThreadFactoryImpl("MonitorService"));
+            .newSingleThreadScheduledExecutor(new ThreadFactoryImpl("MonitorService"));
 
     private final MonitorConfig monitorConfig;
 
@@ -44,9 +44,9 @@ public class MonitorService {
 
     private final DefaultMQAdminExt defaultMQAdminExt;
     private final DefaultMQPullConsumer defaultMQPullConsumer = new DefaultMQPullConsumer(
-        MixAll.TOOLS_CONSUMER_GROUP);
+            MixAll.TOOLS_CONSUMER_GROUP);
     private final DefaultMQPushConsumer defaultMQPushConsumer = new DefaultMQPushConsumer(
-        MixAll.MONITOR_CONSUMER_GROUP);
+            MixAll.MONITOR_CONSUMER_GROUP);
 
 
     public MonitorService(MonitorConfig monitorConfig, MonitorListener monitorListener, RPCHook rpcHook) {
@@ -70,7 +70,7 @@ public class MonitorService {
 
                 @Override
                 public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
-                        ConsumeConcurrentlyContext context) {
+                                                                ConsumeConcurrentlyContext context) {
                     try {
                         OffsetMovedEvent ome =
                                 OffsetMovedEvent.decode(msgs.get(0).getBody(), OffsetMovedEvent.class);
@@ -80,18 +80,40 @@ public class MonitorService {
                         deleteMsgsEvent.setEventTimestamp(msgs.get(0).getStoreTimestamp());
 
                         MonitorService.this.monitorListener.reportDeleteMsgsEvent(deleteMsgsEvent);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                     }
 
                     return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
                 }
             });
-        }
-        catch (MQClientException e) {
+        } catch (MQClientException e) {
         }
     }
 
+    public static void main(String[] args) throws MQClientException {
+        main0(args, null);
+    }
+
+    public static void main0(String[] args, RPCHook rpcHook) throws MQClientException {
+        final MonitorService monitorService =
+                new MonitorService(new MonitorConfig(), new DefaultMonitorListener(), rpcHook);
+        monitorService.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            private volatile boolean hasShutdown = false;
+
+
+            @Override
+            public void run() {
+                synchronized (this) {
+                    if (!this.hasShutdown) {
+                        this.hasShutdown = true;
+                        monitorService.shutdown();
+                    }
+                }
+            }
+        }, "ShutdownHook"));
+    }
 
     private String instanceName() {
         String name =
@@ -100,21 +122,18 @@ public class MonitorService {
         return "MonitorService_" + name.hashCode();
     }
 
-
     private void startScheduleTask() {
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 try {
                     MonitorService.this.doMonitorWork();
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     log.error("doMonitorWork Exception", e);
                 }
             }
         }, 1000 * 20, this.monitorConfig.getRoundInterval(), TimeUnit.MILLISECONDS);
     }
-
 
     public void start() throws MQClientException {
         this.defaultMQPullConsumer.start();
@@ -123,13 +142,11 @@ public class MonitorService {
         this.startScheduleTask();
     }
 
-
     public void shutdown() {
         this.defaultMQPullConsumer.shutdown();
         this.defaultMQAdminExt.shutdown();
         this.defaultMQPushConsumer.shutdown();
     }
-
 
     public void doMonitorWork() throws RemotingException, MQClientException, InterruptedException {
         long beginTime = System.currentTimeMillis();
@@ -142,16 +159,14 @@ public class MonitorService {
                 // 监控消费进度
                 try {
                     this.reportUndoneMsgs(consumerGroup);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     // log.error("reportUndoneMsgs Exception", e);
                 }
 
                 // 监控每个Consumer内存状态
                 try {
                     this.reportConsumerRunningInfo(consumerGroup);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     // log.error("reportConsumerRunningInfo Exception", e);
                 }
             }
@@ -160,7 +175,6 @@ public class MonitorService {
         long spentTimeMills = System.currentTimeMillis() - beginTime;
         log.info("Execute one round monitor work, spent timemills: {}", spentTimeMills);
     }
-
 
     public void reportConsumerRunningInfo(final String consumerGroup) throws InterruptedException,
             MQBrokerException, RemotingException, MQClientException {
@@ -177,8 +191,7 @@ public class MonitorService {
                 ConsumerRunningInfo info =
                         defaultMQAdminExt.getConsumerRunningInfo(consumerGroup, clientId, false);
                 infoMap.put(clientId, info);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
             }
         }
 
@@ -187,26 +200,22 @@ public class MonitorService {
         }
     }
 
-
     private void reportFailedMsgs(final String consumerGroup, final String topic) {
 
     }
-
 
     private void reportUndoneMsgs(final String consumerGroup) {
         ConsumeStats cs = null;
         try {
             cs = defaultMQAdminExt.examineConsumeStats(consumerGroup);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return;
         }
 
         ConsumerConnection cc = null;
         try {
             cc = defaultMQAdminExt.examineConsumerConnectionInfo(consumerGroup);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return;
         }
 
@@ -245,7 +254,6 @@ public class MonitorService {
         }
     }
 
-
     private void computeUndoneMsgs(final UndoneMsgs undoneMsgs, final ConsumeStats consumeStats) {
         long total = 0;
         long singleMax = 0;
@@ -272,23 +280,22 @@ public class MonitorService {
                     if (maxOffset > 0) {
                         PullResult pull = this.defaultMQPullConsumer.pull(mq, "*", maxOffset - 1, 1);
                         switch (pull.getPullStatus()) {
-                        case FOUND:
-                            long delay =
-                                    pull.getMsgFoundList().get(0).getStoreTimestamp() - ow.getLastTimestamp();
-                            if (delay > delayMax) {
-                                delayMax = delay;
-                            }
-                            break;
-                        case NO_MATCHED_MSG:
-                        case NO_NEW_MSG:
-                        case OFFSET_ILLEGAL:
-                            break;
-                        default:
-                            break;
+                            case FOUND:
+                                long delay =
+                                        pull.getMsgFoundList().get(0).getStoreTimestamp() - ow.getLastTimestamp();
+                                if (delay > delayMax) {
+                                    delayMax = delay;
+                                }
+                                break;
+                            case NO_MATCHED_MSG:
+                            case NO_NEW_MSG:
+                            case OFFSET_ILLEGAL:
+                                break;
+                            default:
+                                break;
                         }
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                 }
             }
         }
@@ -296,32 +303,5 @@ public class MonitorService {
         undoneMsgs.setUndoneMsgsTotal(total);
         undoneMsgs.setUndoneMsgsSingleMQ(singleMax);
         undoneMsgs.setUndoneMsgsDelayTimeMills(delayMax);
-    }
-
-
-    public static void main(String[] args) throws MQClientException {
-        main0(args, null);
-    }
-
-
-    public static void main0(String[] args, RPCHook rpcHook) throws MQClientException {
-        final MonitorService monitorService =
-                new MonitorService(new MonitorConfig(), new DefaultMonitorListener(), rpcHook);
-        monitorService.start();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            private volatile boolean hasShutdown = false;
-
-
-            @Override
-            public void run() {
-                synchronized (this) {
-                    if (!this.hasShutdown) {
-                        this.hasShutdown = true;
-                        monitorService.shutdown();
-                    }
-                }
-            }
-        }, "ShutdownHook"));
     }
 }

@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
  * @author shijia.wxr<vintage.wang@gmail.com>
  */
 public class DefaultMessageStoreTest {
+    private static final String StoreMessage = "Once, there was a chance for me!";
     // 队列个数
     private static int QUEUE_TOTAL = 100;
     // 发往哪个队列
@@ -30,8 +31,16 @@ public class DefaultMessageStoreTest {
     // 消息体
     private static byte[] MessageBody;
 
-    private static final String StoreMessage = "Once, there was a chance for me!";
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        StoreHost = new InetSocketAddress(InetAddress.getLocalHost(), 8123);
+        BornHost = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0);
 
+    }
+
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+    }
 
     public MessageExtBrokerInner buildMessage() {
         MessageExtBrokerInner msg = new MessageExtBrokerInner();
@@ -48,20 +57,6 @@ public class DefaultMessageStoreTest {
 
         return msg;
     }
-
-
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        StoreHost = new InetSocketAddress(InetAddress.getLocalHost(), 8123);
-        BornHost = new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0);
-
-    }
-
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-    }
-
 
     @Test
     public void test_write_read() throws Exception {
@@ -102,8 +97,7 @@ public class DefaultMessageStoreTest {
                 assertTrue(result != null);
                 result.release();
                 System.out.println("read " + i + " OK");
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -157,8 +151,7 @@ public class DefaultMessageStoreTest {
                 assertTrue(result != null);
                 result.release();
                 System.out.println("read " + i + " OK");
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 

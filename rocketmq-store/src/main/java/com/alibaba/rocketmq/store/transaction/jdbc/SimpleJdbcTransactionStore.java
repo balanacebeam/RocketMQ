@@ -43,7 +43,7 @@ public class SimpleJdbcTransactionStore extends AbstractJdbcTransactionStore {
     @Override
     public boolean shutdown() {
         try {
-            ((BasicDataSource)getDataSource()).close();
+            ((BasicDataSource) getDataSource()).close();
         } catch (Exception e) {
             log.warn("", e);
         }

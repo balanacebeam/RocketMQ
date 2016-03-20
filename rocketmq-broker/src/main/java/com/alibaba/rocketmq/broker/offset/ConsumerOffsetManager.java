@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Consumer消费进度管理
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-8-11
  */
@@ -160,8 +160,7 @@ public class ConsumerOffsetManager extends ConfigManager {
             map = new ConcurrentHashMap<Integer, Long>(32);
             map.put(queueId, offset);
             this.offsetTable.put(key, map);
-        }
-        else {
+        } else {
             map.put(queueId, offset);
         }
     }
@@ -192,7 +191,7 @@ public class ConsumerOffsetManager extends ConfigManager {
     @Override
     public String configFilePath() {
         return BrokerPathConfigHelper.getConsumerOffsetPath(this.brokerController.getMessageStoreConfig()
-            .getStorePathRootDir());
+                .getStorePathRootDir());
     }
 
 
@@ -226,13 +225,12 @@ public class ConsumerOffsetManager extends ConfigManager {
                 for (Entry<Integer, Long> entry : this.offsetTable.get(topicGroup).entrySet()) {
                     long minOffset =
                             this.brokerController.getMessageStore()
-                                .getMinOffsetInQuque(topic, entry.getKey());
+                                    .getMinOffsetInQuque(topic, entry.getKey());
                     if (entry.getValue() >= minOffset) {
                         Long offset = queueMinOffset.get(entry.getKey());
                         if (offset == null) {
                             queueMinOffset.put(entry.getKey(), Math.min(Long.MAX_VALUE, entry.getValue()));
-                        }
-                        else {
+                        } else {
                             queueMinOffset.put(entry.getKey(), Math.min(entry.getValue(), offset));
                         }
                     }

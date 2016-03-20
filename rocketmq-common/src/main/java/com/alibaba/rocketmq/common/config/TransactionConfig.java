@@ -35,8 +35,6 @@ public class TransactionConfig {
 
     public List<String> urls;
 
-    public int batchSize = 1000;
-
     public boolean asyncTransactionLog = true;
 
     public int asyncQueueSize = 300000;

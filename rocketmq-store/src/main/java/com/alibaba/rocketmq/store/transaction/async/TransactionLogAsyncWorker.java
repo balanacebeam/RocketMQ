@@ -21,7 +21,7 @@ public class TransactionLogAsyncWorker implements java.lang.Runnable {
     private List<TransactionRecord> rollbackOrCommitTransactionLog;
 
     private long transactionTimestamp;
-    
+
     private DefaultMessageStore defaultMessageStore;
 
     public TransactionLogAsyncWorker(List<TransactionRecord> prepareTransactionLog,

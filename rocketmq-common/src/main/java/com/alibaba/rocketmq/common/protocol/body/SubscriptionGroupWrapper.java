@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 订阅组配置，序列化包装
- * 
+ *
  * @author manhong.yqd<manhong.yqd@taobao.com>
  * @since 2013-8-19
  */

@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2010-2013 Alibaba Group Holding Limited
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Filter server 启动入口
- * 
+ *
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2014-4-10
  */
@@ -71,8 +71,7 @@ public class FiltersrvStartup {
         // 启动服务
         try {
             controller.start();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
         }
@@ -106,7 +105,7 @@ public class FiltersrvStartup {
             Options options = ServerUtil.buildCommandlineOptions(new Options());
             final CommandLine commandLine =
                     ServerUtil.parseCmdLine("mqfiltersrv", args, buildCommandlineOptions(options),
-                        new PosixParser());
+                            new PosixParser());
             if (null == commandLine) {
                 System.exit(-1);
                 return null;
@@ -138,7 +137,7 @@ public class FiltersrvStartup {
 
             nettyServerConfig.setServerAsyncSemaphoreValue(filtersrvConfig.getFsServerAsyncSemaphoreValue());
             nettyServerConfig.setServerCallbackExecutorThreads(filtersrvConfig
-                .getFsServerCallbackExecutorThreads());
+                    .getFsServerCallbackExecutorThreads());
             nettyServerConfig.setServerWorkerThreads(filtersrvConfig.getFsServerWorkerThreads());
 
             // 打印默认配置
@@ -194,8 +193,7 @@ public class FiltersrvStartup {
             }, "ShutdownHook"));
 
             return controller;
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             System.exit(-1);
         }
