@@ -4,17 +4,18 @@ transactionConfig:
     checkScheduleIntervalSeconds: 60
     checkSchedulePoolSize: 1
     checkPageSize: 500
-    storeType: "jdbc"
+    storeType: "ssdb"
     userName: "root"
     password: "123456"
     driverClassName: "com.mysql.jdbc.Driver"
     initialSize: 1
-    maxTotal: 5
-    maxIdle: 2
-    minIdle: 1
+    maxTotal: 100
+    maxIdle: 10
+    minIdle: 4
     maxWaitMillis: 10000
     urls:
-        - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
-        - "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
+        #- "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
+        #- "jdbc:mysql://localhost:3306/rocketmq?useUnicode=true&characterEncoding=UTF-8"
+        - "ssdb://127.0.0.1:8888/"
     asyncTransactionLog: true
     asyncQueueSize: 300000

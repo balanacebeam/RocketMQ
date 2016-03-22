@@ -40,6 +40,6 @@ public class TransactionConfig {
     public int asyncQueueSize = 300000;
 
     public static enum StoreType {
-        none, jdbc, sharding_jdbc
+        none, jdbc, sharding_jdbc, ssdb
     }
 }

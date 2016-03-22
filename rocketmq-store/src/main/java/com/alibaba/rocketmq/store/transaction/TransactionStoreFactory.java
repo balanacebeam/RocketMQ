@@ -4,6 +4,7 @@ import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.common.config.TransactionConfig;
 import com.alibaba.rocketmq.store.transaction.jdbc.ShardingJdbcTransactionStore;
 import com.alibaba.rocketmq.store.transaction.jdbc.SimpleJdbcTransactionStore;
+import com.alibaba.rocketmq.store.transaction.ssdb.SSDBTransactionStore;
 import com.alibaba.rocketmq.store.transaction.util.TransactionConfigUtil;
 
 /**
@@ -25,6 +26,8 @@ public class TransactionStoreFactory {
                 return new ShardingJdbcTransactionStore(config);
             case none:
                 return new NoneTransactionStore();
+            case ssdb:
+                return new SSDBTransactionStore(config);
             default:
                 throw new RuntimeException("No transaction implementation for " + storeType);
         }
