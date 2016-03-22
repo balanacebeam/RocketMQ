@@ -55,6 +55,8 @@ public class MessageDecoder {
      */
     public static final char NAME_VALUE_SEPARATOR = 1;
     public static final char PROPERTY_SEPARATOR = 2;
+    public static final String NAME_VALUE_SEPARATOR_STR = String.valueOf(NAME_VALUE_SEPARATOR);
+    public static final String PROPERTY_SEPARATOR_STR = String.valueOf(PROPERTY_SEPARATOR);
     private final static String charset = "utf-8";
 
     public static String createMessageId(final ByteBuffer input, final ByteBuffer addr, final long offset) {
@@ -381,10 +383,10 @@ public class MessageDecoder {
     public static Map<String, String> string2messageProperties(final String properties) {
         Map<String, String> map = new HashMap<String, String>();
         if (properties != null) {
-            String[] items = properties.split(String.valueOf(PROPERTY_SEPARATOR));
+            String[] items = properties.split(PROPERTY_SEPARATOR_STR);
             if (items != null) {
                 for (String i : items) {
-                    String[] nv = i.split(String.valueOf(NAME_VALUE_SEPARATOR));
+                    String[] nv = i.split(NAME_VALUE_SEPARATOR_STR);
                     if (nv != null && 2 == nv.length) {
                         map.put(nv[0], nv[1]);
                     }

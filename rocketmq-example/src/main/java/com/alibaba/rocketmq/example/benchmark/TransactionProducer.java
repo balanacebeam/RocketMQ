@@ -42,7 +42,7 @@ public class TransactionProducer {
     public static void main(String[] args) throws MQClientException {
         threadCount = args.length >= 1 ? Integer.parseInt(args[0]) : 32;
         messageSize = args.length >= 2 ? Integer.parseInt(args[1]) : 1024 * 2;
-        ischeck = args.length >= 3 ? Boolean.parseBoolean(args[2]) : false;
+        ischeck = args.length >= 3 ? Boolean.parseBoolean(args[2]) : true;
         ischeckffalse = args.length >= 4 ? Boolean.parseBoolean(args[3]) : false;
 
         final Message msg = buildMessage(messageSize);
@@ -112,7 +112,7 @@ public class TransactionProducer {
             sendThreadPool.execute(new Runnable() {
                 @Override
                 public void run() {
-                    int count = 10000;
+                    int count = 100;
                     while (count-- > 0) {
                         try {
                             // Thread.sleep(1000);
