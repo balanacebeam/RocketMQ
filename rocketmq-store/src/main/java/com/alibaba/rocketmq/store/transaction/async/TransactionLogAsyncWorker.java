@@ -3,6 +3,7 @@ package com.alibaba.rocketmq.store.transaction.async;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.store.DefaultMessageStore;
 import com.alibaba.rocketmq.store.transaction.TransactionRecord;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,40 +37,47 @@ public class TransactionLogAsyncWorker implements java.lang.Runnable {
 
     @Override
     public void run() {
-        long start = this.defaultMessageStore.now();
-        boolean result = this.defaultMessageStore.getTransactionStore().put(prepareTransactionLog);
-        long elapse = this.defaultMessageStore.now() - start;
-        if (elapse > 1000) {
-            log.warn("doDispatch transaction put firstTime elapse={}", elapse);
-        }
-
-        int time = 1;
-        while (!this.defaultMessageStore.isShutdown() && !result) { // retry until db recovery
+        long start = 0;
+        boolean result = true;
+        long elapse = 0;
+        if (CollectionUtils.isNotEmpty(prepareTransactionLog)) {
             start = this.defaultMessageStore.now();
             result = this.defaultMessageStore.getTransactionStore().put(prepareTransactionLog);
             elapse = this.defaultMessageStore.now() - start;
             if (elapse > 1000) {
-                log.warn("doDispatch transaction put elapse={}, times={}", elapse, time);
-            }
-            if (result) {
-                log.warn("doDispatch transaction put retry success times={}.", time);
-                break;
+                log.warn("doDispatch transaction put firstTime elapse={}", elapse);
             }
 
-            try {
-                TimeUnit.SECONDS.sleep(5);
-            } catch (InterruptedException e) {
-                // ignore
+            int time = 1;
+            while (!this.defaultMessageStore.isShutdown() && !result) { // retry until db recovery
+                start = this.defaultMessageStore.now();
+                result = this.defaultMessageStore.getTransactionStore().put(prepareTransactionLog);
+                elapse = this.defaultMessageStore.now() - start;
+                if (elapse > 1000) {
+                    log.warn("doDispatch transaction put elapse={}, times={}", elapse, time);
+                }
+                if (result) {
+                    log.warn("doDispatch transaction put retry success times={}.", time);
+                    break;
+                }
+
+                try {
+                    TimeUnit.SECONDS.sleep(5);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+                log.warn("doDispatch transaction put retry times={}", time);
+                time++;
             }
-            log.warn("doDispatch transaction put retry times={}", time);
-            time++;
         }
 
-        start = this.defaultMessageStore.now();
-        this.defaultMessageStore.getTransactionStore().remove(rollbackOrCommitTransactionLog);
-        elapse = this.defaultMessageStore.now() - start;
-        if (elapse > 1000) {
-            log.warn("doDispatch transaction remove elapse={}", elapse);
+        if (CollectionUtils.isNotEmpty(rollbackOrCommitTransactionLog)) {
+            start = this.defaultMessageStore.now();
+            this.defaultMessageStore.getTransactionStore().remove(rollbackOrCommitTransactionLog);
+            elapse = this.defaultMessageStore.now() - start;
+            if (elapse > 1000) {
+                log.warn("doDispatch transaction remove elapse={}", elapse);
+            }
         }
 
         this.defaultMessageStore.getStoreCheckpoint().setTransactionTimestamp(transactionTimestamp);

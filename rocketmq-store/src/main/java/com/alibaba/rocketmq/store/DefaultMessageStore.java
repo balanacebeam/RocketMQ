@@ -1808,36 +1808,31 @@ public class DefaultMessageStore implements MessageStore {
                                 rollbackOrCommit.add(buildTransactionRecord(req, false));
                                 break;
                         }
+                    }
 
-                        transactionTimestamp = req.getStoreTimestamp();
-                        final List<TransactionRecord> finalPrepare = prepare;
-                        final List<TransactionRecord> finalRollbackOrCommit = rollbackOrCommit;
+                    transactionTimestamp = req.getStoreTimestamp();
+                }
 
-                        prepare = Lists.newArrayList();
-                        rollbackOrCommit = Lists.newArrayList();
-
-                        TransactionLogAsyncWorker worker = new TransactionLogAsyncWorker(finalPrepare,
-                                finalRollbackOrCommit, transactionTimestamp,
-                                DefaultMessageStore.this);
-                        if (config.transactionConfig.asyncTransactionLog) {
-                            while (true) {
-                                try {
-                                    transactionExecutor.execute(worker);
-                                    break;
-                                } catch (RejectedExecutionException ree) {
-                                    log.warn("AyncTransactionLog queue full, reject new worker.");
-                                    try {
-                                        TimeUnit.SECONDS.sleep(1);
-                                    } catch (InterruptedException e) {
-                                        // ignore
-                                    }
-                                    continue;
-                                }
+                TransactionLogAsyncWorker worker = new TransactionLogAsyncWorker(prepare,
+                        rollbackOrCommit, transactionTimestamp,
+                        DefaultMessageStore.this);
+                if (config.transactionConfig.asyncTransactionLog) {
+                    while (true) {
+                        try {
+                            transactionExecutor.execute(worker);
+                            break;
+                        } catch (RejectedExecutionException ree) {
+                            log.warn("AsyncTransactionLog queue full, reject new worker.");
+                            try {
+                                TimeUnit.SECONDS.sleep(1);
+                            } catch (InterruptedException e) {
+                                // ignore
                             }
-                        } else {
-                            worker.run();
+                            continue;
                         }
                     }
+                } else {
+                    worker.run();
                 }
 
                 if (DefaultMessageStore.this.getMessageStoreConfig().isMessageIndexEnable()) {
@@ -1857,6 +1852,7 @@ public class DefaultMessageStore implements MessageStore {
             } else {
                 transactionRecord.setOffset(request.getPreparedTransactionOffset());
             }
+            transactionRecord.setGmtCreate(new Date());
 
             return transactionRecord;
         }

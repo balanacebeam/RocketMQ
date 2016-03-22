@@ -30,7 +30,7 @@ public class SSDBTransactionStore implements TransactionStore {
 
     private static final String KEY_NAMESPACE = "rmq-t-log";
 
-    private static final String KEY_SEP = "_";
+    private static final String KEY_SEP = "&";
     private Config config;
 
     private SSDB ssdb;
