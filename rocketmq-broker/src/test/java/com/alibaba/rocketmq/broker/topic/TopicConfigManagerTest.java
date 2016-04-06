@@ -4,7 +4,7 @@
 package com.alibaba.rocketmq.broker.topic;
 
 import com.alibaba.rocketmq.broker.BrokerController;
-import com.alibaba.rocketmq.common.BrokerConfig;
+import com.alibaba.rocketmq.broker.config.BrokerConfig;
 import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.TopicConfig;
 import com.alibaba.rocketmq.common.config.Config;

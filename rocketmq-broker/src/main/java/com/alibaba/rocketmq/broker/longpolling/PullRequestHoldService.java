@@ -18,7 +18,7 @@ package com.alibaba.rocketmq.broker.longpolling;
 import com.alibaba.rocketmq.broker.BrokerController;
 import com.alibaba.rocketmq.common.ServiceThread;
 import com.alibaba.rocketmq.common.constant.LoggerName;
-import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
+import com.alibaba.rocketmq.remoting.exception.MessageCommandException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +98,7 @@ public class PullRequestHoldService extends ServiceThread {
                         try {
                             this.brokerController.getPullMessageProcessor().excuteRequestWhenWakeup(
                                     request.getClientChannel(), request.getRequestCommand());
-                        } catch (RemotingCommandException e) {
+                        } catch (MessageCommandException e) {
                             log.error("", e);
                         }
                         continue;
@@ -111,7 +111,7 @@ public class PullRequestHoldService extends ServiceThread {
                             try {
                                 this.brokerController.getPullMessageProcessor().excuteRequestWhenWakeup(
                                         request.getClientChannel(), request.getRequestCommand());
-                            } catch (RemotingCommandException e) {
+                            } catch (MessageCommandException e) {
                                 log.error("", e);
                             }
                             continue;
@@ -124,7 +124,7 @@ public class PullRequestHoldService extends ServiceThread {
                         try {
                             this.brokerController.getPullMessageProcessor().excuteRequestWhenWakeup(
                                     request.getClientChannel(), request.getRequestCommand());
-                        } catch (RemotingCommandException e) {
+                        } catch (MessageCommandException e) {
                             log.error("", e);
                         }
                         continue;

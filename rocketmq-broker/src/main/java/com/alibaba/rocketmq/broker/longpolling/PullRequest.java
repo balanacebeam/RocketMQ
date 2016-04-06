@@ -15,7 +15,7 @@
  */
 package com.alibaba.rocketmq.broker.longpolling;
 
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import io.netty.channel.Channel;
 
 
@@ -26,14 +26,14 @@ import io.netty.channel.Channel;
  * @since 2013-7-26
  */
 public class PullRequest {
-    private final RemotingCommand requestCommand;
+    private final MessageCommand requestCommand;
     private final Channel clientChannel;
     private final long timeoutMillis;
     private final long suspendTimestamp;
     private final long pullFromThisOffset;
 
 
-    public PullRequest(RemotingCommand requestCommand, Channel clientChannel, long timeoutMillis,
+    public PullRequest(MessageCommand requestCommand, Channel clientChannel, long timeoutMillis,
                        long suspendTimestamp, long pullFromThisOffset) {
         this.requestCommand = requestCommand;
         this.clientChannel = clientChannel;
@@ -43,7 +43,7 @@ public class PullRequest {
     }
 
 
-    public RemotingCommand getRequestCommand() {
+    public MessageCommand getRequestCommand() {
         return requestCommand;
     }
 

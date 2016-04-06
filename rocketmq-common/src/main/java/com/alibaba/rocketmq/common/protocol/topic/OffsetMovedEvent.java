@@ -1,8 +1,7 @@
 package com.alibaba.rocketmq.common.protocol.topic;
 
 import com.alibaba.rocketmq.common.message.MessageQueue;
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
-
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 
 public class OffsetMovedEvent extends RemotingSerializable {
     private String consumerGroup;

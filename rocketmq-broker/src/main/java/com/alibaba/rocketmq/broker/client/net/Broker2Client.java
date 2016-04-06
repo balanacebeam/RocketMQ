@@ -24,18 +24,20 @@ import com.alibaba.rocketmq.common.TopicConfig;
 import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.common.message.MessageQueue;
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
 import com.alibaba.rocketmq.common.protocol.RequestCode;
 import com.alibaba.rocketmq.common.protocol.ResponseCode;
 import com.alibaba.rocketmq.common.protocol.body.GetConsumerStatusBody;
 import com.alibaba.rocketmq.common.protocol.body.ResetOffsetBody;
-import com.alibaba.rocketmq.common.protocol.header.CheckTransactionStateRequestHeader;
-import com.alibaba.rocketmq.common.protocol.header.GetConsumerStatusRequestHeader;
-import com.alibaba.rocketmq.common.protocol.header.NotifyConsumerIdsChangedRequestHeader;
-import com.alibaba.rocketmq.common.protocol.header.ResetOffsetRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.CheckTransactionStateRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.GetConsumerStatusRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.NotifyConsumerIdsChangedRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.ResetOffsetRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.common.RemotingHelper;
 import com.alibaba.rocketmq.remoting.exception.RemotingSendRequestException;
 import com.alibaba.rocketmq.remoting.exception.RemotingTimeoutException;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import com.alibaba.rocketmq.store.SelectMapedBufferResult;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -44,6 +46,7 @@ import io.netty.channel.FileRegion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,13 +76,14 @@ public class Broker2Client {
                                               final CheckTransactionStateRequestHeader requestHeader,//
                                               final SelectMapedBufferResult selectMapedBufferResult//
     ) {
-        RemotingCommand request =
-                RemotingCommand.createRequestCommand(RequestCode.CHECK_TRANSACTION_STATE, requestHeader);
-        request.markOnewayRPC();
+        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.CHECK_TRANSACTION_STATE)
+                .setCheckTransactionStateRequestHeader(requestHeader)
+                .setRpcType(Command.RpcType.ONE_WAY)
+                .build();
 
         try {
             FileRegion fileRegion =
-                    new OneMessageTransfer(request.encodeHeader(selectMapedBufferResult.getSize()),
+                    new OneMessageTransfer(ByteBuffer.wrap(request.toByteArray()),
                             selectMapedBufferResult);
             channel.writeAndFlush(fileRegion).addListener(new ChannelFutureListener() {
                 @Override
@@ -97,9 +101,9 @@ public class Broker2Client {
     }
 
 
-    public RemotingCommand callClient(//
-                                      final Channel channel,//
-                                      final RemotingCommand request//
+    public MessageCommand callClient(//
+                                     final Channel channel,//
+                                     final MessageCommand request//
     ) throws RemotingSendRequestException, RemotingTimeoutException, InterruptedException {
         return this.brokerController.getRemotingServer().invokeSync(channel, request, 10000);
     }
@@ -117,10 +121,9 @@ public class Broker2Client {
             return;
         }
 
-        NotifyConsumerIdsChangedRequestHeader requestHeader = new NotifyConsumerIdsChangedRequestHeader();
-        requestHeader.setConsumerGroup(consumerGroup);
-        RemotingCommand request =
-                RemotingCommand.createRequestCommand(RequestCode.NOTIFY_CONSUMER_IDS_CHANGED, requestHeader);
+        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.NOTIFY_CONSUMER_IDS_CHANGED)
+                .setNotifyConsumerIdsChangedRequestHeader(NotifyConsumerIdsChangedRequestHeader.newBuilder().setConsumerGroup(consumerGroup))
+                .build();
 
         try {
             this.brokerController.getRemotingServer().invokeOneway(channel, request, 10);
@@ -133,15 +136,14 @@ public class Broker2Client {
     /**
      * Broker 主动通知 Consumer，offset 需要进行重置列表发生变化
      */
-    public RemotingCommand resetOffset(String topic, String group, long timeStamp, boolean isForce) {
-        final RemotingCommand response = RemotingCommand.createResponseCommand(null);
-
+    public MessageCommand resetOffset(MessageCommand req, String topic, String group, long timeStamp, boolean isForce) {
         TopicConfig topicConfig = this.brokerController.getTopicConfigManager().selectTopicConfig(topic);
         if (null == topicConfig) {
             log.error("[reset-offset] reset offset failed, no topic in this broker. topic={}", topic);
-            response.setCode(ResponseCode.SYSTEM_ERROR);
-            response.setRemark("[reset-offset] reset offset failed, no topic in this broker. topic=" + topic);
-            return response;
+
+            return CommandUtil.createResponseCommand(ResponseCode.SYSTEM_ERROR,
+                    req.getOpaque(),
+                    "[reset-offset] reset offset failed, no topic in this broker. topic=" + topic);
         }
 
         Map<MessageQueue, Long> offsetTable = new HashMap<MessageQueue, Long>();
@@ -154,9 +156,9 @@ public class Broker2Client {
             long consumerOffset =
                     this.brokerController.getConsumerOffsetManager().queryOffset(group, topic, i);
             if (-1 == consumerOffset) {
-                response.setCode(ResponseCode.SYSTEM_ERROR);
-                response.setRemark(String.format("THe consumer group <%s> not exist", group));
-                return response;
+                return CommandUtil.createResponseCommand(ResponseCode.SYSTEM_ERROR,
+                        req.getOpaque(),
+                        String.format("THe consumer group <%s> not exist", group));
             }
 
             long timeStampOffset =
@@ -168,18 +170,20 @@ public class Broker2Client {
             }
         }
 
-        ResetOffsetRequestHeader requestHeader = new ResetOffsetRequestHeader();
-        requestHeader.setTopic(topic);
-        requestHeader.setGroup(group);
-        requestHeader.setTimestamp(timeStamp);
-        RemotingCommand request =
-                RemotingCommand.createRequestCommand(RequestCode.RESET_CONSUMER_CLIENT_OFFSET, requestHeader);
         ResetOffsetBody body = new ResetOffsetBody();
         body.setOffsetTable(offsetTable);
-        request.setBody(body.encode());
 
-        ConsumerGroupInfo consumerGroupInfo =
-                this.brokerController.getConsumerManager().getConsumerGroupInfo(group);
+        ResetOffsetRequestHeader requestHeader = ResetOffsetRequestHeader.newBuilder()
+                .setTopic(topic)
+                .setGroup(group)
+                .setTimestamp(timeStamp)
+                .build();
+
+        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.RESET_CONSUMER_CLIENT_OFFSET, body.encode())
+                .setResetOffsetRequestHeader(requestHeader)
+                .build();
+
+        ConsumerGroupInfo consumerGroupInfo = this.brokerController.getConsumerManager().getConsumerGroupInfo(group);
 
         // Consumer在线
         if (consumerGroupInfo != null && !consumerGroupInfo.getAllChannel().isEmpty()) {
@@ -198,57 +202,54 @@ public class Broker2Client {
                     }
                 } else {
                     // 如果有一个客户端是不支持该功能的，则直接返回错误，需要应用方升级。
-                    response.setCode(ResponseCode.SYSTEM_ERROR);
-                    response.setRemark("the client does not support this feature. version="
-                            + MQVersion.getVersionDesc(version));
                     log.warn("[reset-offset] the client does not support this feature. version={}",
                             RemotingHelper.parseChannelRemoteAddr(channel), MQVersion.getVersionDesc(version));
-                    return response;
+
+                    return CommandUtil.createResponseCommand(ResponseCode.SYSTEM_ERROR,
+                            req.getOpaque(),
+                            "the client does not support this feature. version=" + MQVersion.getVersionDesc(version));
                 }
             }
         }
         // Consumer不在线
         else {
             String errorInfo =
-                    String.format(
-                            "Consumer not online, so can not reset offset, Group: %s Topic: %s Timestamp: %d",//
+                    String.format("Consumer not online, so can not reset offset, Group: %s Topic: %s Timestamp: %d",//
                             requestHeader.getGroup(), //
                             requestHeader.getTopic(), //
                             requestHeader.getTimestamp());
             log.error(errorInfo);
-            response.setCode(ResponseCode.CONSUMER_NOT_ONLINE);
-            response.setRemark(errorInfo);
-            return response;
+
+            return CommandUtil.createResponseCommand(ResponseCode.CONSUMER_NOT_ONLINE,
+                    req.getOpaque(),
+                    errorInfo);
         }
-        response.setCode(ResponseCode.SUCCESS);
+
         ResetOffsetBody resBody = new ResetOffsetBody();
         resBody.setOffsetTable(offsetTable);
-        response.setBody(resBody.encode());
-        return response;
+
+        return CommandUtil.createResponseBuilder(req.getOpaque(), resBody.encode()).build();
     }
 
 
     /**
      * Broker主动获取Consumer端的消息情况
      */
-    public RemotingCommand getConsumeStatus(String topic, String group, String originClientId) {
-        final RemotingCommand result = RemotingCommand.createResponseCommand(null);
-
-        GetConsumerStatusRequestHeader requestHeader = new GetConsumerStatusRequestHeader();
-        requestHeader.setTopic(topic);
-        requestHeader.setGroup(group);
-        RemotingCommand request =
-                RemotingCommand.createRequestCommand(RequestCode.GET_CONSUMER_STATUS_FROM_CLIENT,
-                        requestHeader);
+    public MessageCommand getConsumeStatus(String topic, String group, String originClientId) {
+        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_CONSUMER_STATUS_FROM_CLIENT)
+                .setGetConsumerStatusRequestHeader(GetConsumerStatusRequestHeader.newBuilder()
+                        .setTopic(topic)
+                        .setGroup(group))
+                .build();
 
         Map<String, Map<MessageQueue, Long>> consumerStatusTable =
                 new HashMap<String, Map<MessageQueue, Long>>();
         ConcurrentHashMap<Channel, ClientChannelInfo> channelInfoTable =
                 this.brokerController.getConsumerManager().getConsumerGroupInfo(group).getChannelInfoTable();
         if (null == channelInfoTable || channelInfoTable.isEmpty()) {
-            result.setCode(ResponseCode.SYSTEM_ERROR);
-            result.setRemark(String.format("No Any Consumer online in the consumer group: [%s]", group));
-            return result;
+            return CommandUtil.createResponseCommand(ResponseCode.SYSTEM_ERROR,
+                    request.getOpaque(),
+                    String.format("No Any Consumer online in the consumer group: [%s]", group));
         }
 
         for (Channel channel : channelInfoTable.keySet()) {
@@ -256,29 +257,29 @@ public class Broker2Client {
             String clientId = channelInfoTable.get(channel).getClientId();
             if (version < MQVersion.Version.V3_0_7_SNAPSHOT.ordinal()) {
                 // 如果有一个客户端是不支持该功能的，则直接返回错误，需要应用方升级。
-                result.setCode(ResponseCode.SYSTEM_ERROR);
-                result.setRemark("the client does not support this feature. version="
-                        + MQVersion.getVersionDesc(version));
                 log.warn("[get-consumer-status] the client does not support this feature. version={}",
                         RemotingHelper.parseChannelRemoteAddr(channel), MQVersion.getVersionDesc(version));
-                return result;
+
+                return CommandUtil.createResponseCommand(ResponseCode.SYSTEM_ERROR,
+                        request.getOpaque(),
+                        "the client does not support this feature. version="
+                                + MQVersion.getVersionDesc(version));
             } else if (UtilAll.isBlank(originClientId) || originClientId.equals(clientId)) {
                 // 不指定 originClientId 则对所有的 client 进行处理；若指定 originClientId 则只对当前
                 // originClientId 进行处理
                 try {
-                    RemotingCommand response =
+                    MessageCommand response =
                             this.brokerController.getRemotingServer().invokeSync(channel, request, 5000);
                     assert response != null;
                     switch (response.getCode()) {
                         case ResponseCode.SUCCESS: {
-                            if (response.getBody() != null) {
+                            if (response.hasBody()) {
                                 GetConsumerStatusBody body =
-                                        GetConsumerStatusBody.decode(response.getBody(),
+                                        GetConsumerStatusBody.decode(response.getBody().toByteArray(),
                                                 GetConsumerStatusBody.class);
 
                                 consumerStatusTable.put(clientId, body.getMessageQueueTable());
-                                log.info(
-                                        "[get-consumer-status] get consumer status success. topic={}, group={}, channelRemoteAddr={}",
+                                log.info("[get-consumer-status] get consumer status success. topic={}, group={}, channelRemoteAddr={}",
                                         new Object[]{topic, group, clientId});
                             }
                         }
@@ -286,8 +287,7 @@ public class Broker2Client {
                             break;
                     }
                 } catch (Exception e) {
-                    log.error(
-                            "[get-consumer-status] get consumer status exception. topic={}, group={}, offset={}",
+                    log.error("[get-consumer-status] get consumer status exception. topic={}, group={}, offset={}",
                             new Object[]{topic, group}, e);
                 }
 
@@ -298,10 +298,9 @@ public class Broker2Client {
             }
         }
 
-        result.setCode(ResponseCode.SUCCESS);
         GetConsumerStatusBody resBody = new GetConsumerStatusBody();
         resBody.setConsumerTable(consumerStatusTable);
-        result.setBody(resBody.encode());
-        return result;
+
+        return CommandUtil.createResponseBuilder(request.getOpaque(), resBody.encode()).build();
     }
 }

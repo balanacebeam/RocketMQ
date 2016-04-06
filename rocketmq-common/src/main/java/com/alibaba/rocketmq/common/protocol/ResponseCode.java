@@ -1,8 +1,5 @@
 package com.alibaba.rocketmq.common.protocol;
 
-import com.alibaba.rocketmq.remoting.protocol.RemotingSysResponseCode;
-
-
 public class ResponseCode extends RemotingSysResponseCode {
     // Broker 刷盘超时
     public static final int FLUSH_DISK_TIMEOUT = 10;

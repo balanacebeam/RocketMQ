@@ -23,12 +23,12 @@ import com.alibaba.rocketmq.client.hook.ConsumeMessageContext;
 import com.alibaba.rocketmq.client.log.ClientLogger;
 import com.alibaba.rocketmq.client.stat.ConsumerStatsManager;
 import com.alibaba.rocketmq.common.ThreadFactoryImpl;
+import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.message.MessageExt;
 import com.alibaba.rocketmq.common.message.MessageQueue;
 import com.alibaba.rocketmq.common.protocol.body.CMResult;
 import com.alibaba.rocketmq.common.protocol.body.ConsumeMessageDirectlyResult;
 import com.alibaba.rocketmq.common.protocol.heartbeat.MessageModel;
-import com.alibaba.rocketmq.remoting.common.RemotingHelper;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -316,10 +316,10 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService {
             }
         } catch (Throwable e) {
             result.setConsumeResult(CMResult.CR_THROW_EXCEPTION);
-            result.setRemark(RemotingHelper.exceptionSimpleDesc(e));
+            result.setRemark(UtilAll.exceptionSimpleDesc(e));
 
             log.warn(String.format("consumeMessageDirectly exception: %s Group: %s Msgs: %s MQ: %s",//
-                    RemotingHelper.exceptionSimpleDesc(e),//
+                    UtilAll.exceptionSimpleDesc(e),//
                     ConsumeMessageOrderlyService.this.consumerGroup,//
                     msgs,//
                     mq), e);
@@ -433,7 +433,7 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService {
                                                 context);
                             } catch (Throwable e) {
                                 log.warn("consumeMessage exception: {} Group: {} Msgs: {} MQ: {}",//
-                                        RemotingHelper.exceptionSimpleDesc(e),//
+                                        UtilAll.exceptionSimpleDesc(e),//
                                         ConsumeMessageOrderlyService.this.consumerGroup,//
                                         msgs,//
                                         messageQueue);

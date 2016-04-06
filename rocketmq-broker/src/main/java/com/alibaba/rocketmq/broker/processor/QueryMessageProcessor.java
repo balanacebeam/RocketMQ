@@ -19,14 +19,15 @@ import com.alibaba.rocketmq.broker.BrokerController;
 import com.alibaba.rocketmq.broker.pagecache.OneMessageTransfer;
 import com.alibaba.rocketmq.broker.pagecache.QueryMessageTransfer;
 import com.alibaba.rocketmq.common.constant.LoggerName;
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
 import com.alibaba.rocketmq.common.protocol.RequestCode;
 import com.alibaba.rocketmq.common.protocol.ResponseCode;
-import com.alibaba.rocketmq.common.protocol.header.QueryMessageRequestHeader;
-import com.alibaba.rocketmq.common.protocol.header.QueryMessageResponseHeader;
-import com.alibaba.rocketmq.common.protocol.header.ViewMessageRequestHeader;
-import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.QueryMessageRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.QueryMessageResponseHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.ViewMessageRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
+import com.alibaba.rocketmq.remoting.exception.MessageCommandException;
 import com.alibaba.rocketmq.remoting.netty.NettyRequestProcessor;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import com.alibaba.rocketmq.store.QueryMessageResult;
 import com.alibaba.rocketmq.store.SelectMapedBufferResult;
 import io.netty.channel.ChannelFuture;
@@ -35,6 +36,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.FileRegion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.ByteBuffer;
 
 
 /**
@@ -55,8 +58,8 @@ public class QueryMessageProcessor implements NettyRequestProcessor {
 
 
     @Override
-    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
+    public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
         switch (request.getCode()) {
             case RequestCode.QUERY_MESSAGE:
                 return this.queryMessage(ctx, request);
@@ -70,18 +73,9 @@ public class QueryMessageProcessor implements NettyRequestProcessor {
     }
 
 
-    public RemotingCommand queryMessage(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response =
-                RemotingCommand.createResponseCommand(QueryMessageResponseHeader.class);
-        final QueryMessageResponseHeader responseHeader =
-                (QueryMessageResponseHeader) response.readCustomHeader();
-        final QueryMessageRequestHeader requestHeader =
-                (QueryMessageRequestHeader) request
-                        .decodeCommandCustomHeader(QueryMessageRequestHeader.class);
-
-        // 由于使用sendfile，所以必须要设置
-        response.setOpaque(request.getOpaque());
+    public MessageCommand queryMessage(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final QueryMessageRequestHeader requestHeader = request.getQueryMessageRequestHeader();
 
         final QueryMessageResult queryMessageResult =
                 this.brokerController.getMessageStore().queryMessage(requestHeader.getTopic(),
@@ -89,18 +83,17 @@ public class QueryMessageProcessor implements NettyRequestProcessor {
                         requestHeader.getEndTimestamp());
         assert queryMessageResult != null;
 
-        responseHeader.setIndexLastUpdatePhyoffset(queryMessageResult.getIndexLastUpdatePhyoffset());
-        responseHeader.setIndexLastUpdateTimestamp(queryMessageResult.getIndexLastUpdateTimestamp());
-
+        final MessageCommand.Builder responseBuilder = CommandUtil.createResponseBuilder(request.getOpaque())
+                .setQueryMessageResponseHeader(QueryMessageResponseHeader.newBuilder()
+                .setIndexLastUpdatePhyOffset(queryMessageResult.getIndexLastUpdatePhyoffset())
+                .setIndexLastUpdateTimestamp(queryMessageResult.getIndexLastUpdateTimestamp()));
         // 说明找到消息
         if (queryMessageResult.getBufferTotalSize() > 0) {
-            response.setCode(ResponseCode.SUCCESS);
-            response.setRemark(null);
+            responseBuilder.setCode(ResponseCode.SUCCESS);
 
             try {
                 FileRegion fileRegion =
-                        new QueryMessageTransfer(response.encodeHeader(queryMessageResult
-                                .getBufferTotalSize()), queryMessageResult);
+                        new QueryMessageTransfer(ByteBuffer.wrap(responseBuilder.build().toByteArray()), queryMessageResult);
                 ctx.channel().writeAndFlush(fileRegion).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
@@ -118,30 +111,27 @@ public class QueryMessageProcessor implements NettyRequestProcessor {
             return null;
         }
 
-        response.setCode(ResponseCode.QUERY_NOT_FOUND);
-        response.setRemark("can not find message, maybe time range not correct");
-        return response;
+        responseBuilder.setCode(ResponseCode.QUERY_NOT_FOUND);
+        responseBuilder.setRemark("can not find message, maybe time range not correct");
+
+        return responseBuilder.build();
     }
 
 
-    public RemotingCommand viewMessageById(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response = RemotingCommand.createResponseCommand(null);
-        final ViewMessageRequestHeader requestHeader =
-                (ViewMessageRequestHeader) request.decodeCommandCustomHeader(ViewMessageRequestHeader.class);
-
-        // 由于使用sendfile，所以必须要设置
-        response.setOpaque(request.getOpaque());
+    public MessageCommand viewMessageById(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final ViewMessageRequestHeader requestHeader = request.getViewMessageRequestHeader();
 
         final SelectMapedBufferResult selectMapedBufferResult =
                 this.brokerController.getMessageStore().selectOneMessageByOffset(requestHeader.getOffset());
+
+        MessageCommand.Builder responseBuilder = CommandUtil.createResponseBuilder(request.getOpaque());
         if (selectMapedBufferResult != null) {
-            response.setCode(ResponseCode.SUCCESS);
-            response.setRemark(null);
+            responseBuilder.setCode(ResponseCode.SUCCESS);
 
             try {
                 FileRegion fileRegion =
-                        new OneMessageTransfer(response.encodeHeader(selectMapedBufferResult.getSize()),
+                        new OneMessageTransfer(ByteBuffer.wrap(responseBuilder.build().toByteArray()),
                                 selectMapedBufferResult);
                 ctx.channel().writeAndFlush(fileRegion).addListener(new ChannelFutureListener() {
                     @Override
@@ -159,10 +149,10 @@ public class QueryMessageProcessor implements NettyRequestProcessor {
 
             return null;
         } else {
-            response.setCode(ResponseCode.SYSTEM_ERROR);
-            response.setRemark("can not find message by the offset, " + requestHeader.getOffset());
+            responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);
+            responseBuilder.setRemark("can not find message by the offset, " + requestHeader.getOffset());
         }
 
-        return response;
+        return responseBuilder.build();
     }
 }

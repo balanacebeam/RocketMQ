@@ -15,10 +15,10 @@
  */
 package com.alibaba.rocketmq.remoting.common;
 
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.exception.RemotingConnectException;
 import com.alibaba.rocketmq.remoting.exception.RemotingSendRequestException;
 import com.alibaba.rocketmq.remoting.exception.RemotingTimeoutException;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import io.netty.channel.Channel;
 
 import java.io.IOException;
@@ -37,24 +37,6 @@ import java.nio.channels.SocketChannel;
 public class RemotingHelper {
     public static final String RemotingLogName = "RocketmqRemoting";
 
-
-    public static String exceptionSimpleDesc(final Throwable e) {
-        StringBuffer sb = new StringBuffer();
-        if (e != null) {
-            sb.append(e.toString());
-
-            StackTraceElement[] stackTrace = e.getStackTrace();
-            if (stackTrace != null && stackTrace.length > 0) {
-                StackTraceElement elment = stackTrace[0];
-                sb.append(", ");
-                sb.append(elment.toString());
-            }
-        }
-
-        return sb.toString();
-    }
-
-
     /**
      * IP:PORT
      */
@@ -68,7 +50,7 @@ public class RemotingHelper {
     /**
      * 短连接调用 TODO
      */
-    public static RemotingCommand invokeSync(final String addr, final RemotingCommand request,
+    public static MessageCommand invokeSync(final String addr, final MessageCommand request,
                                              final long timeoutMillis) throws InterruptedException, RemotingConnectException,
             RemotingSendRequestException, RemotingTimeoutException {
         long beginTime = System.currentTimeMillis();
@@ -88,7 +70,7 @@ public class RemotingHelper {
                 socketChannel.socket().setSoTimeout((int) timeoutMillis);
 
                 // 发送数据
-                ByteBuffer byteBufferRequest = request.encode();
+                ByteBuffer byteBufferRequest = ByteBuffer.wrap(request.toByteArray());
                 while (byteBufferRequest.hasRemaining()) {
                     int length = socketChannel.write(byteBufferRequest);
                     if (length > 0) {
@@ -149,7 +131,10 @@ public class RemotingHelper {
 
                 // 对应答数据解码
                 byteBufferBody.flip();
-                return RemotingCommand.decode(byteBufferBody);
+
+                return MessageCommand.getDefaultInstance()
+                        .getParserForType()
+                        .parseFrom(byteBufferBody.array());
             } catch (IOException e) {
                 e.printStackTrace();
 

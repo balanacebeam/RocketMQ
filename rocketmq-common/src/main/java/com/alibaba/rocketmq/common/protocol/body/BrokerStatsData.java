@@ -1,7 +1,7 @@
 package com.alibaba.rocketmq.common.protocol.body;
 
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
 
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 
 public class BrokerStatsData extends RemotingSerializable {
     // 最近一分钟内的统计

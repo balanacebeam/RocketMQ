@@ -15,7 +15,7 @@
  */
 package com.alibaba.rocketmq.namesrv.kvconfig;
 
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 
 import java.util.HashMap;
 

@@ -1,0 +1,257 @@
+syntax="proto2";
+
+package com.alibaba.rocketmq.common.protocol.protobuf;
+
+// broker_header
+message CheckTransactionStateRequestHeader {
+    required int64 tranStateTableOffset = 1;
+    required int64 commitLogOffset = 2;
+    optional string msgId = 3;
+    optional string transactionId = 4;
+}
+
+message CloneGroupOffsetRequestHeader {
+    required string srcGroup = 1;
+    required string destGroup = 2;
+    optional string topic = 3;
+    optional bool offline = 4;
+}
+
+message ConsumeMessageDirectlyResultRequestHeader {
+    required string consumerGroup = 1;
+    optional string clientId = 2;
+    optional string msgId = 3;
+    optional string brokerName = 4;
+}
+
+message ConsumerSendMsgBackRequestHeader {
+    required int64 offset = 1;
+    required string group = 2;
+    required int32 delayLevel = 3;
+    optional bool unitMode = 4 [default = false];
+    optional string originMsgId = 5;
+    optional string originTopic = 6;
+}
+
+enum TopicFilterType {
+    SINGLE_TAG = 1;
+    MULTI_TAG = 2;
+}
+message CreateTopicRequestHeader {
+    required string topic = 1;
+    required string defaultTopic = 2;
+    required int32 readQueueNums = 3;
+    required int32 writeQueueNums = 4;
+    required int32 perm = 5;
+    required TopicFilterType topicFilterType = 6;
+    required bool order = 7 [default = false];
+    optional int32 topicSysFlag = 8;
+}
+
+message DeleteSubscriptionGroupRequestHeader {
+    required string groupName = 1;
+}
+
+message DeleteTopicRequestHeader {
+    required string topic = 1;
+}
+
+message EndTransactionRequestHeader {
+    required string producerGroup = 1;
+    required int64 tranStateTableOffset = 2;
+    required int64 commitLogOffset = 3;
+    required int32 commitOrRollback = 4;
+    optional bool fromTransactionCheck = 5 [default = false];
+    required string msgId = 6;
+    optional string transactionId = 7;
+}
+
+message GetBrokerConfigResponseHeader {
+    required string version = 1;
+}
+
+message GetConsumerConnectionListRequestHeader {
+    required string consumerGroup = 1;
+}
+
+message GetConsumerListByGroupRequestHeader {
+    required string consumerGroup = 1;
+}
+
+message GetConsumerRunningInfoRequestHeader {
+    required string consumerGroup = 1;
+    required string clientId = 2;
+    optional bool jstackEnable = 3;
+}
+
+message GetConsumerStatusRequestHeader {
+    required string topic = 1;
+    required string group = 2;
+    optional string clientAddr = 3;
+}
+
+message GetConsumeStatsRequestHeader {
+    required string consumerGroup = 1;
+    optional string topic = 2;
+}
+
+message GetEarliestMsgStoreTimeRequestHeader {
+    required string topic = 1;
+    required int32 queueId = 2;
+}
+
+message GetEarliestMsgStoreTimeResponseHeader {
+    required int64 timestamp = 1;
+}
+
+message GetMaxOffsetRequestHeader {
+    required string topic = 1;
+    required int32 queueId = 2;
+}
+
+message GetMaxOffsetResponseHeader {
+    required int64 offset = 1;
+}
+
+message GetMinOffsetRequestHeader {
+    required string topic = 1;
+    required int32 queueId = 2;
+}
+
+message GetMinOffsetResponseHeader {
+    required int64 offset = 1;
+}
+
+message GetProducerConnectionListRequestHeader {
+    required string producerGroup = 1;
+}
+
+message GetTopicsByClusterRequestHeader {
+    required string cluster = 1;
+}
+
+message GetTopicStatsInfoRequestHeader {
+    required string topic = 1;
+}
+
+message NotifyConsumerIdsChangedRequestHeader {
+    required string consumerGroup = 1;
+}
+
+message PullMessageRequestHeader {
+    required string consumerGroup = 1;
+    required string topic = 2;
+    required int32 queueId = 3;
+    required int64 queueOffset = 4;
+    required int32 maxMsgNums = 5;
+    required int32 sysFlag = 6;
+    required int64 commitOffset = 7;
+    required int64 suspendTimeoutMillis = 8;
+    required int64 subVersion = 9;
+    optional string subscription = 10;
+}
+
+message PullMessageResponseHeader {
+    required int64 suggestWhichBrokerId = 1;
+    required int64 nextBeginOffset = 2;
+    required int64 minOffset = 3;
+    required int64 maxOffset = 4;
+}
+
+message QueryConsumerOffsetRequestHeader {
+    required string consumerGroup = 1;
+    required string topic = 2;
+    required int32 queueId = 3;
+}
+
+message QueryConsumerOffsetResponseHeader {
+    required int64 offset = 1;
+}
+
+message QueryConsumeTimeSpanRequestHeader {
+    required string topic = 1;
+    required string group = 2;
+}
+
+message QueryCorrectionOffsetHeader {
+    required string compareGroup = 1;
+    required string topic = 2;
+    optional string filterGroups = 3;
+}
+
+message QueryMessageRequestHeader {
+    required string topic = 1;
+    required string key = 2;
+    required int32 maxNum = 3;
+    required int64 beginTimestamp = 4;
+    required int64 endTimestamp = 5;
+}
+
+message QueryMessageResponseHeader {
+    required int64 indexLastUpdateTimestamp = 1;
+    required int64 indexLastUpdatePhyOffset = 2;
+}
+
+message QueryTopicConsumeByWhoRequestHeader {
+    required string topic = 1;
+}
+
+message ResetOffsetRequestHeader {
+    required string topic = 1;
+    required string group = 2;
+    required int64 timestamp = 3;
+    required bool isForce = 4;
+}
+
+message SearchOffsetRequestHeader {
+    required string topic = 1;
+    required int32 queueId = 2;
+    required int64 timestamp = 3;
+}
+
+message SearchOffsetResponseHeader {
+    required int64 offset = 1;
+}
+
+message SendMessageRequestHeader {
+    required string producerGroup = 1;
+    required string topic = 2;
+    required string defaultTopic = 3;
+    required int32 defaultTopicQueueNums = 4;
+    required int32 queueId = 5;
+    required int32 sysFlag = 6;
+    required int64 bornTimestamp = 7;
+    required int32 flag = 8;
+    optional string properties = 9;
+    optional int32 reConsumeTimes = 10;
+    optional bool unitMode = 11 [default = false];
+}
+
+message SendMessageResponseHeader {
+    required string msgId = 1;
+    required int32 queueId = 2;
+    required int64 queueOffset = 3;
+    optional string transactionId = 4;
+}
+
+message UnregisterClientRequestHeader {
+    required string clientId = 1;
+    optional string producerGroup = 2;
+    optional string consumerGroup = 3;
+}
+
+message UpdateConsumerOffsetRequestHeader {
+    required string consumerGroup = 1;
+    required string topic = 2;
+    required int32 queueId = 3;
+    required int64 commitOffset = 4;
+}
+
+message ViewBrokerStatsDataRequestHeader {
+    required string statsName = 1;
+    required string statsKey = 2;
+}
+
+message ViewMessageRequestHeader {
+    required int64 offset = 1;
+}

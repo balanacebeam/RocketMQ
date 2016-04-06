@@ -238,10 +238,10 @@ public interface MQAdminExt extends MQAdmin {
      * @throws RemotingTimeoutException
      * @throws RemotingSendRequestException
      * @throws RemotingConnectException
-     * @throws RemotingCommandException
+     * @throws MessageCommandException
      */
     public int wipeWritePermOfBroker(final String namesrvAddr, String brokerName)
-            throws RemotingCommandException, RemotingConnectException, RemotingSendRequestException,
+            throws MessageCommandException, RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQClientException;
 
 

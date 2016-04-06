@@ -15,7 +15,7 @@
  */
 package com.alibaba.rocketmq.store.schedule;
 
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 
 import java.util.concurrent.ConcurrentHashMap;
 

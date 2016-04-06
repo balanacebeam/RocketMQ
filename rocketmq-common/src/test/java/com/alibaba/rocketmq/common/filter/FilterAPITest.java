@@ -1,7 +1,7 @@
 package com.alibaba.rocketmq.common.filter;
 
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 import com.alibaba.rocketmq.common.protocol.heartbeat.SubscriptionData;
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
 import org.junit.Test;
 
 

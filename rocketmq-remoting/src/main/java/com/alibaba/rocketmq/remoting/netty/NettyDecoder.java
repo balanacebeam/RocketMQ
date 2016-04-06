@@ -15,9 +15,10 @@
  */
 package com.alibaba.rocketmq.remoting.netty;
 
+import com.alibaba.rocketmq.common.protocol.protobuf.Command;
 import com.alibaba.rocketmq.remoting.common.RemotingHelper;
 import com.alibaba.rocketmq.remoting.common.RemotingUtil;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
+import com.google.protobuf.ByteString;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
@@ -36,6 +37,7 @@ public class NettyDecoder extends LengthFieldBasedFrameDecoder {
     private static final int FRAME_MAX_LENGTH = //
             Integer.parseInt(System.getProperty("com.rocketmq.remoting.frameMaxLength", "8388608"));
 
+    private Command.MessageCommand messageCommand = Command.MessageCommand.getDefaultInstance();
 
     public NettyDecoder() {
         super(FRAME_MAX_LENGTH, 0, 4, 0, 4);
@@ -53,7 +55,7 @@ public class NettyDecoder extends LengthFieldBasedFrameDecoder {
 
             ByteBuffer byteBuffer = frame.nioBuffer();
 
-            return RemotingCommand.decode(byteBuffer);
+            return messageCommand.getParserForType().parseFrom(ByteString.copyFrom(byteBuffer));
         } catch (Exception e) {
             log.error("decode exception, " + RemotingHelper.parseChannelRemoteAddr(ctx.channel()), e);
             RemotingUtil.closeChannel(ctx.channel());

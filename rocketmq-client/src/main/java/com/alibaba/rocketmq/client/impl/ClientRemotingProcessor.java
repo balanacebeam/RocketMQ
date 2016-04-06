@@ -23,17 +23,18 @@ import com.alibaba.rocketmq.common.message.MessageConst;
 import com.alibaba.rocketmq.common.message.MessageDecoder;
 import com.alibaba.rocketmq.common.message.MessageExt;
 import com.alibaba.rocketmq.common.message.MessageQueue;
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
 import com.alibaba.rocketmq.common.protocol.RequestCode;
 import com.alibaba.rocketmq.common.protocol.ResponseCode;
 import com.alibaba.rocketmq.common.protocol.body.ConsumeMessageDirectlyResult;
 import com.alibaba.rocketmq.common.protocol.body.ConsumerRunningInfo;
 import com.alibaba.rocketmq.common.protocol.body.GetConsumerStatusBody;
 import com.alibaba.rocketmq.common.protocol.body.ResetOffsetBody;
-import com.alibaba.rocketmq.common.protocol.header.*;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.*;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.common.RemotingHelper;
-import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
+import com.alibaba.rocketmq.remoting.exception.MessageCommandException;
 import com.alibaba.rocketmq.remoting.netty.NettyRequestProcessor;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 
@@ -57,8 +58,8 @@ public class ClientRemotingProcessor implements NettyRequestProcessor {
 
 
     @Override
-    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
+    public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
         switch (request.getCode()) {
             case RequestCode.CHECK_TRANSACTION_STATE:
                 return this.checkTransactionState(ctx, request);
@@ -81,64 +82,51 @@ public class ClientRemotingProcessor implements NettyRequestProcessor {
     }
 
 
-    private RemotingCommand consumeMessageDirectly(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response = RemotingCommand.createResponseCommand(null);
-        final ConsumeMessageDirectlyResultRequestHeader requestHeader =
-                (ConsumeMessageDirectlyResultRequestHeader) request
-                        .decodeCommandCustomHeader(ConsumeMessageDirectlyResultRequestHeader.class);
+    private MessageCommand consumeMessageDirectly(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final ConsumeMessageDirectlyResultRequestHeader requestHeader = request.getConsumeMessageDirectlyResultRequestHeader();
 
-        final MessageExt msg = MessageDecoder.decode(ByteBuffer.wrap(request.getBody()));
+        final MessageExt msg = MessageDecoder.decode(request.getBody().asReadOnlyByteBuffer());
 
         ConsumeMessageDirectlyResult result =
                 this.mqClientFactory.consumeMessageDirectly(msg, requestHeader.getConsumerGroup(),
                         requestHeader.getBrokerName());
 
         if (null != result) {
-            response.setCode(ResponseCode.SUCCESS);
-            response.setBody(result.encode());
+            return CommandUtil.createResponseBuilder(request.getOpaque(), result.encode())
+                    .build();
         } else {
-            response.setCode(ResponseCode.SYSTEM_ERROR);
-            response.setRemark(String.format("The Consumer Group <%s> not exist in this consumer",
-                    requestHeader.getConsumerGroup()));
+            return CommandUtil.createResponseCommand(ResponseCode.SYSTEM_ERROR,
+                    request.getOpaque(),
+                    String.format("The Consumer Group <%s> not exist in this consumer", requestHeader.getConsumerGroup()));
         }
-
-        return response;
     }
 
 
-    private RemotingCommand getConsumerRunningInfo(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response = RemotingCommand.createResponseCommand(null);
-        final GetConsumerRunningInfoRequestHeader requestHeader =
-                (GetConsumerRunningInfoRequestHeader) request
-                        .decodeCommandCustomHeader(GetConsumerRunningInfoRequestHeader.class);
+    private MessageCommand getConsumerRunningInfo(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final GetConsumerRunningInfoRequestHeader requestHeader = request.getGetConsumerRunningInfoRequestHeader();
 
         ConsumerRunningInfo consumerRunningInfo =
                 this.mqClientFactory.consumerRunningInfo(requestHeader.getConsumerGroup());
         if (null != consumerRunningInfo) {
-            if (requestHeader.isJstackEnable()) {
+            if (requestHeader.getJstackEnable()) {
                 String jstack = UtilAll.jstack();
                 consumerRunningInfo.setJstack(jstack);
             }
 
-            response.setCode(ResponseCode.SUCCESS);
-            response.setBody(consumerRunningInfo.encode());
+            return CommandUtil.createResponseBuilder(request.getOpaque(), consumerRunningInfo.encode())
+                    .build();
         } else {
-            response.setCode(ResponseCode.SYSTEM_ERROR);
-            response.setRemark(String.format("The Consumer Group <%s> not exist in this consumer",
-                    requestHeader.getConsumerGroup()));
+            return CommandUtil.createResponseCommand(ResponseCode.SYSTEM_ERROR, request.getOpaque(),
+                    String.format("The Consumer Group <%s> not exist in this consumer", requestHeader.getConsumerGroup()));
         }
-
-        return response;
     }
 
-    public RemotingCommand checkTransactionState(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final CheckTransactionStateRequestHeader requestHeader =
-                (CheckTransactionStateRequestHeader) request
-                        .decodeCommandCustomHeader(CheckTransactionStateRequestHeader.class);
-        final ByteBuffer byteBuffer = ByteBuffer.wrap(request.getBody());
+    public MessageCommand checkTransactionState(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final CheckTransactionStateRequestHeader requestHeader = request.getCheckTransactionStateRequestHeader();
+        final ByteBuffer byteBuffer = request.getBody().asReadOnlyByteBuffer();
         final MessageExt messageExt = MessageDecoder.decode(byteBuffer);
         if (messageExt != null) {
             final String group = messageExt.getProperty(MessageConst.PROPERTY_PRODUCER_GROUP);
@@ -160,34 +148,29 @@ public class ClientRemotingProcessor implements NettyRequestProcessor {
         return null;
     }
 
-    public RemotingCommand notifyConsumerIdsChanged(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
+    public MessageCommand notifyConsumerIdsChanged(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
         try {
-            final NotifyConsumerIdsChangedRequestHeader requestHeader =
-                    (NotifyConsumerIdsChangedRequestHeader) request
-                            .decodeCommandCustomHeader(NotifyConsumerIdsChangedRequestHeader.class);
-            log.info(
-                    "receive broker's notification[{}], the consumer group: {} changed, rebalance immediately",//
+            final NotifyConsumerIdsChangedRequestHeader requestHeader = request.getNotifyConsumerIdsChangedRequestHeader();
+            log.info("receive broker's notification[{}], the consumer group: {} changed, rebalance immediately",//
                     RemotingHelper.parseChannelRemoteAddr(ctx.channel()),//
                     requestHeader.getConsumerGroup());
             this.mqClientFactory.rebalanceImmediately();
         } catch (Exception e) {
-            log.error("notifyConsumerIdsChanged exception", RemotingHelper.exceptionSimpleDesc(e));
+            log.error("notifyConsumerIdsChanged exception", UtilAll.exceptionSimpleDesc(e));
         }
         return null;
     }
 
-    public RemotingCommand resetOffset(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final ResetOffsetRequestHeader requestHeader =
-                (ResetOffsetRequestHeader) request.decodeCommandCustomHeader(ResetOffsetRequestHeader.class);
-        log.info(
-                "invoke reset offset operation from broker. brokerAddr={}, topic={}, group={}, timestamp={}",
+    public MessageCommand resetOffset(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final ResetOffsetRequestHeader requestHeader = request.getResetOffsetRequestHeader();
+        log.info("invoke reset offset operation from broker. brokerAddr={}, topic={}, group={}, timestamp={}",
                 new Object[]{RemotingHelper.parseChannelRemoteAddr(ctx.channel()), requestHeader.getTopic(),
                         requestHeader.getGroup(), requestHeader.getTimestamp()});
         Map<MessageQueue, Long> offsetTable = new HashMap<MessageQueue, Long>();
-        if (request.getBody() != null) {
-            ResetOffsetBody body = ResetOffsetBody.decode(request.getBody(), ResetOffsetBody.class);
+        if (request.hasBody()) {
+            ResetOffsetBody body = ResetOffsetBody.decode(request.getBody().toByteArray(), ResetOffsetBody.class);
             offsetTable = body.getOffsetTable();
         }
         this.mqClientFactory.resetOffset(requestHeader.getTopic(), requestHeader.getGroup(), offsetTable);
@@ -195,19 +178,16 @@ public class ClientRemotingProcessor implements NettyRequestProcessor {
     }
 
     @Deprecated
-    public RemotingCommand getConsumeStatus(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response = RemotingCommand.createResponseCommand(null);
-        final GetConsumerStatusRequestHeader requestHeader =
-                (GetConsumerStatusRequestHeader) request
-                        .decodeCommandCustomHeader(GetConsumerStatusRequestHeader.class);
+    public MessageCommand getConsumeStatus(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final GetConsumerStatusRequestHeader requestHeader = request.getGetConsumerStatusRequestHeader();
 
         Map<MessageQueue, Long> offsetTable =
                 this.mqClientFactory.getConsumerStatus(requestHeader.getTopic(), requestHeader.getGroup());
         GetConsumerStatusBody body = new GetConsumerStatusBody();
         body.setMessageQueueTable(offsetTable);
-        response.setBody(body.encode());
-        response.setCode(ResponseCode.SUCCESS);
-        return response;
+
+        return CommandUtil.createResponseBuilder(request.getOpaque(), body.encode())
+                .build();
     }
 }

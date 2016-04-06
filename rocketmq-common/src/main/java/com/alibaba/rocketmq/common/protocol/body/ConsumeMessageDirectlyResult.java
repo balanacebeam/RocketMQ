@@ -1,7 +1,7 @@
 package com.alibaba.rocketmq.common.protocol.body;
 
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
 
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 
 public class ConsumeMessageDirectlyResult extends RemotingSerializable {
     private boolean order = false;

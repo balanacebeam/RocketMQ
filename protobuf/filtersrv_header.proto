@@ -1,0 +1,20 @@
+syntax="proto2";
+
+package com.alibaba.rocketmq.common.protocol.protobuf;
+
+// filtersrv_header
+message RegisterFilterServerRequestHeader {
+    required string filterServerAddr = 1;
+}
+
+message RegisterFilterServerResponseHeader {
+    required string brokerName = 1;
+    required int64 brokerId = 2;
+}
+
+message RegisterMessageFilterClassRequestHeader {
+    required string consumerGroup = 1;
+    required string topic = 2;
+    required string className = 3;
+    required int32 classCRC = 4;
+}

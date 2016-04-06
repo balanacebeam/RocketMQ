@@ -15,7 +15,6 @@
  */
 package com.alibaba.rocketmq.broker.client;
 
-import com.alibaba.rocketmq.remoting.protocol.LanguageCode;
 import io.netty.channel.Channel;
 
 
@@ -26,20 +25,18 @@ import io.netty.channel.Channel;
 public class ClientChannelInfo {
     private final Channel channel;
     private final String clientId;
-    private final LanguageCode language;
     private final int version;
     private volatile long lastUpdateTimestamp = System.currentTimeMillis();
 
 
     public ClientChannelInfo(Channel channel) {
-        this(channel, null, null, 0);
+        this(channel, null, 0);
     }
 
 
-    public ClientChannelInfo(Channel channel, String clientId, LanguageCode language, int version) {
+    public ClientChannelInfo(Channel channel, String clientId, int version) {
         this.channel = channel;
         this.clientId = clientId;
-        this.language = language;
         this.version = version;
     }
 
@@ -51,11 +48,6 @@ public class ClientChannelInfo {
 
     public String getClientId() {
         return clientId;
-    }
-
-
-    public LanguageCode getLanguage() {
-        return language;
     }
 
 
@@ -80,7 +72,6 @@ public class ClientChannelInfo {
         int result = 1;
         result = prime * result + ((channel == null) ? 0 : channel.hashCode());
         result = prime * result + ((clientId == null) ? 0 : clientId.hashCode());
-        result = prime * result + ((language == null) ? 0 : language.hashCode());
         result = prime * result + (int) (lastUpdateTimestamp ^ (lastUpdateTimestamp >>> 32));
         result = prime * result + version;
         return result;
@@ -109,7 +100,7 @@ public class ClientChannelInfo {
 
     @Override
     public String toString() {
-        return "ClientChannelInfo [channel=" + channel + ", clientId=" + clientId + ", language=" + language
+        return "ClientChannelInfo [channel=" + channel + ", clientId=" + clientId
                 + ", version=" + version + ", lastUpdateTimestamp=" + lastUpdateTimestamp + "]";
     }
 }

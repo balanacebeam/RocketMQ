@@ -17,6 +17,7 @@ package com.alibaba.rocketmq.client.impl.producer;
 
 import com.alibaba.rocketmq.client.QueryResult;
 import com.alibaba.rocketmq.client.Validators;
+import com.alibaba.rocketmq.client.VirtualEnvUtil;
 import com.alibaba.rocketmq.client.exception.MQBrokerException;
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.client.hook.CheckForbiddenContext;
@@ -34,12 +35,11 @@ import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.help.FAQUrl;
 import com.alibaba.rocketmq.common.message.*;
 import com.alibaba.rocketmq.common.protocol.ResponseCode;
-import com.alibaba.rocketmq.common.protocol.header.CheckTransactionStateRequestHeader;
-import com.alibaba.rocketmq.common.protocol.header.EndTransactionRequestHeader;
-import com.alibaba.rocketmq.common.protocol.header.SendMessageRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.CheckTransactionStateRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.EndTransactionRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.SendMessageRequestHeader;
 import com.alibaba.rocketmq.common.sysflag.MessageSysFlag;
 import com.alibaba.rocketmq.remoting.RPCHook;
-import com.alibaba.rocketmq.remoting.common.RemotingHelper;
 import com.alibaba.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 
@@ -298,24 +298,25 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                                                  final LocalTransactionState localTransactionState,//
                                                  final String producerGroup,//
                                                  final Throwable exception) {
-                final EndTransactionRequestHeader thisHeader = new EndTransactionRequestHeader();
-                thisHeader.setCommitLogOffset(checkRequestHeader.getCommitLogOffset());
-                thisHeader.setProducerGroup(producerGroup);
-                thisHeader.setTranStateTableOffset(checkRequestHeader.getTranStateTableOffset());
-                thisHeader.setFromTransactionCheck(true);
-                thisHeader.setMsgId(message.getMsgId());
-                thisHeader.setTransactionId(checkRequestHeader.getTransactionId());
+                final EndTransactionRequestHeader.Builder thisHeaderBuilder = EndTransactionRequestHeader.newBuilder()
+                        .setCommitLogOffset(checkRequestHeader.getCommitLogOffset())
+                        .setProducerGroup(producerGroup)
+                        .setTranStateTableOffset(checkRequestHeader.getTranStateTableOffset())
+                        .setFromTransactionCheck(true)
+                        .setMsgId(message.getMsgId())
+                        .setTransactionId(checkRequestHeader.getTransactionId());
+
                 switch (localTransactionState) {
                     case COMMIT_MESSAGE:
-                        thisHeader.setCommitOrRollback(MessageSysFlag.TransactionCommitType);
+                        thisHeaderBuilder.setCommitOrRollback(MessageSysFlag.TransactionCommitType);
                         break;
                     case ROLLBACK_MESSAGE:
-                        thisHeader.setCommitOrRollback(MessageSysFlag.TransactionRollbackType);
-                        log.warn("when broker check, client rollback this transaction, {}", thisHeader);
+                        thisHeaderBuilder.setCommitOrRollback(MessageSysFlag.TransactionRollbackType);
+                        log.warn("when broker check, client rollback this transaction, {}", thisHeaderBuilder);
                         break;
                     case UNKNOW:
-                        thisHeader.setCommitOrRollback(MessageSysFlag.TransactionNotType);
-                        log.warn("when broker check, client donot know this transaction state, {}", thisHeader);
+                        thisHeaderBuilder.setCommitOrRollback(MessageSysFlag.TransactionNotType);
+                        log.warn("when broker check, client donot know this transaction state, {}", thisHeaderBuilder);
                         break;
                     default:
                         break;
@@ -325,9 +326,16 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                 if (exception != null) {
                     remark =
                             "checkLocalTransactionState Exception: "
-                                    + RemotingHelper.exceptionSimpleDesc(exception);
+                                    + UtilAll.exceptionSimpleDesc(exception);
                 }
 
+                String projectGroupPrefix = DefaultMQProducerImpl.this.mQClientFactory.getMQClientAPIImpl().getProjectGroupPrefix();
+                if (!UtilAll.isBlank(projectGroupPrefix)) {
+                    thisHeaderBuilder.setProducerGroup(VirtualEnvUtil.buildWithProjectGroup(
+                            thisHeaderBuilder.getProducerGroup(), projectGroupPrefix));
+                }
+
+                final EndTransactionRequestHeader thisHeader = thisHeaderBuilder.build();
                 try {
                     DefaultMQProducerImpl.this.mQClientFactory.getMQClientAPIImpl().endTransactionOneway(
                             brokerAddr, thisHeader, remark, 3000);
@@ -609,22 +617,32 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                     this.executeSendMessageHookBefore(context);
                 }
 
-                SendMessageRequestHeader requestHeader = new SendMessageRequestHeader();
-                requestHeader.setProducerGroup(this.defaultMQProducer.getProducerGroup());
-                requestHeader.setTopic(msg.getTopic());
-                requestHeader.setDefaultTopic(this.defaultMQProducer.getCreateTopicKey());
-                requestHeader.setDefaultTopicQueueNums(this.defaultMQProducer.getDefaultTopicQueueNums());
-                requestHeader.setQueueId(mq.getQueueId());
-                requestHeader.setSysFlag(sysFlag);
-                requestHeader.setBornTimestamp(System.currentTimeMillis());
-                requestHeader.setFlag(msg.getFlag());
-                requestHeader.setProperties(MessageDecoder.messageProperties2String(msg.getProperties()));
-                requestHeader.setReconsumeTimes(0);
-                requestHeader.setUnitMode(this.isUnitMode());
-                if (requestHeader.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
+                SendMessageRequestHeader.Builder requestHeaderBuiler = SendMessageRequestHeader.newBuilder()
+                        .setProducerGroup(this.defaultMQProducer.getProducerGroup())
+                        .setTopic(msg.getTopic())
+                        .setDefaultTopic(this.defaultMQProducer.getCreateTopicKey())
+                        .setDefaultTopicQueueNums(this.defaultMQProducer.getDefaultTopicQueueNums())
+                        .setQueueId(mq.getQueueId())
+                        .setSysFlag(sysFlag)
+                        .setBornTimestamp(System.currentTimeMillis())
+                        .setFlag(msg.getFlag())
+                        .setProperties(MessageDecoder.messageProperties2String(msg.getProperties()))
+                        .setReConsumeTimes(0)
+                        .setUnitMode(this.isUnitMode());
+
+                String projectGroupPrefix = this.mQClientFactory.getMQClientAPIImpl().getProjectGroupPrefix();
+                if (!UtilAll.isBlank(projectGroupPrefix)) {
+                    msg.setTopic(VirtualEnvUtil.buildWithProjectGroup(msg.getTopic(), projectGroupPrefix));
+                    requestHeaderBuiler.setProducerGroup(VirtualEnvUtil.buildWithProjectGroup(
+                            requestHeaderBuiler.getProducerGroup(), projectGroupPrefix));
+                    requestHeaderBuiler.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeaderBuiler.getTopic(),
+                            projectGroupPrefix));
+                }
+
+                if (requestHeaderBuiler.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
                     String reconsumeTimes = MessageAccessor.getReconsumeTime(msg);
                     if (reconsumeTimes != null) {
-                        requestHeader.setReconsumeTimes(new Integer(reconsumeTimes));
+                        requestHeaderBuiler.setReConsumeTimes(new Integer(reconsumeTimes));
                         MessageAccessor.clearProperty(msg, MessageConst.PROPERTY_RECONSUME_TIME);
                     }
                 }
@@ -633,7 +651,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                         brokerAddr,// 1
                         mq.getBrokerName(),// 2
                         msg,// 3
-                        requestHeader,// 4
+                        requestHeaderBuiler.build(),// 4
                         timeout,// 5
                         communicationMode,// 6
                         sendCallback// 7
@@ -924,28 +942,36 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         final MessageId id = MessageDecoder.decodeMessageId(sendResult.getMsgId());
         String transactionId = sendResult.getTransactionId();
         final String brokerAddr = this.mQClientFactory.findBrokerAddressInPublish(sendResult.getMessageQueue().getBrokerName());
-        EndTransactionRequestHeader requestHeader = new EndTransactionRequestHeader();
-        requestHeader.setTransactionId(transactionId);
-        requestHeader.setCommitLogOffset(id.getOffset());
+        EndTransactionRequestHeader.Builder requestHeaderBuilder = EndTransactionRequestHeader.newBuilder()
+        .setTransactionId(transactionId)
+        .setCommitLogOffset(id.getOffset());
         switch (localTransactionState) {
             case COMMIT_MESSAGE:
-                requestHeader.setCommitOrRollback(MessageSysFlag.TransactionCommitType);
+                requestHeaderBuilder.setCommitOrRollback(MessageSysFlag.TransactionCommitType);
                 break;
             case ROLLBACK_MESSAGE:
-                requestHeader.setCommitOrRollback(MessageSysFlag.TransactionRollbackType);
+                requestHeaderBuilder.setCommitOrRollback(MessageSysFlag.TransactionRollbackType);
                 break;
             case UNKNOW:
-                requestHeader.setCommitOrRollback(MessageSysFlag.TransactionNotType);
+                requestHeaderBuilder.setCommitOrRollback(MessageSysFlag.TransactionNotType);
                 break;
             default:
                 break;
         }
 
-        requestHeader.setProducerGroup(this.defaultMQProducer.getProducerGroup());
-        requestHeader.setTranStateTableOffset(sendResult.getQueueOffset());
-        requestHeader.setMsgId(sendResult.getMsgId());
-        String remark =
-                localException != null ? ("executeLocalTransactionBranch exception: " + localException
+        requestHeaderBuilder.setProducerGroup(this.defaultMQProducer.getProducerGroup());
+        requestHeaderBuilder.setTranStateTableOffset(sendResult.getQueueOffset());
+        requestHeaderBuilder.setMsgId(sendResult.getMsgId());
+
+        String projectGroupPrefix = DefaultMQProducerImpl.this.mQClientFactory.getMQClientAPIImpl().getProjectGroupPrefix();
+        if (!UtilAll.isBlank(projectGroupPrefix)) {
+            requestHeaderBuilder.setProducerGroup(VirtualEnvUtil.buildWithProjectGroup(
+                    requestHeaderBuilder.getProducerGroup(), projectGroupPrefix));
+        }
+
+        EndTransactionRequestHeader requestHeader = requestHeaderBuilder.build();
+
+        String remark = localException != null ? ("executeLocalTransactionBranch exception: " + localException
                         .toString()) : null;
         this.mQClientFactory.getMQClientAPIImpl().endTransactionOneway(brokerAddr, requestHeader, remark,
                 this.defaultMQProducer.getSendMsgTimeout());

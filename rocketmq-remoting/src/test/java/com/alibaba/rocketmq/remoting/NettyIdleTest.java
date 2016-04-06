@@ -1,10 +1,11 @@
 package com.alibaba.rocketmq.remoting;
 
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.exception.RemotingConnectException;
 import com.alibaba.rocketmq.remoting.exception.RemotingSendRequestException;
 import com.alibaba.rocketmq.remoting.exception.RemotingTimeoutException;
 import com.alibaba.rocketmq.remoting.netty.*;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.util.concurrent.Executors;
@@ -35,10 +36,12 @@ public class NettyIdleTest {
 
 
             @Override
-            public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
+            public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request) {
                 System.out.println("processRequest=" + request + " " + (i++));
-                request.setRemark("hello, I am respponse " + ctx.channel().remoteAddress());
-                return request;
+
+                return MessageCommand.newBuilder(request)
+                        .setRemark("hello, I am respponse " + ctx.channel().remoteAddress())
+                        .build();
             }
         }, Executors.newCachedThreadPool());
         remotingServer.start();
@@ -53,8 +56,8 @@ public class NettyIdleTest {
         RemotingClient client = createRemotingClient();
 
         for (int i = 0; i < 10; i++) {
-            RemotingCommand request = RemotingCommand.createRequestCommand(0, null);
-            RemotingCommand response = client.invokeSync("localhost:8888", request, 1000 * 3);
+            MessageCommand request = CommandUtil.createRequestCommand(0);
+            MessageCommand response = client.invokeSync("localhost:8888", request, 1000 * 3);
             System.out.println(i + " invoke result = " + response);
             assertTrue(response != null);
 

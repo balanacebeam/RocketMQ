@@ -16,12 +16,12 @@
 package com.alibaba.rocketmq.store.schedule;
 
 import com.alibaba.rocketmq.common.ConfigManager;
-import com.alibaba.rocketmq.common.TopicFilterType;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.common.message.MessageAccessor;
 import com.alibaba.rocketmq.common.message.MessageConst;
 import com.alibaba.rocketmq.common.message.MessageDecoder;
 import com.alibaba.rocketmq.common.message.MessageExt;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.TopicFilterType;
 import com.alibaba.rocketmq.common.running.RunningStats;
 import com.alibaba.rocketmq.store.*;
 import com.alibaba.rocketmq.store.config.StorePathConfigHelper;

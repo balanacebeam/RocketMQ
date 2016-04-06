@@ -76,11 +76,10 @@ public class ConsumerConnectionSubCommand implements SubCommand {
             // 打印连接
             int i = 1;
             for (Connection conn : cc.getConnectionSet()) {
-                System.out.printf("%03d  %-32s %-22s %-8s %s\n",//
+                System.out.printf("%03d  %-32s %-22s %s\n",//
                         i++,//
                         conn.getClientId(),//
                         conn.getClientAddr(),//
-                        conn.getLanguage(),//
                         MQVersion.getVersionDesc(conn.getVersion())//
                 );
             }

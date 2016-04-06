@@ -15,6 +15,7 @@
  */
 package com.alibaba.rocketmq.client.consumer.store;
 
+import com.alibaba.rocketmq.client.VirtualEnvUtil;
 import com.alibaba.rocketmq.client.exception.MQBrokerException;
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.client.impl.FindBrokerResult;
@@ -23,8 +24,8 @@ import com.alibaba.rocketmq.client.log.ClientLogger;
 import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.message.MessageQueue;
-import com.alibaba.rocketmq.common.protocol.header.QueryConsumerOffsetRequestHeader;
-import com.alibaba.rocketmq.common.protocol.header.UpdateConsumerOffsetRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.QueryConsumerOffsetRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.UpdateConsumerOffsetRequestHeader;
 import com.alibaba.rocketmq.remoting.exception.RemotingException;
 import org.slf4j.Logger;
 
@@ -186,14 +187,22 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
         }
 
         if (findBrokerResult != null) {
-            UpdateConsumerOffsetRequestHeader requestHeader = new UpdateConsumerOffsetRequestHeader();
-            requestHeader.setTopic(mq.getTopic());
-            requestHeader.setConsumerGroup(this.groupName);
-            requestHeader.setQueueId(mq.getQueueId());
-            requestHeader.setCommitOffset(offset);
+            UpdateConsumerOffsetRequestHeader.Builder requestHeaderBuilder = UpdateConsumerOffsetRequestHeader.newBuilder()
+                    .setTopic(mq.getTopic())
+                    .setConsumerGroup(this.groupName)
+                    .setQueueId(mq.getQueueId())
+                    .setCommitOffset(offset);
+
+            String projectGroupPrefix = this.mQClientFactory.getMQClientAPIImpl().getProjectGroupPrefix();
+            if (!UtilAll.isBlank(projectGroupPrefix)) {
+                requestHeaderBuilder.setConsumerGroup(VirtualEnvUtil.buildWithProjectGroup(
+                        requestHeaderBuilder.getConsumerGroup(), projectGroupPrefix));
+                requestHeaderBuilder.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeaderBuilder.getTopic(),
+                        projectGroupPrefix));
+            }
 
             this.mQClientFactory.getMQClientAPIImpl().updateConsumerOffsetOneway(
-                    findBrokerResult.getBrokerAddr(), requestHeader, 1000 * 5);
+                    findBrokerResult.getBrokerAddr(), requestHeaderBuilder.build(), 1000 * 5);
         } else {
             throw new MQClientException("The broker[" + mq.getBrokerName() + "] not exist", null);
         }
@@ -210,13 +219,21 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
         }
 
         if (findBrokerResult != null) {
-            QueryConsumerOffsetRequestHeader requestHeader = new QueryConsumerOffsetRequestHeader();
-            requestHeader.setTopic(mq.getTopic());
-            requestHeader.setConsumerGroup(this.groupName);
-            requestHeader.setQueueId(mq.getQueueId());
+            QueryConsumerOffsetRequestHeader.Builder requestHeaderBuilder = QueryConsumerOffsetRequestHeader.newBuilder()
+                    .setTopic(mq.getTopic())
+                    .setConsumerGroup(this.groupName)
+                    .setQueueId(mq.getQueueId());
+
+            String projectGroupPrefix = this.mQClientFactory.getMQClientAPIImpl().getProjectGroupPrefix();
+            if (!UtilAll.isBlank(projectGroupPrefix)) {
+                requestHeaderBuilder.setConsumerGroup(VirtualEnvUtil.buildWithProjectGroup(
+                        requestHeaderBuilder.getConsumerGroup(), projectGroupPrefix));
+                requestHeaderBuilder.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeaderBuilder.getTopic(),
+                        projectGroupPrefix));
+            }
 
             return this.mQClientFactory.getMQClientAPIImpl().queryConsumerOffset(
-                    findBrokerResult.getBrokerAddr(), requestHeader, 1000 * 5);
+                    findBrokerResult.getBrokerAddr(), requestHeaderBuilder.build(), 1000 * 5);
         } else {
             throw new MQClientException("The broker[" + mq.getBrokerName() + "] not exist", null);
         }

@@ -15,7 +15,7 @@
  */
 package com.alibaba.rocketmq.common.message;
 
-import com.alibaba.rocketmq.common.TopicFilterType;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.TopicFilterType;
 import com.alibaba.rocketmq.common.sysflag.MessageSysFlag;
 
 import java.net.InetSocketAddress;

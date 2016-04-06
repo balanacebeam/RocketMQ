@@ -24,19 +24,23 @@ import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.common.constant.PermName;
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
 import com.alibaba.rocketmq.common.protocol.RequestCode;
 import com.alibaba.rocketmq.common.protocol.ResponseCode;
-import com.alibaba.rocketmq.common.protocol.header.*;
+import com.alibaba.rocketmq.common.protocol.body.GetConsumerListByGroupResponseBody;
 import com.alibaba.rocketmq.common.protocol.heartbeat.ConsumerData;
 import com.alibaba.rocketmq.common.protocol.heartbeat.HeartbeatData;
 import com.alibaba.rocketmq.common.protocol.heartbeat.ProducerData;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.*;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.common.subscription.SubscriptionGroupConfig;
 import com.alibaba.rocketmq.common.sysflag.TopicSysFlag;
 import com.alibaba.rocketmq.remoting.common.RemotingHelper;
-import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
+import com.alibaba.rocketmq.remoting.exception.MessageCommandException;
 import com.alibaba.rocketmq.remoting.netty.NettyRequestProcessor;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
+import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,8 +71,8 @@ public class ClientManageProcessor implements NettyRequestProcessor {
     }
 
     @Override
-    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
+    public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
         switch (request.getCode()) {
             case RequestCode.HEART_BEAT:
                 return this.heartBeat(ctx, request);
@@ -109,15 +113,9 @@ public class ClientManageProcessor implements NettyRequestProcessor {
     }
 
 
-    private RemotingCommand updateConsumerOffset(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response =
-                RemotingCommand.createResponseCommand(UpdateConsumerOffsetResponseHeader.class);
-        // final UpdateConsumerOffsetResponseHeader responseHeader =
-        // (UpdateConsumerOffsetResponseHeader) response.readCustomHeader();
-        final UpdateConsumerOffsetRequestHeader requestHeader =
-                (UpdateConsumerOffsetRequestHeader) request
-                        .decodeCommandCustomHeader(UpdateConsumerOffsetRequestHeader.class);
+    private MessageCommand updateConsumerOffset(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final UpdateConsumerOffsetRequestHeader requestHeader = request.getUpdateConsumerOffsetRequestHeader();
 
         // 消息轨迹：记录已经消费成功并提交 offset 的消息记录
         if (this.hasConsumeMessageHook()) {
@@ -144,31 +142,25 @@ public class ClientManageProcessor implements NettyRequestProcessor {
         }
         this.brokerController.getConsumerOffsetManager().commitOffset(requestHeader.getConsumerGroup(),
                 requestHeader.getTopic(), requestHeader.getQueueId(), requestHeader.getCommitOffset());
-        response.setCode(ResponseCode.SUCCESS);
-        response.setRemark(null);
-        return response;
+
+        return CommandUtil.createResponseCommandSuccess(request.getOpaque());
     }
 
 
-    private RemotingCommand queryConsumerOffset(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response =
-                RemotingCommand.createResponseCommand(QueryConsumerOffsetResponseHeader.class);
-        final QueryConsumerOffsetResponseHeader responseHeader =
-                (QueryConsumerOffsetResponseHeader) response.readCustomHeader();
-        final QueryConsumerOffsetRequestHeader requestHeader =
-                (QueryConsumerOffsetRequestHeader) request
-                        .decodeCommandCustomHeader(QueryConsumerOffsetRequestHeader.class);
+    private MessageCommand queryConsumerOffset(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final QueryConsumerOffsetRequestHeader requestHeader = request.getQueryConsumerOffsetRequestHeader();
 
         long offset =
                 this.brokerController.getConsumerOffsetManager().queryOffset(
                         requestHeader.getConsumerGroup(), requestHeader.getTopic(), requestHeader.getQueueId());
 
+
+        final MessageCommand.Builder responseBuilder = CommandUtil.createResponseBuilder(request.getOpaque());
         // 订阅组存在
         if (offset >= 0) {
-            responseHeader.setOffset(offset);
-            response.setCode(ResponseCode.SUCCESS);
-            response.setRemark(null);
+            responseBuilder.setQueryConsumerOffsetResponseHeader(QueryConsumerOffsetResponseHeader.newBuilder().setOffset(offset));
+            responseBuilder.setCode(ResponseCode.SUCCESS);
         }
         // 订阅组不存在
         else {
@@ -180,41 +172,42 @@ public class ClientManageProcessor implements NettyRequestProcessor {
             if (minOffset <= 0
                     && !this.brokerController.getMessageStore().checkInDiskByConsumeOffset(
                     requestHeader.getTopic(), requestHeader.getQueueId(), 0)) {
-                responseHeader.setOffset(0L);
-                response.setCode(ResponseCode.SUCCESS);
-                response.setRemark(null);
+                responseBuilder.setQueryConsumerOffsetResponseHeader(QueryConsumerOffsetResponseHeader.newBuilder().setOffset(0));
+                responseBuilder.setCode(ResponseCode.SUCCESS);
             }
             // 新版本服务器不做消费进度纠正
             else {
-                response.setCode(ResponseCode.QUERY_NOT_FOUND);
-                response.setRemark("Not found, V3_0_6_SNAPSHOT maybe this group consumer boot first");
+                responseBuilder.setCode(ResponseCode.QUERY_NOT_FOUND);
+                responseBuilder.setRemark("Not found, V3_0_6_SNAPSHOT maybe this group consumer boot first");
             }
         }
 
-        return response;
+        return responseBuilder.build();
     }
 
 
-    public RemotingCommand getConsumerListByGroup(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response =
-                RemotingCommand.createResponseCommand(GetConsumerListByGroupResponseHeader.class);
-        final GetConsumerListByGroupRequestHeader requestHeader =
-                (GetConsumerListByGroupRequestHeader) request
-                        .decodeCommandCustomHeader(GetConsumerListByGroupRequestHeader.class);
+    public MessageCommand getConsumerListByGroup(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final GetConsumerListByGroupRequestHeader requestHeader = request.getGetConsumerListByGroupRequestHeader();
 
         ConsumerGroupInfo consumerGroupInfo =
                 this.brokerController.getConsumerManager().getConsumerGroupInfo(
                         requestHeader.getConsumerGroup());
+
+        final MessageCommand.Builder responseBuilder = CommandUtil.createResponseBuilder(request.getOpaque());
         if (consumerGroupInfo != null) {
             List<String> clientIds = consumerGroupInfo.getAllClientId();
             if (!clientIds.isEmpty()) {
                 GetConsumerListByGroupResponseBody body = new GetConsumerListByGroupResponseBody();
                 body.setConsumerIdList(clientIds);
-                response.setBody(body.encode());
-                response.setCode(ResponseCode.SUCCESS);
-                response.setRemark(null);
-                return response;
+
+                byte[] bBody = body.encode();
+                if (ArrayUtils.isNotEmpty(bBody)) {
+                    responseBuilder.setBody(ByteString.copyFrom(bBody));
+                }
+                responseBuilder.setCode(ResponseCode.SUCCESS);
+
+                return responseBuilder.build();
             } else {
                 log.warn("getAllClientId failed, {} {}", requestHeader.getConsumerGroup(),
                         RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
@@ -224,24 +217,20 @@ public class ClientManageProcessor implements NettyRequestProcessor {
                     RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
         }
 
-        response.setCode(ResponseCode.SYSTEM_ERROR);
-        response.setRemark("no consumer for this group, " + requestHeader.getConsumerGroup());
-        return response;
+        responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);
+        responseBuilder.setRemark("no consumer for this group, " + requestHeader.getConsumerGroup());
+
+        return responseBuilder.build();
     }
 
 
-    public RemotingCommand unregisterClient(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response =
-                RemotingCommand.createResponseCommand(UnregisterClientResponseHeader.class);
-        final UnregisterClientRequestHeader requestHeader =
-                (UnregisterClientRequestHeader) request
-                        .decodeCommandCustomHeader(UnregisterClientRequestHeader.class);
+    public MessageCommand unregisterClient(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final UnregisterClientRequestHeader requestHeader = request.getUnregisterClientRequestHeader();
 
         ClientChannelInfo clientChannelInfo = new ClientChannelInfo(//
                 ctx.channel(),//
-                requestHeader.getClientID(),//
-                request.getLanguage(),//
+                requestHeader.getClientId(),//
                 request.getVersion()//
         );
 
@@ -261,21 +250,16 @@ public class ClientManageProcessor implements NettyRequestProcessor {
             }
         }
 
-        response.setCode(ResponseCode.SUCCESS);
-        response.setRemark(null);
-        return response;
+        return CommandUtil.createResponseCommandSuccess(request.getOpaque());
     }
 
 
-    public RemotingCommand heartBeat(ChannelHandlerContext ctx, RemotingCommand request) {
-        RemotingCommand response = RemotingCommand.createResponseCommand(null);
-
-        HeartbeatData heartbeatData = HeartbeatData.decode(request.getBody(), HeartbeatData.class);
+    public MessageCommand heartBeat(ChannelHandlerContext ctx, MessageCommand request) {
+        HeartbeatData heartbeatData = HeartbeatData.decode(request.getBody().toByteArray(), HeartbeatData.class);
 
         ClientChannelInfo clientChannelInfo = new ClientChannelInfo(//
                 ctx.channel(),//
                 heartbeatData.getClientID(),//
-                request.getLanguage(),//
                 request.getVersion()//
         );
 
@@ -327,8 +311,6 @@ public class ClientManageProcessor implements NettyRequestProcessor {
                     clientChannelInfo);
         }
 
-        response.setCode(ResponseCode.SUCCESS);
-        response.setRemark(null);
-        return response;
+        return CommandUtil.createResponseCommandSuccess(request.getOpaque());
     }
 }

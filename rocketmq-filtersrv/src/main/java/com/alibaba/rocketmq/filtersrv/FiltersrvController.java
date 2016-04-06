@@ -20,7 +20,7 @@ import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.ThreadFactoryImpl;
 import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.constant.LoggerName;
-import com.alibaba.rocketmq.common.protocol.header.filtersrv.RegisterFilterServerResponseHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.FiltersrvHeader.RegisterFilterServerResponseHeader;
 import com.alibaba.rocketmq.filtersrv.filter.FilterClassManager;
 import com.alibaba.rocketmq.filtersrv.processor.DefaultRequestProcessor;
 import com.alibaba.rocketmq.filtersrv.stats.FilterServerStatsManager;

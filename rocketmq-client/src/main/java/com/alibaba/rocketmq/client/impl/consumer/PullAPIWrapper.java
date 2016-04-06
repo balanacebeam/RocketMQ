@@ -30,8 +30,8 @@ import com.alibaba.rocketmq.client.log.ClientLogger;
 import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.message.*;
-import com.alibaba.rocketmq.common.protocol.header.PullMessageRequestHeader;
 import com.alibaba.rocketmq.common.protocol.heartbeat.SubscriptionData;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.PullMessageRequestHeader;
 import com.alibaba.rocketmq.common.protocol.route.TopicRouteData;
 import com.alibaba.rocketmq.common.sysflag.PullSysFlag;
 import com.alibaba.rocketmq.remoting.exception.RemotingException;
@@ -203,17 +203,25 @@ public class PullAPIWrapper {
                 sysFlagInner = PullSysFlag.clearCommitOffsetFlag(sysFlagInner);
             }
 
-            PullMessageRequestHeader requestHeader = new PullMessageRequestHeader();
-            requestHeader.setConsumerGroup(this.consumerGroup);
-            requestHeader.setTopic(mq.getTopic());
-            requestHeader.setQueueId(mq.getQueueId());
-            requestHeader.setQueueOffset(offset);
-            requestHeader.setMaxMsgNums(maxNums);
-            requestHeader.setSysFlag(sysFlagInner);
-            requestHeader.setCommitOffset(commitOffset);
-            requestHeader.setSuspendTimeoutMillis(brokerSuspendMaxTimeMillis);
-            requestHeader.setSubscription(subExpression);
-            requestHeader.setSubVersion(subVersion);
+            PullMessageRequestHeader.Builder requestHeaderBuilder = PullMessageRequestHeader.newBuilder()
+                    .setConsumerGroup(this.consumerGroup)
+                    .setTopic(mq.getTopic())
+                    .setQueueId(mq.getQueueId())
+                    .setQueueOffset(offset)
+                    .setMaxMsgNums(maxNums)
+                    .setSysFlag(sysFlagInner)
+                    .setCommitOffset(commitOffset)
+                    .setSuspendTimeoutMillis(brokerSuspendMaxTimeMillis)
+                    .setSubscription(subExpression)
+                    .setSubVersion(subVersion);
+
+            String projectGroupPrefix = this.mQClientFactory.getMQClientAPIImpl().getProjectGroupPrefix();
+            if (!UtilAll.isBlank(projectGroupPrefix)) {
+                requestHeaderBuilder.setConsumerGroup(VirtualEnvUtil.buildWithProjectGroup(
+                        requestHeaderBuilder.getConsumerGroup(), projectGroupPrefix));
+                requestHeaderBuilder.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeaderBuilder.getTopic(),
+                        projectGroupPrefix));
+            }
 
             String brokerAddr = findBrokerResult.getBrokerAddr();
             if (PullSysFlag.hasClassFilterFlag(sysFlagInner)) {
@@ -222,7 +230,7 @@ public class PullAPIWrapper {
 
             PullResult pullResult = this.mQClientFactory.getMQClientAPIImpl().pullMessage(//
                     brokerAddr,//
-                    requestHeader,//
+                    requestHeaderBuilder.build(),//
                     timeoutMillis,//
                     communicationMode,//
                     pullCallback);

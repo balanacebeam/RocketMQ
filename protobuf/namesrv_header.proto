@@ -1,0 +1,64 @@
+syntax="proto2";
+
+package com.alibaba.rocketmq.common.protocol.protobuf;
+
+// namesrv_header
+message DeleteKVConfigRequestHeader {
+    required string keyspace = 1;
+    required string key = 2;
+}
+
+message DeleteTopicInNamesrvRequestHeader {
+    required string topic = 1;
+}
+
+message GetKVConfigRequestHeader {
+    required string keyspace = 1;
+    required string key = 2;
+}
+
+message GetKVConfigResponseHeader {
+    optional string value = 1;
+}
+
+message GetKVListByNamespaceRequestHeader {
+    required string keyspace = 1;
+}
+
+message GetRouteInfoRequestHeader {
+    required string topic = 1;
+}
+
+message PutKVConfigRequestHeader {
+    required string keyspace = 1;
+    required string key = 2;
+    required string value = 3;
+}
+
+message RegisterBrokerRequestHeader {
+    required string brokerName = 1;
+    required string brokerAddr = 2;
+    required string clusterName = 3;
+    required string haServerAddr = 4;
+    required int64 brokerId = 5;
+}
+
+message RegisterBrokerResponseHeader {
+    optional string haServerAddr = 1;
+    optional string masterAddr = 2;
+}
+
+message UnRegisterBrokerRequestHeader {
+    required string brokerName = 1;
+    required string brokerAddr = 2;
+    required string clusterName = 3;
+    required int64 brokerId = 4;
+}
+
+message WipeWritePermOfBrokerRequestHeader {
+    required string brokerName = 1;
+}
+
+message WipeWritePermOfBrokerResponseHeader {
+    required int32 wipeTopicCount = 1;
+}

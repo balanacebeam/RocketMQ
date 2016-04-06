@@ -4,15 +4,15 @@
 package com.alibaba.rocketmq.broker.api;
 
 import com.alibaba.rocketmq.broker.BrokerController;
+import com.alibaba.rocketmq.broker.config.BrokerConfig;
 import com.alibaba.rocketmq.client.impl.CommunicationMode;
 import com.alibaba.rocketmq.client.impl.MQClientAPIImpl;
 import com.alibaba.rocketmq.client.producer.SendResult;
-import com.alibaba.rocketmq.common.BrokerConfig;
 import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.common.message.Message;
 import com.alibaba.rocketmq.common.message.MessageDecoder;
-import com.alibaba.rocketmq.common.protocol.header.SendMessageRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.SendMessageRequestHeader;
 import com.alibaba.rocketmq.remoting.netty.NettyClientConfig;
 import com.alibaba.rocketmq.remoting.netty.NettyServerConfig;
 import com.alibaba.rocketmq.store.config.MessageStoreConfig;
@@ -45,16 +45,17 @@ public class SendMessageTest {
             msg.setDelayTimeLevel(i % 3 + 1);
 
             try {
-                SendMessageRequestHeader requestHeader = new SendMessageRequestHeader();
-                requestHeader.setProducerGroup("abc");
-                requestHeader.setTopic(msg.getTopic());
-                requestHeader.setDefaultTopic(MixAll.DEFAULT_TOPIC);
-                requestHeader.setDefaultTopicQueueNums(4);
-                requestHeader.setQueueId(i % 4);
-                requestHeader.setSysFlag(0);
-                requestHeader.setBornTimestamp(System.currentTimeMillis());
-                requestHeader.setFlag(msg.getFlag());
-                requestHeader.setProperties(MessageDecoder.messageProperties2String(msg.getProperties()));
+                SendMessageRequestHeader requestHeader = SendMessageRequestHeader.newBuilder()
+                        .setProducerGroup("abc")
+                        .setTopic(msg.getTopic())
+                        .setDefaultTopic(MixAll.DEFAULT_TOPIC)
+                        .setDefaultTopicQueueNums(4)
+                        .setQueueId(i % 4)
+                        .setSysFlag(0)
+                        .setBornTimestamp(System.currentTimeMillis())
+                        .setFlag(msg.getFlag())
+                        .setProperties(MessageDecoder.messageProperties2String(msg.getProperties()))
+                        .build();
 
                 SendResult result =
                         client.sendMessage("127.0.0.1:10911", "brokerName", msg, requestHeader, 1000 * 5,

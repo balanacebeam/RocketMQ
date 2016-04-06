@@ -15,7 +15,7 @@
  */
 package com.alibaba.rocketmq.remoting;
 
-import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
+import com.alibaba.rocketmq.remoting.exception.MessageCommandException;
 
 
 /**
@@ -23,5 +23,5 @@ import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
  * @since 2013-7-13
  */
 public interface CommandCustomHeader {
-    void checkFields() throws RemotingCommandException;
+    void checkFields() throws MessageCommandException;
 }

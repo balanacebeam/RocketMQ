@@ -17,7 +17,7 @@ package com.alibaba.rocketmq.client.impl.producer;
 
 import com.alibaba.rocketmq.client.producer.TransactionCheckListener;
 import com.alibaba.rocketmq.common.message.MessageExt;
-import com.alibaba.rocketmq.common.protocol.header.CheckTransactionStateRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.CheckTransactionStateRequestHeader;
 
 import java.util.Set;
 

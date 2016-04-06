@@ -20,7 +20,7 @@ import com.alibaba.rocketmq.broker.BrokerPathConfigHelper;
 import com.alibaba.rocketmq.common.ConfigManager;
 import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.constant.LoggerName;
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

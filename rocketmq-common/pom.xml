@@ -18,9 +18,13 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>${project.groupId}</groupId>-->
+            <!--<artifactId>rocketmq-remoting</artifactId>-->
+        <!--</dependency>-->
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>rocketmq-remoting</artifactId>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
         </dependency>
         <dependency>
             <groupId>org.yaml</groupId>
@@ -37,6 +41,14 @@
         <dependency>
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
         </dependency>
     </dependencies>
 </project>

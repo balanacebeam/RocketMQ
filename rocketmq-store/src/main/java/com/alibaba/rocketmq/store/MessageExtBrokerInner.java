@@ -15,8 +15,8 @@
  */
 package com.alibaba.rocketmq.store;
 
-import com.alibaba.rocketmq.common.TopicFilterType;
 import com.alibaba.rocketmq.common.message.MessageExt;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.TopicFilterType;
 
 
 /**

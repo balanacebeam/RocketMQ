@@ -22,7 +22,6 @@ import com.alibaba.rocketmq.common.MQVersion;
 import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.conflict.PackageConflictDetect;
 import com.alibaba.rocketmq.remoting.RPCHook;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import com.alibaba.rocketmq.srvutil.ServerUtil;
 import com.alibaba.rocketmq.tools.command.broker.BrokerStatusSubCommand;
 import com.alibaba.rocketmq.tools.command.broker.CleanExpiredCQSubCommand;
@@ -112,7 +111,7 @@ public class MQAdminStartup {
 
 
     public static void main0(String[] args, RPCHook rpcHook) {
-        System.setProperty(RemotingCommand.RemotingVersionKey, Integer.toString(MQVersion.CurrentVersion));
+        System.setProperty(com.alibaba.rocketmq.common.protocol.CommandUtil.RemotingVersionKey, Integer.toString(MQVersion.CurrentVersion));
 
         // 检测包冲突
         PackageConflictDetect.detectFastjson();

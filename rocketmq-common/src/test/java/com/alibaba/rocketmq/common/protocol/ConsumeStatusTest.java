@@ -1,7 +1,6 @@
 package com.alibaba.rocketmq.common.protocol;
 
 import com.alibaba.rocketmq.common.protocol.body.ConsumeStatus;
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
 import org.junit.Test;
 
 

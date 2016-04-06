@@ -16,6 +16,7 @@
 package com.alibaba.rocketmq.tools.admin;
 
 import com.alibaba.rocketmq.client.QueryResult;
+import com.alibaba.rocketmq.client.VirtualEnvUtil;
 import com.alibaba.rocketmq.client.admin.MQAdminExtInner;
 import com.alibaba.rocketmq.client.exception.MQBrokerException;
 import com.alibaba.rocketmq.client.exception.MQClientException;
@@ -33,14 +34,13 @@ import com.alibaba.rocketmq.common.message.MessageQueue;
 import com.alibaba.rocketmq.common.namesrv.NamesrvUtil;
 import com.alibaba.rocketmq.common.protocol.ResponseCode;
 import com.alibaba.rocketmq.common.protocol.body.*;
-import com.alibaba.rocketmq.common.protocol.header.UpdateConsumerOffsetRequestHeader;
 import com.alibaba.rocketmq.common.protocol.heartbeat.SubscriptionData;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.UpdateConsumerOffsetRequestHeader;
 import com.alibaba.rocketmq.common.protocol.route.BrokerData;
 import com.alibaba.rocketmq.common.protocol.route.QueueData;
 import com.alibaba.rocketmq.common.protocol.route.TopicRouteData;
 import com.alibaba.rocketmq.common.subscription.SubscriptionGroupConfig;
 import com.alibaba.rocketmq.remoting.RPCHook;
-import com.alibaba.rocketmq.remoting.common.RemotingHelper;
 import com.alibaba.rocketmq.remoting.common.RemotingUtil;
 import com.alibaba.rocketmq.remoting.exception.*;
 import com.alibaba.rocketmq.tools.admin.api.MessageTrack;
@@ -352,7 +352,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
 
     @Override
     public int wipeWritePermOfBroker(final String namesrvAddr, String brokerName)
-            throws RemotingCommandException, RemotingConnectException, RemotingSendRequestException,
+            throws MessageCommandException, RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQClientException {
         return this.mqClientInstance.getMQClientAPIImpl()
                 .wipeWritePermOfBroker(namesrvAddr, brokerName, 3000);
@@ -518,12 +518,21 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
         // 更新 offset
         if (force || resetOffset <= offsetWrapper.getConsumerOffset()) {
             rollbackStats.setRollbackOffset(resetOffset);
-            UpdateConsumerOffsetRequestHeader requestHeader = new UpdateConsumerOffsetRequestHeader();
-            requestHeader.setConsumerGroup(consumeGroup);
-            requestHeader.setTopic(queue.getTopic());
-            requestHeader.setQueueId(queue.getQueueId());
-            requestHeader.setCommitOffset(resetOffset);
-            this.mqClientInstance.getMQClientAPIImpl().updateConsumerOffset(brokerAddr, requestHeader, 3000);
+            UpdateConsumerOffsetRequestHeader.Builder requestHeaderBuilder = UpdateConsumerOffsetRequestHeader.newBuilder()
+                    .setConsumerGroup(consumeGroup)
+                    .setTopic(queue.getTopic())
+                    .setQueueId(queue.getQueueId())
+                    .setCommitOffset(resetOffset);
+
+            String projectGroupPrefix = this.mqClientInstance.getMQClientAPIImpl().getProjectGroupPrefix();
+            if (!UtilAll.isBlank(projectGroupPrefix)) {
+                requestHeaderBuilder.setConsumerGroup(VirtualEnvUtil.buildWithProjectGroup(
+                        requestHeaderBuilder.getConsumerGroup(), projectGroupPrefix));
+                requestHeaderBuilder.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeaderBuilder.getTopic(),
+                        projectGroupPrefix));
+            }
+
+            this.mqClientInstance.getMQClientAPIImpl().updateConsumerOffset(brokerAddr, requestHeaderBuilder.build(), 3000);
         }
         return rollbackStats;
     }
@@ -821,7 +830,7 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
                         break;
                 }
             } catch (Exception e) {
-                mt.setExceptionDesc(RemotingHelper.exceptionSimpleDesc(e));
+                mt.setExceptionDesc(UtilAll.exceptionSimpleDesc(e));
             }
 
             result.add(mt);

@@ -21,8 +21,8 @@ import com.alibaba.rocketmq.common.ConfigManager;
 import com.alibaba.rocketmq.common.DataVersion;
 import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.constant.LoggerName;
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 import com.alibaba.rocketmq.common.subscription.SubscriptionGroupConfig;
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

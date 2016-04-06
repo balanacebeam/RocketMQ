@@ -18,6 +18,7 @@ package com.alibaba.rocketmq.broker;
 import com.alibaba.rocketmq.broker.client.*;
 import com.alibaba.rocketmq.broker.client.net.Broker2Client;
 import com.alibaba.rocketmq.broker.client.rebalance.RebalanceLockManager;
+import com.alibaba.rocketmq.broker.config.BrokerConfig;
 import com.alibaba.rocketmq.broker.filtersrv.FilterServerManager;
 import com.alibaba.rocketmq.broker.longpolling.PullRequestHoldService;
 import com.alibaba.rocketmq.broker.mqtrace.ConsumeMessageHook;

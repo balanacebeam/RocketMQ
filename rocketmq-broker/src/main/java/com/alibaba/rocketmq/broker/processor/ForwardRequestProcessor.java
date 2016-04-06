@@ -17,8 +17,8 @@ package com.alibaba.rocketmq.broker.processor;
 
 import com.alibaba.rocketmq.broker.BrokerController;
 import com.alibaba.rocketmq.common.constant.LoggerName;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.netty.NettyRequestProcessor;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ public class ForwardRequestProcessor implements NettyRequestProcessor {
 
 
     @Override
-    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
+    public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request) {
         // TODO Auto-generated method stub
         return null;
     }

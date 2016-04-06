@@ -16,7 +16,7 @@
 package com.alibaba.rocketmq.common.admin;
 
 import com.alibaba.rocketmq.common.message.MessageQueue;
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 
 import java.util.HashMap;
 import java.util.Iterator;

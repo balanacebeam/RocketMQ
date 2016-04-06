@@ -1,11 +1,12 @@
 package com.alibaba.rocketmq.remoting;
 
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.exception.RemotingConnectException;
 import com.alibaba.rocketmq.remoting.exception.RemotingSendRequestException;
 import com.alibaba.rocketmq.remoting.exception.RemotingTimeoutException;
 import com.alibaba.rocketmq.remoting.netty.NettyClientConfig;
 import com.alibaba.rocketmq.remoting.netty.NettyRemotingClient;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import org.junit.Test;
 
 
@@ -32,8 +33,8 @@ public class NettyConnectionTest {
 
         for (int i = 0; i < 100; i++) {
             try {
-                RemotingCommand request = RemotingCommand.createRequestCommand(0, null);
-                RemotingCommand response = client.invokeSync("localhost:8888", request, 1000 * 3);
+                MessageCommand request = CommandUtil.createRequestCommand(0);
+                MessageCommand response = client.invokeSync("localhost:8888", request, 1000 * 3);
             } catch (Exception e) {
                 e.printStackTrace();
             }

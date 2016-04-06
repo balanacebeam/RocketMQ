@@ -221,7 +221,7 @@ public class DefaultMQAdminExt extends ClientConfig implements MQAdminExt {
 
     @Override
     public int wipeWritePermOfBroker(final String namesrvAddr, String brokerName)
-            throws RemotingCommandException, RemotingConnectException, RemotingSendRequestException,
+            throws MessageCommandException, RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQClientException {
         return defaultMQAdminExtImpl.wipeWritePermOfBroker(namesrvAddr, brokerName);
     }

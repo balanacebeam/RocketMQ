@@ -15,12 +15,12 @@
  */
 package com.alibaba.rocketmq.remoting;
 
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.exception.RemotingConnectException;
 import com.alibaba.rocketmq.remoting.exception.RemotingSendRequestException;
 import com.alibaba.rocketmq.remoting.exception.RemotingTimeoutException;
 import com.alibaba.rocketmq.remoting.exception.RemotingTooMuchRequestException;
 import com.alibaba.rocketmq.remoting.netty.NettyRequestProcessor;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -40,17 +40,17 @@ public interface RemotingClient extends RemotingService {
     public List<String> getNameServerAddressList();
 
 
-    public RemotingCommand invokeSync(final String addr, final RemotingCommand request,
+    public MessageCommand invokeSync(final String addr, final MessageCommand request,
                                       final long timeoutMillis) throws InterruptedException, RemotingConnectException,
             RemotingSendRequestException, RemotingTimeoutException;
 
 
-    public void invokeAsync(final String addr, final RemotingCommand request, final long timeoutMillis,
+    public void invokeAsync(final String addr, final MessageCommand request, final long timeoutMillis,
                             final InvokeCallback invokeCallback) throws InterruptedException, RemotingConnectException,
             RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException;
 
 
-    public void invokeOneway(final String addr, final RemotingCommand request, final long timeoutMillis)
+    public void invokeOneway(final String addr, final MessageCommand request, final long timeoutMillis)
             throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException,
             RemotingTimeoutException, RemotingSendRequestException;
 

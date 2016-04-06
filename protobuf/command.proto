@@ -1,0 +1,90 @@
+syntax="proto2";
+
+import "broker_header.proto";
+import "filtersrv_header.proto";
+import "namesrv_header.proto";
+
+package com.alibaba.rocketmq.common.protocol.protobuf;
+
+// common
+enum RpcType {
+    ONE_WAY = 1;
+    TWO_WAY = 2;
+    REQUEST = 3;
+    RESPONSE = 4;
+}
+
+message StrPair {
+    required string key = 1;
+    required string value = 2;
+}
+
+message MessageCommand {
+    required int32 code = 1;
+    required int32 version = 2;
+    required int32 opaque = 3;
+    required RpcType rpcType = 4;
+    optional string remark = 5;
+    repeated StrPair extFields = 6;
+    oneof MessageHeader {
+        CheckTransactionStateRequestHeader checkTransactionStateRequestHeader = 11;
+        CloneGroupOffsetRequestHeader cloneGroupOffsetRequestHeader = 12;
+        ConsumeMessageDirectlyResultRequestHeader consumeMessageDirectlyResultRequestHeader = 13;
+        ConsumerSendMsgBackRequestHeader consumerSendMsgBackRequestHeader = 14;
+        CreateTopicRequestHeader createTopicRequestHeader = 15;
+        DeleteKVConfigRequestHeader deleteKVConfigRequestHeader = 16;
+        DeleteSubscriptionGroupRequestHeader deleteSubscriptionGroupRequestHeader = 17;
+        DeleteTopicInNamesrvRequestHeader deleteTopicInNamesrvRequestHeader = 18;
+        DeleteTopicRequestHeader deleteTopicRequestHeader = 19;
+        EndTransactionRequestHeader endTransactionRequestHeader = 20;
+        GetBrokerConfigResponseHeader getBrokerConfigResponseHeader = 21;
+        GetConsumerConnectionListRequestHeader getConsumerConnectionListRequestHeader = 22;
+        GetConsumerListByGroupRequestHeader getConsumerListByGroupRequestHeader = 23;
+        GetConsumerRunningInfoRequestHeader getConsumerRunningInfoRequestHeader = 24;
+        GetConsumerStatusRequestHeader getConsumerStatusRequestHeader = 25;
+        GetConsumeStatsRequestHeader getConsumeStatsRequestHeader = 26;
+        GetEarliestMsgStoreTimeRequestHeader getEarliestMsgStoreTimeRequestHeader = 27;
+        GetEarliestMsgStoreTimeResponseHeader getEarliestMsgStoreTimeResponseHeader = 28;
+        GetKVConfigRequestHeader getKVConfigRequestHeader = 29;
+        GetKVConfigResponseHeader getKVConfigResponseHeader = 30;
+        GetKVListByNamespaceRequestHeader getKVListByNamespaceRequestHeader = 31;
+        GetMaxOffsetRequestHeader getMaxOffsetRequestHeader = 32;
+        GetMaxOffsetResponseHeader getMaxOffsetResponseHeader = 33;
+        GetMinOffsetRequestHeader getMinOffsetRequestHeader = 34;
+        GetMinOffsetResponseHeader getMinOffsetResponseHeader = 35;
+        GetProducerConnectionListRequestHeader getProducerConnectionListRequestHeader = 36;
+        GetRouteInfoRequestHeader getRouteInfoRequestHeader = 37;
+        GetTopicsByClusterRequestHeader getTopicsByClusterRequestHeader = 38;
+        GetTopicStatsInfoRequestHeader getTopicStatsInfoRequestHeader = 39;
+        NotifyConsumerIdsChangedRequestHeader notifyConsumerIdsChangedRequestHeader = 40;
+        PullMessageRequestHeader pullMessageRequestHeader = 41;
+        PullMessageResponseHeader pullMessageResponseHeader = 42;
+        PutKVConfigRequestHeader putKVConfigRequestHeader = 43;
+        QueryConsumerOffsetRequestHeader queryConsumerOffsetRequestHeader = 44;
+        QueryConsumerOffsetResponseHeader queryConsumerOffsetResponseHeader = 45;
+        QueryConsumeTimeSpanRequestHeader queryConsumeTimeSpanRequestHeader = 46;
+        QueryCorrectionOffsetHeader queryCorrectionOffsetHeader = 47;
+        QueryMessageRequestHeader queryMessageRequestHeader = 48;
+        QueryMessageResponseHeader queryMessageResponseHeader = 49;
+        QueryTopicConsumeByWhoRequestHeader queryTopicConsumeByWhoRequestHeader = 50;
+        RegisterBrokerRequestHeader registerBrokerRequestHeader = 51;
+        RegisterBrokerResponseHeader registerBrokerResponseHeader = 52;
+        RegisterFilterServerRequestHeader registerFilterServerRequestHeader = 53;
+        RegisterFilterServerResponseHeader registerFilterServerResponseHeader = 54;
+        RegisterMessageFilterClassRequestHeader registerMessageFilterClassRequestHeader = 55;
+        ResetOffsetRequestHeader resetOffsetRequestHeader = 56;
+        SearchOffsetRequestHeader searchOffsetRequestHeader = 57;
+        SearchOffsetResponseHeader searchOffsetResponseHeader = 58;
+        SendMessageRequestHeader sendMessageRequestHeader = 59;
+        SendMessageResponseHeader sendMessageResponseHeader = 60;
+        UnRegisterBrokerRequestHeader unRegisterBrokerRequestHeader = 61;
+        UnregisterClientRequestHeader unregisterClientRequestHeader = 62;
+        UpdateConsumerOffsetRequestHeader updateConsumerOffsetRequestHeader = 63;
+        ViewBrokerStatsDataRequestHeader viewBrokerStatsDataRequestHeader = 64;
+        ViewMessageRequestHeader viewMessageRequestHeader = 65;
+        WipeWritePermOfBrokerRequestHeader wipeWritePermOfBrokerRequestHeader = 66;
+        WipeWritePermOfBrokerResponseHeader wipeWritePermOfBrokerResponseHeader = 67;
+        bool noHeader = 99;
+    };
+    optional bytes body = 100;
+}

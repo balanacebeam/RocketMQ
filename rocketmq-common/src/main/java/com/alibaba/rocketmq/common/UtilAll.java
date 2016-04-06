@@ -15,8 +15,6 @@
  */
 package com.alibaba.rocketmq.common;
 
-import com.alibaba.rocketmq.remoting.common.RemotingHelper;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -444,9 +442,25 @@ public class UtilAll {
                 }
             }
         } catch (Throwable e) {
-            result.append(RemotingHelper.exceptionSimpleDesc(e));
+            result.append(exceptionSimpleDesc(e));
         }
 
         return result.toString();
+    }
+
+    public static String exceptionSimpleDesc(final Throwable e) {
+        StringBuffer sb = new StringBuffer();
+        if (e != null) {
+            sb.append(e.toString());
+
+            StackTraceElement[] stackTrace = e.getStackTrace();
+            if (stackTrace != null && stackTrace.length > 0) {
+                StackTraceElement elment = stackTrace[0];
+                sb.append(", ");
+                sb.append(elment.toString());
+            }
+        }
+
+        return sb.toString();
     }
 }

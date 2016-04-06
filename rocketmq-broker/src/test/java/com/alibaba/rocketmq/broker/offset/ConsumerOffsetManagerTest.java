@@ -4,7 +4,7 @@
 package com.alibaba.rocketmq.broker.offset;
 
 import com.alibaba.rocketmq.broker.BrokerController;
-import com.alibaba.rocketmq.common.BrokerConfig;
+import com.alibaba.rocketmq.broker.config.BrokerConfig;
 import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.remoting.netty.NettyClientConfig;
 import com.alibaba.rocketmq.remoting.netty.NettyServerConfig;

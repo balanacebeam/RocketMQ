@@ -15,9 +15,9 @@
  */
 package com.alibaba.rocketmq.remoting.netty;
 
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.InvokeCallback;
 import com.alibaba.rocketmq.remoting.common.SemaphoreReleaseOnlyOnce;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +40,7 @@ public class ResponseFuture {
     private final SemaphoreReleaseOnlyOnce once;
     // 保证回调的callback方法至多至少只被执行一次
     private final AtomicBoolean executeCallbackOnlyOnce = new AtomicBoolean(false);
-    private volatile RemotingCommand responseCommand;
+    private volatile MessageCommand responseCommand;
     private volatile boolean sendRequestOK = true;
     private volatile Throwable cause;
 
@@ -76,13 +76,13 @@ public class ResponseFuture {
     }
 
 
-    public RemotingCommand waitResponse(final long timeoutMillis) throws InterruptedException {
+    public MessageCommand waitResponse(final long timeoutMillis) throws InterruptedException {
         this.countDownLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         return this.responseCommand;
     }
 
 
-    public void putResponse(final RemotingCommand responseCommand) {
+    public void putResponse(final MessageCommand responseCommand) {
         this.responseCommand = responseCommand;
         this.countDownLatch.countDown();
     }
@@ -123,12 +123,12 @@ public class ResponseFuture {
     }
 
 
-    public RemotingCommand getResponseCommand() {
+    public MessageCommand getResponseCommand() {
         return responseCommand;
     }
 
 
-    public void setResponseCommand(RemotingCommand responseCommand) {
+    public void setResponseCommand(MessageCommand responseCommand) {
         this.responseCommand = responseCommand;
     }
 

@@ -1,8 +1,8 @@
 package com.alibaba.rocketmq.common.protocol.body;
 
 import com.alibaba.rocketmq.common.DataVersion;
+import com.alibaba.rocketmq.common.protocol.RemotingSerializable;
 import com.alibaba.rocketmq.common.subscription.SubscriptionGroupConfig;
-import com.alibaba.rocketmq.remoting.protocol.RemotingSerializable;
 
 import java.util.concurrent.ConcurrentHashMap;
 

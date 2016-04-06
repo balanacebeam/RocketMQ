@@ -16,6 +16,7 @@
 package com.alibaba.rocketmq.client.impl;
 
 import com.alibaba.rocketmq.client.QueryResult;
+import com.alibaba.rocketmq.client.VirtualEnvUtil;
 import com.alibaba.rocketmq.client.exception.MQBrokerException;
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.client.impl.factory.MQClientInstance;
@@ -23,23 +24,22 @@ import com.alibaba.rocketmq.client.impl.producer.TopicPublishInfo;
 import com.alibaba.rocketmq.client.log.ClientLogger;
 import com.alibaba.rocketmq.common.MixAll;
 import com.alibaba.rocketmq.common.TopicConfig;
+import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.help.FAQUrl;
 import com.alibaba.rocketmq.common.message.*;
 import com.alibaba.rocketmq.common.protocol.ResponseCode;
-import com.alibaba.rocketmq.common.protocol.header.QueryMessageRequestHeader;
-import com.alibaba.rocketmq.common.protocol.header.QueryMessageResponseHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.QueryMessageRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.QueryMessageResponseHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command;
 import com.alibaba.rocketmq.common.protocol.route.BrokerData;
 import com.alibaba.rocketmq.common.protocol.route.TopicRouteData;
 import com.alibaba.rocketmq.remoting.InvokeCallback;
 import com.alibaba.rocketmq.remoting.common.RemotingUtil;
-import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
 import com.alibaba.rocketmq.remoting.exception.RemotingException;
 import com.alibaba.rocketmq.remoting.netty.ResponseFuture;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import org.slf4j.Logger;
 
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -273,35 +273,37 @@ public class MQAdminImpl {
 
                 for (String addr : brokerAddrs) {
                     try {
-                        QueryMessageRequestHeader requestHeader = new QueryMessageRequestHeader();
-                        requestHeader.setTopic(topic);
-                        requestHeader.setKey(key);
-                        requestHeader.setMaxNum(maxNum);
-                        requestHeader.setBeginTimestamp(begin);
-                        requestHeader.setEndTimestamp(end);
+                        QueryMessageRequestHeader.Builder requestHeaderBuilder = QueryMessageRequestHeader.newBuilder()
+                                .setTopic(topic)
+                                .setKey(key)
+                                .setMaxNum(maxNum)
+                                .setBeginTimestamp(begin)
+                                .setEndTimestamp(end);
 
-                        this.mQClientFactory.getMQClientAPIImpl().queryMessage(addr, requestHeader,
+                        String projectGroupPrefix = this.mQClientFactory.getMQClientAPIImpl().getProjectGroupPrefix();
+                        if (!UtilAll.isBlank(projectGroupPrefix)) {
+                            requestHeaderBuilder.setTopic(VirtualEnvUtil.buildWithProjectGroup(requestHeaderBuilder.getTopic(),
+                                    projectGroupPrefix));
+                        }
+
+                        this.mQClientFactory.getMQClientAPIImpl().queryMessage(addr, requestHeaderBuilder.build(),
                                 1000 * 15, new InvokeCallback() {
                                     @Override
                                     public void operationComplete(ResponseFuture responseFuture) {
                                         try {
-                                            RemotingCommand response = responseFuture.getResponseCommand();
+                                            Command.MessageCommand response = responseFuture.getResponseCommand();
                                             if (response != null) {
                                                 switch (response.getCode()) {
                                                     case ResponseCode.SUCCESS: {
-                                                        QueryMessageResponseHeader responseHeader = null;
-                                                        try {
-                                                            responseHeader =
-                                                                    (QueryMessageResponseHeader) response
-                                                                            .decodeCommandCustomHeader(QueryMessageResponseHeader.class);
-                                                        } catch (RemotingCommandException e) {
-                                                            log.error("decodeCommandCustomHeader exception", e);
+                                                        if (!response.hasQueryMessageRequestHeader()) {
+                                                            log.error("not hasQueryMessageRequestHeader");
                                                             return;
                                                         }
+                                                        QueryMessageResponseHeader responseHeader = response.getQueryMessageResponseHeader();
 
                                                         List<MessageExt> wrappers =
                                                                 MessageDecoder.decodes(
-                                                                        ByteBuffer.wrap(response.getBody()), true);
+                                                                        response.getBody().asReadOnlyByteBuffer(), true);
 
                                                         QueryResult qr =
                                                                 new QueryResult(responseHeader

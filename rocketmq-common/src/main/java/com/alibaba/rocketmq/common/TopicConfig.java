@@ -16,6 +16,7 @@
 package com.alibaba.rocketmq.common;
 
 import com.alibaba.rocketmq.common.constant.PermName;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.TopicFilterType;
 
 
 /**

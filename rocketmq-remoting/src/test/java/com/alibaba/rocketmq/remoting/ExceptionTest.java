@@ -3,11 +3,12 @@
  */
 package com.alibaba.rocketmq.remoting;
 
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.exception.RemotingConnectException;
 import com.alibaba.rocketmq.remoting.exception.RemotingSendRequestException;
 import com.alibaba.rocketmq.remoting.exception.RemotingTimeoutException;
 import com.alibaba.rocketmq.remoting.netty.*;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import io.netty.channel.ChannelHandlerContext;
 import org.junit.Test;
 
@@ -36,13 +37,16 @@ public class ExceptionTest {
 
 
             @Override
-            public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
+            public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request) {
                 System.out.println("processRequest=" + request + " " + (i++));
-                request.setRemark("hello, I am respponse " + ctx.channel().remoteAddress());
-                return request;
+
+                return MessageCommand.newBuilder(request)
+                        .setRemark("hello, I am respponse " + ctx.channel().remoteAddress())
+                        .build();
             }
         }, Executors.newCachedThreadPool());
         client.start();
+
         return client;
     }
 
@@ -51,8 +55,8 @@ public class ExceptionTest {
     public void test_CONNECT_EXCEPTION() {
         RemotingClient client = createRemotingClient();
 
-        RemotingCommand request = RemotingCommand.createRequestCommand(0, null);
-        RemotingCommand response = null;
+        MessageCommand request = CommandUtil.createRequestCommand(0);
+        MessageCommand response = null;
         try {
             response = client.invokeSync("localhost:8888", request, 1000 * 3);
         } catch (RemotingConnectException e) {

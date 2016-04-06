@@ -3,10 +3,11 @@
  */
 package com.alibaba.rocketmq.remoting;
 
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.annotation.CFNullable;
 import com.alibaba.rocketmq.remoting.exception.*;
 import com.alibaba.rocketmq.remoting.netty.*;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import io.netty.channel.ChannelHandlerContext;
 import org.junit.Test;
 
@@ -35,10 +36,12 @@ public class NettyRPCTest {
 
 
             @Override
-            public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
+            public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request) {
                 System.out.println("processRequest=" + request + " " + (i++));
-                request.setRemark("hello, I am respponse " + ctx.channel().remoteAddress());
-                return request;
+
+                return MessageCommand.newBuilder(request)
+                        .setRemark("hello, I am respponse " + ctx.channel().remoteAddress())
+                        .build();
             }
         }, Executors.newCachedThreadPool());
         remotingServer.start();
@@ -56,8 +59,8 @@ public class NettyRPCTest {
             TestRequestHeader requestHeader = new TestRequestHeader();
             requestHeader.setCount(i);
             requestHeader.setMessageTitle("HelloMessageTitle");
-            RemotingCommand request = RemotingCommand.createRequestCommand(0, requestHeader);
-            RemotingCommand response = client.invokeSync("localhost:8888", request, 1000 * 3000);
+            MessageCommand request = CommandUtil.createRequestCommand(0, String.valueOf(i));
+            MessageCommand response = client.invokeSync("localhost:8888", request, 1000 * 3000);
             System.out.println("invoke result = " + response);
             assertTrue(response != null);
         }
@@ -75,8 +78,7 @@ public class NettyRPCTest {
         RemotingClient client = createRemotingClient();
 
         for (int i = 0; i < 100; i++) {
-            RemotingCommand request = RemotingCommand.createRequestCommand(0, null);
-            request.setRemark(String.valueOf(i));
+            MessageCommand request = CommandUtil.createRequestCommand(0, String.valueOf(i));
             client.invokeOneway("localhost:8888", request, 1000 * 3);
         }
 
@@ -93,8 +95,7 @@ public class NettyRPCTest {
         RemotingClient client = createRemotingClient();
 
         for (int i = 0; i < 100; i++) {
-            RemotingCommand request = RemotingCommand.createRequestCommand(0, null);
-            request.setRemark(String.valueOf(i));
+            MessageCommand request = CommandUtil.createRequestCommand(0, String.valueOf(i));
             client.invokeAsync("localhost:8888", request, 1000 * 3, new InvokeCallback() {
                 @Override
                 public void operationComplete(ResponseFuture responseFuture) {
@@ -119,7 +120,7 @@ public class NettyRPCTest {
 
         server.registerProcessor(0, new NettyRequestProcessor() {
             @Override
-            public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
+            public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request) {
                 try {
                     return server.invokeSync(ctx.channel(), request, 1000 * 10);
                 } catch (InterruptedException e) {
@@ -136,16 +137,16 @@ public class NettyRPCTest {
 
         client.registerProcessor(0, new NettyRequestProcessor() {
             @Override
-            public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
+            public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request) {
                 System.out.println("client receive server request = " + request);
-                request.setRemark("client remark");
-                return request;
+
+                return MessageCommand.newBuilder(request).setRemark("client remark").build();
             }
         }, Executors.newCachedThreadPool());
 
         for (int i = 0; i < 3; i++) {
-            RemotingCommand request = RemotingCommand.createRequestCommand(0, null);
-            RemotingCommand response = client.invokeSync("localhost:8888", request, 1000 * 3);
+            MessageCommand request = CommandUtil.createRequestCommand(0);
+            MessageCommand response = client.invokeSync("localhost:8888", request, 1000 * 3);
             System.out.println("invoke result = " + response);
             assertTrue(response != null);
         }
@@ -167,7 +168,7 @@ class TestRequestHeader implements CommandCustomHeader {
 
 
     @Override
-    public void checkFields() throws RemotingCommandException {
+    public void checkFields() throws MessageCommandException {
     }
 
 
@@ -201,7 +202,7 @@ class TestResponseHeader implements CommandCustomHeader {
 
 
     @Override
-    public void checkFields() throws RemotingCommandException {
+    public void checkFields() throws MessageCommandException {
 
     }
 

@@ -3,7 +3,8 @@
  */
 package com.alibaba.rocketmq.remoting;
 
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
@@ -20,8 +21,8 @@ public class SyncInvokeTest {
 
         for (int i = 0; i < 100; i++) {
             try {
-                RemotingCommand request = RemotingCommand.createRequestCommand(0, null);
-                RemotingCommand response = client.invokeSync("localhost:8888", request, 1000 * 3);
+                MessageCommand request = CommandUtil.createRequestCommand(0);
+                MessageCommand response = client.invokeSync("localhost:8888", request, 1000 * 3);
                 System.out.println(i + "\t" + "invoke result = " + response);
                 assertTrue(response != null);
             } catch (Exception e) {

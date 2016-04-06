@@ -1,7 +1,5 @@
 package com.alibaba.rocketmq.common.protocol.body;
 
-import com.alibaba.rocketmq.remoting.protocol.LanguageCode;
-
 
 /**
  * TODO
@@ -12,7 +10,6 @@ import com.alibaba.rocketmq.remoting.protocol.LanguageCode;
 public class Connection {
     private String clientId;
     private String clientAddr;
-    private LanguageCode language;
     private int version;
 
 
@@ -33,16 +30,6 @@ public class Connection {
 
     public void setClientAddr(String clientAddr) {
         this.clientAddr = clientAddr;
-    }
-
-
-    public LanguageCode getLanguage() {
-        return language;
-    }
-
-
-    public void setLanguage(LanguageCode language) {
-        this.language = language;
     }
 
 

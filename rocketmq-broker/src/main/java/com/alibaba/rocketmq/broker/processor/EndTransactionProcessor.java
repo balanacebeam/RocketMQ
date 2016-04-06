@@ -16,19 +16,20 @@
 package com.alibaba.rocketmq.broker.processor;
 
 import com.alibaba.rocketmq.broker.BrokerController;
-import com.alibaba.rocketmq.common.TopicFilterType;
 import com.alibaba.rocketmq.common.constant.LoggerName;
 import com.alibaba.rocketmq.common.message.MessageAccessor;
 import com.alibaba.rocketmq.common.message.MessageConst;
 import com.alibaba.rocketmq.common.message.MessageDecoder;
 import com.alibaba.rocketmq.common.message.MessageExt;
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
 import com.alibaba.rocketmq.common.protocol.ResponseCode;
-import com.alibaba.rocketmq.common.protocol.header.EndTransactionRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.EndTransactionRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.TopicFilterType;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.common.sysflag.MessageSysFlag;
 import com.alibaba.rocketmq.remoting.common.RemotingHelper;
-import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
+import com.alibaba.rocketmq.remoting.exception.MessageCommandException;
 import com.alibaba.rocketmq.remoting.netty.NettyRequestProcessor;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 import com.alibaba.rocketmq.store.MessageExtBrokerInner;
 import com.alibaba.rocketmq.store.MessageStore;
 import com.alibaba.rocketmq.store.PutMessageResult;
@@ -82,12 +83,9 @@ public class EndTransactionProcessor implements NettyRequestProcessor {
     }
 
     @Override
-    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request)
-            throws RemotingCommandException {
-        final RemotingCommand response = RemotingCommand.createResponseCommand(null);
-        final EndTransactionRequestHeader requestHeader =
-                (EndTransactionRequestHeader) request
-                        .decodeCommandCustomHeader(EndTransactionRequestHeader.class);
+    public MessageCommand processRequest(ChannelHandlerContext ctx, MessageCommand request)
+            throws MessageCommandException {
+        final EndTransactionRequestHeader requestHeader = request.getEndTransactionRequestHeader();
 
         // 回查应答
         if (requestHeader.getFromTransactionCheck()) {
@@ -161,13 +159,15 @@ public class EndTransactionProcessor implements NettyRequestProcessor {
         final MessageExt msgExt =
                 this.brokerController.getMessageStore().lookMessageByOffset(
                         requestHeader.getCommitLogOffset());
+
+        MessageCommand.Builder responseBuilder = CommandUtil.createResponseBuilder(request.getOpaque());
         if (msgExt != null) {
             // 校验Producer Group
             final String pgroupRead = msgExt.getProperty(MessageConst.PROPERTY_PRODUCER_GROUP);
             if (!pgroupRead.equals(requestHeader.getProducerGroup())) {
-                response.setCode(ResponseCode.SYSTEM_ERROR);
-                response.setRemark("the producer group wrong");
-                return response;
+                responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);
+                responseBuilder.setRemark("the producer group wrong");
+                return responseBuilder.build();
             }
 
             // 校验Transaction State Table Offset
@@ -179,9 +179,9 @@ public class EndTransactionProcessor implements NettyRequestProcessor {
 
             // 校验Commit Log Offset
             if (msgExt.getCommitLogOffset() != requestHeader.getCommitLogOffset()) {
-                response.setCode(ResponseCode.SYSTEM_ERROR);
-                response.setRemark("the commit log offset wrong");
-                return response;
+                responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);
+                responseBuilder.setRemark("the commit log offset wrong");
+                return responseBuilder.build();
             }
 
             MessageExtBrokerInner msgInner = this.endMessageTransaction(msgExt);
@@ -204,44 +204,43 @@ public class EndTransactionProcessor implements NettyRequestProcessor {
                     case FLUSH_DISK_TIMEOUT:
                     case FLUSH_SLAVE_TIMEOUT:
                     case SLAVE_NOT_AVAILABLE:
-                        response.setCode(ResponseCode.SUCCESS);
-                        response.setRemark(null);
+                        responseBuilder.setCode(ResponseCode.SUCCESS);
                         break;
 
                     // Failed
                     case CREATE_MAPEDFILE_FAILED:
-                        response.setCode(ResponseCode.SYSTEM_ERROR);
-                        response.setRemark("create maped file failed.");
+                        responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);
+                        responseBuilder.setRemark("create maped file failed.");
                         break;
                     case MESSAGE_ILLEGAL:
-                        response.setCode(ResponseCode.MESSAGE_ILLEGAL);
-                        response.setRemark("the message is illegal, maybe length not matched.");
+                        responseBuilder.setCode(ResponseCode.MESSAGE_ILLEGAL);
+                        responseBuilder.setRemark("the message is illegal, maybe length not matched.");
                         break;
                     case SERVICE_NOT_AVAILABLE:
-                        response.setCode(ResponseCode.SERVICE_NOT_AVAILABLE);
-                        response.setRemark("service not available now.");
+                        responseBuilder.setCode(ResponseCode.SERVICE_NOT_AVAILABLE);
+                        responseBuilder.setRemark("service not available now.");
                         break;
                     case UNKNOWN_ERROR:
-                        response.setCode(ResponseCode.SYSTEM_ERROR);
-                        response.setRemark("UNKNOWN_ERROR");
+                        responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);
+                        responseBuilder.setRemark("UNKNOWN_ERROR");
                         break;
                     default:
-                        response.setCode(ResponseCode.SYSTEM_ERROR);
-                        response.setRemark("UNKNOWN_ERROR DEFAULT");
+                        responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);
+                        responseBuilder.setRemark("UNKNOWN_ERROR DEFAULT");
                         break;
                 }
 
-                return response;
+                return responseBuilder.build();
             } else {
-                response.setCode(ResponseCode.SYSTEM_ERROR);
-                response.setRemark("store putMessage return null");
+                responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);
+                responseBuilder.setRemark("store putMessage return null");
             }
         } else {
-            response.setCode(ResponseCode.SYSTEM_ERROR);
-            response.setRemark("find prepared transaction message failed");
-            return response;
+            responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);
+            responseBuilder.setRemark("find prepared transaction message failed");
+            return responseBuilder.build();
         }
 
-        return response;
+        return responseBuilder.build();
     }
 }

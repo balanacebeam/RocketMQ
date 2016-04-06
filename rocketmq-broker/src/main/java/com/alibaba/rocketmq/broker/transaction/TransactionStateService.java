@@ -5,7 +5,7 @@ import com.alibaba.rocketmq.broker.client.ClientChannelInfo;
 import com.alibaba.rocketmq.common.ThreadFactoryImpl;
 import com.alibaba.rocketmq.common.config.Config;
 import com.alibaba.rocketmq.common.constant.LoggerName;
-import com.alibaba.rocketmq.common.protocol.header.CheckTransactionStateRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.CheckTransactionStateRequestHeader;
 import com.alibaba.rocketmq.store.DefaultMessageStore;
 import com.alibaba.rocketmq.store.SelectMapedBufferResult;
 import com.alibaba.rocketmq.store.config.BrokerRole;
@@ -109,9 +109,11 @@ public class TransactionStateService {
 
         ClientChannelInfo clientChannelInfo = randomChoose(clientChannelInfoList);
 
-        final CheckTransactionStateRequestHeader requestHeader = new CheckTransactionStateRequestHeader();
-        requestHeader.setCommitLogOffset(transactionRecord.getOffset());
-        requestHeader.setTranStateTableOffset(transactionRecord.getOffset()); // TODO useful now?
+        final CheckTransactionStateRequestHeader requestHeader = CheckTransactionStateRequestHeader.newBuilder()
+                .setCommitLogOffset(transactionRecord.getOffset())
+                .setTranStateTableOffset(transactionRecord.getOffset())
+                .build(); // TODO useful now?
+
         this.brokerController.getBroker2Client().checkProducerTransactionState(
                 clientChannelInfo.getChannel(), requestHeader, selectMapedBufferResult);
     }

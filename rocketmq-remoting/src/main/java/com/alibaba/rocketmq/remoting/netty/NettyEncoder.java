@@ -17,37 +17,44 @@ package com.alibaba.rocketmq.remoting.netty;
 
 import com.alibaba.rocketmq.remoting.common.RemotingHelper;
 import com.alibaba.rocketmq.remoting.common.RemotingUtil;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
+import com.google.protobuf.MessageLite;
+import com.google.protobuf.MessageLiteOrBuilder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
-
 
 /**
  * @author shijia.wxr<vintage.wang@gmail.com>
  * @since 2013-7-13
  */
-public class NettyEncoder extends MessageToByteEncoder<RemotingCommand> {
+public class NettyEncoder extends MessageToByteEncoder<MessageLiteOrBuilder> {
     private static final Logger log = LoggerFactory.getLogger(RemotingHelper.RemotingLogName);
 
     @Override
-    public void encode(ChannelHandlerContext ctx, RemotingCommand remotingCommand, ByteBuf out)
+    public void encode(ChannelHandlerContext ctx, MessageLiteOrBuilder msg, ByteBuf out)
             throws Exception {
         try {
-            ByteBuffer header = remotingCommand.encodeHeader();
-            out.writeBytes(header);
-            byte[] body = remotingCommand.getBody();
-            if (body != null) {
-                out.writeBytes(body);
+            byte[] body = null;
+            if (msg instanceof MessageLite) {
+                body = ((MessageLite) msg).toByteArray();
+            } else if (msg instanceof MessageLite.Builder) {
+                body = ((MessageLite.Builder) msg).build().toByteArray();
             }
+
+            if (body == null) {
+                log.error("NettyEncoder body is null.");
+                return;
+            }
+
+            out.writeInt(body.length);
+            out.writeBytes(body);
         } catch (Exception e) {
             log.error("encode exception, " + RemotingHelper.parseChannelRemoteAddr(ctx.channel()), e);
-            if (remotingCommand != null) {
-                log.error(remotingCommand.toString());
+            if (msg != null) {
+                log.error(msg.toString());
             }
             RemotingUtil.closeChannel(ctx.channel());
         }

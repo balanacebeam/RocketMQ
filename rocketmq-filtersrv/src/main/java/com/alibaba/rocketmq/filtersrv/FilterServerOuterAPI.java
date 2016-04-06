@@ -16,18 +16,19 @@
 package com.alibaba.rocketmq.filtersrv;
 
 import com.alibaba.rocketmq.client.exception.MQBrokerException;
+import com.alibaba.rocketmq.common.protocol.CommandUtil;
 import com.alibaba.rocketmq.common.protocol.RequestCode;
 import com.alibaba.rocketmq.common.protocol.ResponseCode;
-import com.alibaba.rocketmq.common.protocol.header.filtersrv.RegisterFilterServerRequestHeader;
-import com.alibaba.rocketmq.common.protocol.header.filtersrv.RegisterFilterServerResponseHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
+import com.alibaba.rocketmq.common.protocol.protobuf.FiltersrvHeader.RegisterFilterServerRequestHeader;
+import com.alibaba.rocketmq.common.protocol.protobuf.FiltersrvHeader.RegisterFilterServerResponseHeader;
 import com.alibaba.rocketmq.remoting.RemotingClient;
-import com.alibaba.rocketmq.remoting.exception.RemotingCommandException;
+import com.alibaba.rocketmq.remoting.exception.MessageCommandException;
 import com.alibaba.rocketmq.remoting.exception.RemotingConnectException;
 import com.alibaba.rocketmq.remoting.exception.RemotingSendRequestException;
 import com.alibaba.rocketmq.remoting.exception.RemotingTimeoutException;
 import com.alibaba.rocketmq.remoting.netty.NettyClientConfig;
 import com.alibaba.rocketmq.remoting.netty.NettyRemotingClient;
-import com.alibaba.rocketmq.remoting.protocol.RemotingCommand;
 
 
 /**
@@ -58,20 +59,17 @@ public class FilterServerOuterAPI {
     public RegisterFilterServerResponseHeader registerFilterServerToBroker(//
                                                                            final String brokerAddr,// 1
                                                                            final String filterServerAddr// 2
-    ) throws RemotingCommandException, RemotingConnectException, RemotingSendRequestException,
+    ) throws MessageCommandException, RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQBrokerException {
-        RegisterFilterServerRequestHeader requestHeader = new RegisterFilterServerRequestHeader();
-        requestHeader.setFilterServerAddr(filterServerAddr);
-        RemotingCommand request =
-                RemotingCommand.createRequestCommand(RequestCode.REGISTER_FILTER_SERVER, requestHeader);
+        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.REGISTER_FILTER_SERVER)
+                .setRegisterFilterServerRequestHeader(RegisterFilterServerRequestHeader.newBuilder().setFilterServerAddr(filterServerAddr))
+                .build();
 
-        RemotingCommand response = this.remotingClient.invokeSync(brokerAddr, request, 3000);
+        MessageCommand response = this.remotingClient.invokeSync(brokerAddr, request, 3000);
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
-                RegisterFilterServerResponseHeader responseHeader =
-                        (RegisterFilterServerResponseHeader) response
-                                .decodeCommandCustomHeader(RegisterFilterServerResponseHeader.class);
+                RegisterFilterServerResponseHeader responseHeader = response.getRegisterFilterServerResponseHeader();
 
                 return responseHeader;
             }
