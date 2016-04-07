@@ -376,10 +376,16 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
                 this.namesrvController.getKvConfigManager().getKVListByNamespace(
                         NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG);
 
+        RegisterBrokerResponseHeader.Builder requestBuilder = RegisterBrokerResponseHeader.newBuilder();
+        if (StringUtils.isNotEmpty(result.getHaServerAddr())) {
+            requestBuilder.setHaServerAddr(result.getHaServerAddr());
+        }
+        if (StringUtils.isNotEmpty(result.getMasterAddr())) {
+            requestBuilder.setMasterAddr(result.getMasterAddr());
+        }
+
         return CommandUtil.createResponseBuilder(request.getOpaque(), jsonValue)
-                .setRegisterBrokerResponseHeader(RegisterBrokerResponseHeader.newBuilder()
-                        .setHaServerAddr(result.getHaServerAddr())
-                        .setMasterAddr(result.getMasterAddr()))
+                .setRegisterBrokerResponseHeader(requestBuilder)
                 .build();
     }
 

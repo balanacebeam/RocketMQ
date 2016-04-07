@@ -64,6 +64,7 @@ import com.alibaba.rocketmq.remoting.netty.NettyClientConfig;
 import com.alibaba.rocketmq.remoting.netty.NettyRemotingClient;
 import com.alibaba.rocketmq.remoting.netty.ResponseFuture;
 import com.google.protobuf.ByteString;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.UnsupportedEncodingException;
@@ -185,7 +186,7 @@ public class MQClientAPIImpl {
         }
 
         byte[] body = RemotingSerializable.encode(config);
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.UPDATE_AND_CREATE_SUBSCRIPTIONGROUP, body)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.UPDATE_AND_CREATE_SUBSCRIPTIONGROUP, body)
                 .build();
 
 
@@ -212,7 +213,7 @@ public class MQClientAPIImpl {
                     VirtualEnvUtil.buildWithProjectGroup(topicConfig.getTopicName(), projectGroupPrefix);
         }
 
-        CreateTopicRequestHeader.Builder requestHeaderBuiler = CreateTopicRequestHeader.newBuilder()
+        CreateTopicRequestHeader.Builder requestHeaderBuilder = CreateTopicRequestHeader.newBuilder()
                 .setTopic(topicWithProjectGroup)
                 .setDefaultTopic(defaultTopic)
                 .setReadQueueNums(topicConfig.getReadQueueNums())
@@ -222,8 +223,8 @@ public class MQClientAPIImpl {
                 .setTopicSysFlag(topicConfig.getTopicSysFlag())
                 .setOrder(topicConfig.isOrder());
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.UPDATE_AND_CREATE_TOPIC)
-                .setCreateTopicRequestHeader(requestHeaderBuiler)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.UPDATE_AND_CREATE_TOPIC)
+                .setCreateTopicRequestHeader(requestHeaderBuilder)
                 .build();
 
         MessageCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
@@ -248,7 +249,7 @@ public class MQClientAPIImpl {
                                   final CommunicationMode communicationMode,// 6
                                   final SendCallback sendCallback// 7
     ) throws RemotingException, MQBrokerException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.SEND_MESSAGE, msg.getBody())
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.SEND_MESSAGE, msg.getBody())
                 .setSendMessageRequestHeader(requestHeader)
                 .build();
 
@@ -380,7 +381,7 @@ public class MQClientAPIImpl {
                                   final CommunicationMode communicationMode,//
                                   final PullCallback pullCallback//
     ) throws RemotingException, MQBrokerException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.PULL_MESSAGE)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.PULL_MESSAGE)
                 .setPullMessageRequestHeader(requestHeader)
                 .build();
 
@@ -481,7 +482,7 @@ public class MQClientAPIImpl {
         ViewMessageRequestHeader requestHeader = ViewMessageRequestHeader.newBuilder()
                 .setOffset(phyoffset)
                 .build();
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.VIEW_MESSAGE_BY_ID)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.VIEW_MESSAGE_BY_ID)
                 .setViewMessageRequestHeader(requestHeader)
                 .build();
 
@@ -516,7 +517,7 @@ public class MQClientAPIImpl {
                 .setQueueId(queueId)
                 .setTimestamp(timestamp)
                 .build();
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.SEARCH_OFFSET_BY_TIMESTAMP)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.SEARCH_OFFSET_BY_TIMESTAMP)
                 .setSearchOffsetRequestHeader(requestHeader)
                 .build();
 
@@ -546,7 +547,7 @@ public class MQClientAPIImpl {
                 .setTopic(topicWithProjectGroup)
                 .setQueueId(queueId)
                 .build();
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_MAX_OFFSET)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_MAX_OFFSET)
                 .setGetMaxOffsetRequestHeader(requestHeader)
                 .build();
 
@@ -579,7 +580,7 @@ public class MQClientAPIImpl {
         GetConsumerListByGroupRequestHeader requestHeader = GetConsumerListByGroupRequestHeader.newBuilder()
                 .setConsumerGroup(consumerGroupWithProjectGroup)
                 .build();
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_CONSUMER_LIST_BY_GROUP)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_CONSUMER_LIST_BY_GROUP)
                 .setGetConsumerListByGroupRequestHeader(requestHeader)
                 .build();
 
@@ -613,7 +614,7 @@ public class MQClientAPIImpl {
                 .setTopic(topicWithProjectGroup)
                 .setQueueId(queueId)
                 .build();
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_MIN_OFFSET)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_MIN_OFFSET)
                 .setGetMinOffsetRequestHeader(requestHeader)
                 .build();
 
@@ -643,7 +644,7 @@ public class MQClientAPIImpl {
                 .setTopic(topicWithProjectGroup)
                 .setQueueId(queueId)
                 .build();
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_EARLIEST_MSG_STORETIME)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_EARLIEST_MSG_STORETIME)
                 .setGetEarliestMsgStoreTimeRequestHeader(requestHeader)
                 .build();
 
@@ -667,7 +668,7 @@ public class MQClientAPIImpl {
                                     final QueryConsumerOffsetRequestHeader requestHeader,//
                                     final long timeoutMillis//
     ) throws RemotingException, MQBrokerException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.QUERY_CONSUMER_OFFSET)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.QUERY_CONSUMER_OFFSET)
                 .setQueryConsumerOffsetRequestHeader(requestHeader)
                 .build();
 
@@ -692,7 +693,7 @@ public class MQClientAPIImpl {
                                      final long timeoutMillis//
     ) throws RemotingException, MQBrokerException, InterruptedException {
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.UPDATE_CONSUMER_OFFSET)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.UPDATE_CONSUMER_OFFSET)
                 .setUpdateConsumerOffsetRequestHeader(requestHeader)
                 .build();
 
@@ -717,7 +718,7 @@ public class MQClientAPIImpl {
                                            final long timeoutMillis//
     ) throws RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException,
             RemotingSendRequestException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.UPDATE_CONSUMER_OFFSET)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.UPDATE_CONSUMER_OFFSET)
                 .setUpdateConsumerOffsetRequestHeader(requestHeader)
                 .build();
 
@@ -747,7 +748,7 @@ public class MQClientAPIImpl {
             }
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.HEART_BEAT, heartbeatData.encode())
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.HEART_BEAT, heartbeatData.encode())
                 .build();
 
         MessageCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
@@ -780,13 +781,17 @@ public class MQClientAPIImpl {
                     VirtualEnvUtil.buildWithProjectGroup(consumerGroup, projectGroupPrefix);
         }
 
-        final UnregisterClientRequestHeader requestHeader = UnregisterClientRequestHeader.newBuilder()
-                .setClientId(clientID)
-                .setProducerGroup(producerGroupWithProjectGroup)
-                .setConsumerGroup(consumerGroupWithProjectGroup)
-                .build();
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.UNREGISTER_CLIENT)
-                .setUnregisterClientRequestHeader(requestHeader)
+        final UnregisterClientRequestHeader.Builder requestHeaderBuilder = UnregisterClientRequestHeader.newBuilder()
+                .setClientId(clientID);
+        if (StringUtils.isNotEmpty(producerGroupWithProjectGroup)) {
+            requestHeaderBuilder.setProducerGroup(producerGroupWithProjectGroup);
+        }
+        if (StringUtils.isNotEmpty(consumerGroupWithProjectGroup)) {
+            requestHeaderBuilder.setConsumerGroup(consumerGroupWithProjectGroup);
+        }
+
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.UNREGISTER_CLIENT)
+                .setUnregisterClientRequestHeader(requestHeaderBuilder)
                 .build();
 
         MessageCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
@@ -808,7 +813,7 @@ public class MQClientAPIImpl {
                                      final String remark,//
                                      final long timeoutMillis//
     ) throws RemotingException, MQBrokerException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.END_TRANSACTION)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.END_TRANSACTION)
                 .setEndTransactionRequestHeader(requestHeader)
                 .setRemark(remark)
                 .build();
@@ -822,7 +827,7 @@ public class MQClientAPIImpl {
                              final long timeoutMillis,//
                              final InvokeCallback invokeCallback//
     ) throws RemotingException, MQBrokerException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.QUERY_MESSAGE)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.QUERY_MESSAGE)
                 .setQueryMessageRequestHeader(requestHeader)
                 .build();
 
@@ -850,7 +855,7 @@ public class MQClientAPIImpl {
             }
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.HEART_BEAT, heartbeat.encode())
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.HEART_BEAT, heartbeat.encode())
                 .build();
 
         MessageCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
@@ -871,16 +876,19 @@ public class MQClientAPIImpl {
             msg.setTopic(VirtualEnvUtil.buildWithProjectGroup(msg.getTopic(), projectGroupPrefix));
         }
 
-        ConsumerSendMsgBackRequestHeader requestHeader = ConsumerSendMsgBackRequestHeader.newBuilder()
+        ConsumerSendMsgBackRequestHeader.Builder requestHeaderBuilder = ConsumerSendMsgBackRequestHeader.newBuilder()
                 .setGroup(consumerGroupWithProjectGroup)
-                .setOriginTopic(msg.getTopic())
                 .setOffset(msg.getCommitLogOffset())
-                .setDelayLevel(delayLevel)
-                .setOriginMsgId(msg.getMsgId())
-                .build();
+                .setDelayLevel(delayLevel);
+        if (StringUtils.isNotEmpty(msg.getTopic())) {
+            requestHeaderBuilder.setOriginTopic(msg.getTopic());
+        }
+        if (StringUtils.isNotEmpty(msg.getMsgId())) {
+            requestHeaderBuilder.setOriginMsgId(msg.getMsgId());
+        }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.CONSUMER_SEND_MSG_BACK)
-                .setConsumerSendMsgBackRequestHeader(requestHeader)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.CONSUMER_SEND_MSG_BACK)
+                .setConsumerSendMsgBackRequestHeader(requestHeaderBuilder)
                 .build();
 
         MessageCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
@@ -911,7 +919,7 @@ public class MQClientAPIImpl {
             }
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.LOCK_BATCH_MQ, requestBody.encode())
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.LOCK_BATCH_MQ, requestBody.encode())
                 .build();
 
         MessageCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
@@ -952,7 +960,7 @@ public class MQClientAPIImpl {
             }
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.UNLOCK_BATCH_MQ, requestBody.encode())
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.UNLOCK_BATCH_MQ, requestBody.encode())
                 .build();
 
         if (oneway) {
@@ -981,7 +989,7 @@ public class MQClientAPIImpl {
         }
 
         MessageCommand request =
-                CommandUtil.createRequestBuiler(RequestCode.GET_TOPIC_STATS_INFO)
+                CommandUtil.createRequestBuilder(RequestCode.GET_TOPIC_STATS_INFO)
                         .setGetTopicStatsInfoRequestHeader(GetTopicStatsInfoRequestHeader.newBuilder().setTopic(topicWithProjectGroup))
                         .build();
 
@@ -1027,10 +1035,10 @@ public class MQClientAPIImpl {
                     VirtualEnvUtil.buildWithProjectGroup(consumerGroup, projectGroupPrefix);
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_CONSUME_STATS)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_CONSUME_STATS)
                 .setGetConsumeStatsRequestHeader(GetConsumeStatsRequestHeader.newBuilder()
                         .setConsumerGroup(consumerGroupWithProjectGroup)
-                        .setTopic(topic))
+                        .setTopic(topic == null ? "" : topic))
                 .build();
 
         MessageCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
@@ -1067,7 +1075,7 @@ public class MQClientAPIImpl {
                     VirtualEnvUtil.buildWithProjectGroup(producerGroup, projectGroupPrefix);
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_PRODUCER_CONNECTION_LIST)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_PRODUCER_CONNECTION_LIST)
                 .setGetProducerConnectionListRequestHeader(GetProducerConnectionListRequestHeader.newBuilder().setProducerGroup(producerGroupWithProjectGroup))
                 .build();
 
@@ -1092,7 +1100,7 @@ public class MQClientAPIImpl {
                     VirtualEnvUtil.buildWithProjectGroup(consumerGroup, projectGroupPrefix);
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_CONSUMER_CONNECTION_LIST)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_CONSUMER_CONNECTION_LIST)
                 .setGetConsumerConnectionListRequestHeader(GetConsumerConnectionListRequestHeader.newBuilder().setConsumerGroup(consumerGroupWithProjectGroup))
                 .build();
 
@@ -1143,7 +1151,7 @@ public class MQClientAPIImpl {
             throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
             InterruptedException, MQBrokerException, UnsupportedEncodingException {
 
-        MessageCommand.Builder requestBuiler = CommandUtil.createRequestBuiler(RequestCode.UPDATE_BROKER_CONFIG);
+        MessageCommand.Builder requestBuiler = CommandUtil.createRequestBuilder(RequestCode.UPDATE_BROKER_CONFIG);
 
         String str = MixAll.properties2String(properties);
         if (str != null && str.length() > 0) {
@@ -1183,7 +1191,7 @@ public class MQClientAPIImpl {
 
     public TopicRouteData getDefaultTopicRouteInfoFromNameServer(final String topic, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_ROUTEINTO_BY_TOPIC)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_ROUTEINTO_BY_TOPIC)
                 .setGetRouteInfoRequestHeader(GetRouteInfoRequestHeader.newBuilder().setTopic(topic))
                 .build();
 
@@ -1215,7 +1223,7 @@ public class MQClientAPIImpl {
             topicWithProjectGroup = VirtualEnvUtil.buildWithProjectGroup(topic, projectGroupPrefix);
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_ROUTEINTO_BY_TOPIC)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_ROUTEINTO_BY_TOPIC)
                 .setGetRouteInfoRequestHeader(GetRouteInfoRequestHeader.newBuilder().setTopic(topicWithProjectGroup))
                 .build();
 
@@ -1273,7 +1281,7 @@ public class MQClientAPIImpl {
     public int wipeWritePermOfBroker(final String namesrvAddr, String brokerName, final long timeoutMillis)
             throws MessageCommandException, RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQClientException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.WIPE_WRITE_PERM_OF_BROKER)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.WIPE_WRITE_PERM_OF_BROKER)
                 .setWipeWritePermOfBrokerRequestHeader(WipeWritePermOfBrokerRequestHeader.newBuilder().setBrokerName(brokerName))
                 .build();
 
@@ -1299,7 +1307,7 @@ public class MQClientAPIImpl {
             topicWithProjectGroup = VirtualEnvUtil.buildWithProjectGroup(topic, projectGroupPrefix);
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.DELETE_TOPIC_IN_BROKER)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.DELETE_TOPIC_IN_BROKER)
                 .setDeleteTopicRequestHeader(DeleteTopicRequestHeader.newBuilder().setTopic(topicWithProjectGroup))
                 .build();
 
@@ -1324,7 +1332,7 @@ public class MQClientAPIImpl {
             topicWithProjectGroup = VirtualEnvUtil.buildWithProjectGroup(topic, projectGroupPrefix);
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.DELETE_TOPIC_IN_NAMESRV)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.DELETE_TOPIC_IN_NAMESRV)
                 .setDeleteTopicRequestHeader(DeleteTopicRequestHeader.newBuilder().setTopic(topicWithProjectGroup))
                 .build();
 
@@ -1349,7 +1357,7 @@ public class MQClientAPIImpl {
             groupWithProjectGroup = VirtualEnvUtil.buildWithProjectGroup(groupName, projectGroupPrefix);
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.DELETE_SUBSCRIPTIONGROUP)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.DELETE_SUBSCRIPTIONGROUP)
                 .setDeleteSubscriptionGroupRequestHeader(DeleteSubscriptionGroupRequestHeader.newBuilder().setGroupName(groupWithProjectGroup))
                 .build();
 
@@ -1368,7 +1376,7 @@ public class MQClientAPIImpl {
 
     public String getKVConfigValue(final String namespace, final String key, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_KV_CONFIG)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_KV_CONFIG)
                 .setGetKVConfigRequestHeader(GetKVConfigRequestHeader.newBuilder()
                         .setKeyspace(namespace)
                         .setKey(key))
@@ -1397,7 +1405,7 @@ public class MQClientAPIImpl {
                 .setValue(value)
                 .build();
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.PUT_KV_CONFIG)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.PUT_KV_CONFIG)
                 .setPutKVConfigRequestHeader(requestHeader)
                 .build();
 
@@ -1426,7 +1434,7 @@ public class MQClientAPIImpl {
 
     public void deleteKVConfigValue(final String namespace, final String key, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.DELETE_KV_CONFIG)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.DELETE_KV_CONFIG)
                 .setDeleteKVConfigRequestHeader(DeleteKVConfigRequestHeader.newBuilder()
                         .setKeyspace(namespace)
                         .setKey(key))
@@ -1461,7 +1469,7 @@ public class MQClientAPIImpl {
 
     public String getKVConfigByValue(final String namespace, String value, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_KV_CONFIG_BY_VALUE)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_KV_CONFIG_BY_VALUE)
                 .setGetKVConfigRequestHeader(GetKVConfigRequestHeader.newBuilder()
                         .setKeyspace(namespace)
                         .setKey(value))
@@ -1484,7 +1492,7 @@ public class MQClientAPIImpl {
 
     public KVTable getKVListByNamespace(final String namespace, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_KVLIST_BY_NAMESPACE)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_KVLIST_BY_NAMESPACE)
                 .setGetKVListByNamespaceRequestHeader(GetKVListByNamespaceRequestHeader.newBuilder().setKeyspace(namespace))
                 .build();
 
@@ -1504,7 +1512,7 @@ public class MQClientAPIImpl {
 
     public void deleteKVConfigByValue(final String namespace, final String projectGroup,
                                       final long timeoutMillis) throws RemotingException, MQClientException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.DELETE_KV_CONFIG_BY_VALUE)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.DELETE_KV_CONFIG_BY_VALUE)
                 .setDeleteKVConfigRequestHeader(DeleteKVConfigRequestHeader.newBuilder()
                         .setKeyspace(namespace)
                         .setKey(projectGroup))
@@ -1543,7 +1551,7 @@ public class MQClientAPIImpl {
                 .setIsForce(isForce)
                 .build();
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.INVOKE_BROKER_TO_RESET_OFFSET)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.INVOKE_BROKER_TO_RESET_OFFSET)
                 .setResetOffsetRequestHeader(requestHeader)
                 .build();
 
@@ -1567,14 +1575,15 @@ public class MQClientAPIImpl {
     public Map<String, Map<MessageQueue, Long>> invokeBrokerToGetConsumerStatus(final String addr,
                                                                                 final String topic, final String group, final String clientAddr, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
-        GetConsumerStatusRequestHeader requestHeader = GetConsumerStatusRequestHeader.newBuilder()
+        GetConsumerStatusRequestHeader.Builder requestHeaderBuilder = GetConsumerStatusRequestHeader.newBuilder()
                 .setTopic(topic)
-                .setGroup(group)
-                .setClientAddr(clientAddr)
-                .build();
+                .setGroup(group);
+        if (StringUtils.isNotEmpty(clientAddr)) {
+            requestHeaderBuilder.setClientAddr(clientAddr);
+        }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.INVOKE_BROKER_TO_GET_CONSUMER_STATUS)
-                .setGetConsumerStatusRequestHeader(requestHeader)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.INVOKE_BROKER_TO_GET_CONSUMER_STATUS)
+                .setGetConsumerStatusRequestHeader(requestHeaderBuilder)
                 .build();
 
         MessageCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
@@ -1598,7 +1607,7 @@ public class MQClientAPIImpl {
     public GroupList queryTopicConsumeByWho(final String addr, final String topic, final long timeoutMillis)
             throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
             InterruptedException, MQBrokerException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.QUERY_TOPIC_CONSUME_BY_WHO)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.QUERY_TOPIC_CONSUME_BY_WHO)
                 .setQueryTopicConsumeByWhoRequestHeader(QueryTopicConsumeByWhoRequestHeader.newBuilder().setTopic(topic))
                 .build();
 
@@ -1619,7 +1628,7 @@ public class MQClientAPIImpl {
     public Set<QueueTimeSpan> queryConsumeTimeSpan(final String addr, final String topic, final String group,
                                                    final long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQBrokerException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.QUERY_CONSUME_TIME_SPAN)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.QUERY_CONSUME_TIME_SPAN)
                 .setQueryConsumeTimeSpanRequestHeader(QueryConsumeTimeSpanRequestHeader.newBuilder()
                         .setTopic(topic)
                         .setGroup(group))
@@ -1642,7 +1651,7 @@ public class MQClientAPIImpl {
 
     public TopicList getTopicsByCluster(final String cluster, final long timeoutMillis)
             throws RemotingException, MQClientException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_TOPICS_BY_CLUSTER)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_TOPICS_BY_CLUSTER)
                 .setGetTopicsByClusterRequestHeader(GetTopicsByClusterRequestHeader.newBuilder().setCluster(cluster))
                 .build();
 
@@ -1686,7 +1695,7 @@ public class MQClientAPIImpl {
                 .setClassCRC(classCRC)
                 .build();
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.REGISTER_MESSAGE_FILTER_CLASS, classBody)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.REGISTER_MESSAGE_FILTER_CLASS, classBody)
                 .setRegisterMessageFilterClassRequestHeader(requestHeader)
                 .build();
 
@@ -1793,7 +1802,7 @@ public class MQClientAPIImpl {
                 .setJstackEnable(jstack)
                 .build();
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_CONSUMER_RUNNING_INFO)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_CONSUMER_RUNNING_INFO)
                 .setGetConsumerRunningInfoRequestHeader(requestHeader)
                 .build();
 
@@ -1825,7 +1834,7 @@ public class MQClientAPIImpl {
                 .setMsgId(msgId)
                 .build();
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.CONSUME_MESSAGE_DIRECTLY)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.CONSUME_MESSAGE_DIRECTLY)
                 .setConsumeMessageDirectlyResultRequestHeader(requestHeader)
                 .build();
 
@@ -1868,7 +1877,7 @@ public class MQClientAPIImpl {
             }
             requestHeaderBuilder.setFilterGroups(sb.toString());
         }
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.QUERY_CORRECTION_OFFSET)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.QUERY_CORRECTION_OFFSET)
                 .setQueryCorrectionOffsetHeader(requestHeaderBuilder)
                 .build();
 
@@ -2003,10 +2012,10 @@ public class MQClientAPIImpl {
         CloneGroupOffsetRequestHeader requestHeader = CloneGroupOffsetRequestHeader.newBuilder()
                 .setSrcGroup(srcGroup)
                 .setDestGroup(destGroup)
-                .setTopic(topic)
+                .setTopic(topic == null ? "" : topic)
                 .setOffline(isOffline)
                 .build();
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.CLONE_GROUP_OFFSET)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.CLONE_GROUP_OFFSET)
                 .setCloneGroupOffsetRequestHeader(requestHeader)
                 .build();
 
@@ -2027,7 +2036,7 @@ public class MQClientAPIImpl {
     public BrokerStatsData ViewBrokerStatsData(String brokerAddr, String statsName, String statsKey,
                                                long timeoutMillis) throws MQClientException, RemotingConnectException,
             RemotingSendRequestException, RemotingTimeoutException, InterruptedException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.VIEW_BROKER_STATS_DATA)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.VIEW_BROKER_STATS_DATA)
                 .setViewBrokerStatsDataRequestHeader(ViewBrokerStatsDataRequestHeader.newBuilder()
                         .setStatsName(statsName)
                         .setStatsKey(statsKey))

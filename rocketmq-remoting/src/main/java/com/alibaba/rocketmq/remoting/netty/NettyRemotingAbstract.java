@@ -18,7 +18,6 @@ package com.alibaba.rocketmq.remoting.netty;
 import com.alibaba.rocketmq.common.UtilAll;
 import com.alibaba.rocketmq.common.protocol.CommandUtil;
 import com.alibaba.rocketmq.common.protocol.RemotingSysResponseCode;
-import com.alibaba.rocketmq.common.protocol.protobuf.Command;
 import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.ChannelEventListener;
 import com.alibaba.rocketmq.remoting.InvokeCallback;
@@ -41,6 +40,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
+
+import static com.alibaba.rocketmq.common.protocol.protobuf.Command.RpcType.ONE_WAY;
 
 
 /**
@@ -120,7 +121,7 @@ public abstract class NettyRemotingAbstract {
                         plog.error("process request exception", e);
                         plog.error(cmd.toString());
 
-                        if (cmd.hasRpcType() && !cmd.getRpcType().equals(Command.RpcType.ONE_WAY)) {
+                        if (cmd.hasRpcType() && !cmd.getRpcType().equals(ONE_WAY)) {
                             final MessageCommand response =
                                     CommandUtil.createResponseCommand(
                                             RemotingSysResponseCode.SYSTEM_ERROR,//
@@ -357,11 +358,12 @@ public abstract class NettyRemotingAbstract {
     public void invokeOnewayImpl(final Channel channel, final MessageCommand request,
                                  final long timeoutMillis) throws InterruptedException, RemotingTooMuchRequestException,
             RemotingTimeoutException, RemotingSendRequestException {
+        final MessageCommand onewayRequest = MessageCommand.newBuilder(request).setRpcType(ONE_WAY).build();
         boolean acquired = this.semaphoreOneway.tryAcquire(timeoutMillis, TimeUnit.MILLISECONDS);
         if (acquired) {
             final SemaphoreReleaseOnlyOnce once = new SemaphoreReleaseOnlyOnce(this.semaphoreOneway);
             try {
-                channel.writeAndFlush(request).addListener(new ChannelFutureListener() {
+                channel.writeAndFlush(onewayRequest).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture f) throws Exception {
                         once.release();

@@ -41,6 +41,7 @@ import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.SendMessageReq
 import com.alibaba.rocketmq.common.sysflag.MessageSysFlag;
 import com.alibaba.rocketmq.remoting.RPCHook;
 import com.alibaba.rocketmq.remoting.exception.RemotingException;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -303,8 +304,10 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                         .setProducerGroup(producerGroup)
                         .setTranStateTableOffset(checkRequestHeader.getTranStateTableOffset())
                         .setFromTransactionCheck(true)
-                        .setMsgId(message.getMsgId())
-                        .setTransactionId(checkRequestHeader.getTransactionId());
+                        .setMsgId(message.getMsgId());
+                if (StringUtils.isNotEmpty(checkRequestHeader.getTransactionId())) {
+                    thisHeaderBuilder.setTransactionId(checkRequestHeader.getTransactionId());
+                }
 
                 switch (localTransactionState) {
                     case COMMIT_MESSAGE:

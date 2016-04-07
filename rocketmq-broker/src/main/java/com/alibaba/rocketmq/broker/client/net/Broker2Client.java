@@ -76,7 +76,7 @@ public class Broker2Client {
                                               final CheckTransactionStateRequestHeader requestHeader,//
                                               final SelectMapedBufferResult selectMapedBufferResult//
     ) {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.CHECK_TRANSACTION_STATE)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.CHECK_TRANSACTION_STATE)
                 .setCheckTransactionStateRequestHeader(requestHeader)
                 .setRpcType(Command.RpcType.ONE_WAY)
                 .build();
@@ -121,7 +121,7 @@ public class Broker2Client {
             return;
         }
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.NOTIFY_CONSUMER_IDS_CHANGED)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.NOTIFY_CONSUMER_IDS_CHANGED)
                 .setNotifyConsumerIdsChangedRequestHeader(NotifyConsumerIdsChangedRequestHeader.newBuilder().setConsumerGroup(consumerGroup))
                 .build();
 
@@ -179,7 +179,7 @@ public class Broker2Client {
                 .setTimestamp(timeStamp)
                 .build();
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.RESET_CONSUMER_CLIENT_OFFSET, body.encode())
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.RESET_CONSUMER_CLIENT_OFFSET, body.encode())
                 .setResetOffsetRequestHeader(requestHeader)
                 .build();
 
@@ -236,7 +236,7 @@ public class Broker2Client {
      * Broker主动获取Consumer端的消息情况
      */
     public MessageCommand getConsumeStatus(String topic, String group, String originClientId) {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.GET_CONSUMER_STATUS_FROM_CLIENT)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.GET_CONSUMER_STATUS_FROM_CLIENT)
                 .setGetConsumerStatusRequestHeader(GetConsumerStatusRequestHeader.newBuilder()
                         .setTopic(topic)
                         .setGroup(group))

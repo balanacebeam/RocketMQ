@@ -61,7 +61,7 @@ public class FilterServerOuterAPI {
                                                                            final String filterServerAddr// 2
     ) throws MessageCommandException, RemotingConnectException, RemotingSendRequestException,
             RemotingTimeoutException, InterruptedException, MQBrokerException {
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.REGISTER_FILTER_SERVER)
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.REGISTER_FILTER_SERVER)
                 .setRegisterFilterServerRequestHeader(RegisterFilterServerRequestHeader.newBuilder().setFilterServerAddr(filterServerAddr))
                 .build();
 

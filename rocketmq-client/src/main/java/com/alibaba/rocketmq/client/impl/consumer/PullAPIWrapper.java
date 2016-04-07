@@ -35,6 +35,7 @@ import com.alibaba.rocketmq.common.protocol.protobuf.BrokerHeader.PullMessageReq
 import com.alibaba.rocketmq.common.protocol.route.TopicRouteData;
 import com.alibaba.rocketmq.common.sysflag.PullSysFlag;
 import com.alibaba.rocketmq.remoting.exception.RemotingException;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
@@ -212,8 +213,10 @@ public class PullAPIWrapper {
                     .setSysFlag(sysFlagInner)
                     .setCommitOffset(commitOffset)
                     .setSuspendTimeoutMillis(brokerSuspendMaxTimeMillis)
-                    .setSubscription(subExpression)
                     .setSubVersion(subVersion);
+            if (StringUtils.isNotEmpty(subExpression)) {
+                requestHeaderBuilder.setSubscription(subExpression);
+            }
 
             String projectGroupPrefix = this.mQClientFactory.getMQClientAPIImpl().getProjectGroupPrefix();
             if (!UtilAll.isBlank(projectGroupPrefix)) {

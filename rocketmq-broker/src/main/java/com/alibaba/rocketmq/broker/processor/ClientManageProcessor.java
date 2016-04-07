@@ -190,8 +190,7 @@ public class ClientManageProcessor implements NettyRequestProcessor {
             throws MessageCommandException {
         final GetConsumerListByGroupRequestHeader requestHeader = request.getGetConsumerListByGroupRequestHeader();
 
-        ConsumerGroupInfo consumerGroupInfo =
-                this.brokerController.getConsumerManager().getConsumerGroupInfo(
+        ConsumerGroupInfo consumerGroupInfo = this.brokerController.getConsumerManager().getConsumerGroupInfo(
                         requestHeader.getConsumerGroup());
 
         final MessageCommand.Builder responseBuilder = CommandUtil.createResponseBuilder(request.getOpaque());

@@ -96,7 +96,7 @@ public class PullRequestHoldService extends ServiceThread {
                     // 查看是否offset OK
                     if (maxOffset > request.getPullFromThisOffset()) {
                         try {
-                            this.brokerController.getPullMessageProcessor().excuteRequestWhenWakeup(
+                            this.brokerController.getPullMessageProcessor().executeRequestWhenWakeup(
                                     request.getClientChannel(), request.getRequestCommand());
                         } catch (MessageCommandException e) {
                             log.error("", e);
@@ -109,7 +109,7 @@ public class PullRequestHoldService extends ServiceThread {
                                 this.brokerController.getMessageStore().getMaxOffsetInQuque(topic, queueId);
                         if (newestOffset > request.getPullFromThisOffset()) {
                             try {
-                                this.brokerController.getPullMessageProcessor().excuteRequestWhenWakeup(
+                                this.brokerController.getPullMessageProcessor().executeRequestWhenWakeup(
                                         request.getClientChannel(), request.getRequestCommand());
                             } catch (MessageCommandException e) {
                                 log.error("", e);
@@ -122,7 +122,7 @@ public class PullRequestHoldService extends ServiceThread {
                     if (System.currentTimeMillis() >= (request.getSuspendTimestamp() + request
                             .getTimeoutMillis())) {
                         try {
-                            this.brokerController.getPullMessageProcessor().excuteRequestWhenWakeup(
+                            this.brokerController.getPullMessageProcessor().executeRequestWhenWakeup(
                                     request.getClientChannel(), request.getRequestCommand());
                         } catch (MessageCommandException e) {
                             log.error("", e);

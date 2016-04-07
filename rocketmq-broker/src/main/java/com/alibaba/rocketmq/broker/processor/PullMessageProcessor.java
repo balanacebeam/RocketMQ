@@ -84,12 +84,12 @@ public class PullMessageProcessor implements NettyRequestProcessor {
     @Override
     public MessageCommand processRequest(final ChannelHandlerContext ctx, MessageCommand request)
             throws MessageCommandException {
-        MessageCommand.Builder responseBuiler = this.processRequest(ctx.channel(), request, true);
+        MessageCommand.Builder responseBuilder = this.processRequest(ctx.channel(), request, true);
 
-        return responseBuiler == null ? null : responseBuiler.build();
+        return responseBuilder == null ? null : responseBuilder.build();
     }
 
-    public void excuteRequestWhenWakeup(final Channel channel, final MessageCommand request)
+    public void executeRequestWhenWakeup(final Channel channel, final MessageCommand request)
             throws MessageCommandException {
         Runnable run = new Runnable() {
             @Override
@@ -121,7 +121,7 @@ public class PullMessageProcessor implements NettyRequestProcessor {
                         }
                     }
                 } catch (MessageCommandException e1) {
-                    log.error("excuteRequestWhenWakeup run", e1);
+                    log.error("executeRequestWhenWakeup run", e1);
                 }
             }
         };
@@ -157,10 +157,11 @@ public class PullMessageProcessor implements NettyRequestProcessor {
     }
 
     private MessageCommand.Builder processRequest(final Channel channel, MessageCommand request,
-                                          boolean brokerAllowSuspend) throws MessageCommandException {
+                                                  boolean brokerAllowSuspend) throws MessageCommandException {
         final PullMessageRequestHeader requestHeader = request.getPullMessageRequestHeader();
 
         MessageCommand.Builder responseBuilder = CommandUtil.createResponseBuilder(request.getOpaque());
+
         if (log.isDebugEnabled()) {
             log.debug("receive PullMessage request command, " + request);
         }
@@ -286,23 +287,22 @@ public class PullMessageProcessor implements NettyRequestProcessor {
                 this.brokerController.getMessageStore().getMessage(requestHeader.getConsumerGroup(),
                         requestHeader.getTopic(), requestHeader.getQueueId(), requestHeader.getQueueOffset(),
                         requestHeader.getMaxMsgNums(), subscriptionData);
+        PullMessageResponseHeader.Builder responseHeaderBuilder = PullMessageResponseHeader.newBuilder();
         if (getMessageResult != null) {
-            PullMessageResponseHeader.Builder responseHeader = PullMessageResponseHeader.newBuilder()
-                    .setNextBeginOffset(getMessageResult.getNextBeginOffset())
+            responseHeaderBuilder.setNextBeginOffset(getMessageResult.getNextBeginOffset())
                     .setMinOffset(getMessageResult.getMinOffset())
                     .setMaxOffset(getMessageResult.getMaxOffset());
 
             responseBuilder.setRemark(getMessageResult.getStatus().name());
-            responseBuilder.setPullMessageResponseHeader(responseHeader);
 
             // 消费较慢，重定向到另外一台机器
             if (getMessageResult.isSuggestPullingFromSlave()) {
-                responseHeader.setSuggestWhichBrokerId(subscriptionGroupConfig
+                responseHeaderBuilder.setSuggestWhichBrokerId(subscriptionGroupConfig
                         .getWhichBrokerWhenConsumeSlowly());
             }
             // 消费正常，按照订阅组配置重定向
             else {
-                responseHeader.setSuggestWhichBrokerId(subscriptionGroupConfig.getBrokerId());
+                responseHeaderBuilder.setSuggestWhichBrokerId(subscriptionGroupConfig.getBrokerId());
             }
 
             switch (getMessageResult.getStatus()) {
@@ -399,9 +399,17 @@ public class PullMessageProcessor implements NettyRequestProcessor {
                             getMessageResult.getMessageCount());
 
                     try {
-                        FileRegion fileRegion =
-                                new ManyMessageTransfer(ByteBuffer.wrap(responseBuilder.build().toByteArray()),
-                                        getMessageResult);
+                        responseBuilder.setPullMessageResponseHeader(responseHeaderBuilder);
+
+                        byte[] data = responseBuilder.build().toByteArray();
+                        int headerLength = 4 + 4 + 4 + data.length;
+                        ByteBuffer headerData = ByteBuffer.allocate(headerLength);
+                        headerData.putInt(headerLength - 4 + getMessageResult.getBufferTotalSize()); // total length
+                        headerData.putInt(Integer.MAX_VALUE); // send file flag value
+                        headerData.putInt(data.length); // protobuf data length
+                        headerData.put(data);
+                        headerData.flip();
+                        FileRegion fileRegion = new ManyMessageTransfer(headerData, getMessageResult);
                         channel.writeAndFlush(fileRegion).addListener(new ChannelFutureListener() {
                             @Override
                             public void operationComplete(ChannelFuture future) throws Exception {
@@ -457,17 +465,23 @@ public class PullMessageProcessor implements NettyRequestProcessor {
                         event.setOffsetNew(getMessageResult.getNextBeginOffset());
                         this.generateOffsetMovedEvent(event);
                     } else {
-                        responseHeader.setSuggestWhichBrokerId(subscriptionGroupConfig.getBrokerId());
+                        responseHeaderBuilder.setSuggestWhichBrokerId(subscriptionGroupConfig.getBrokerId());
                         responseBuilder.setCode(ResponseCode.PULL_RETRY_IMMEDIATELY);
                     }
+
+                    responseBuilder.setPullMessageResponseHeader(responseHeaderBuilder);
 
                     log.warn(
                             "PULL_OFFSET_MOVED:topic={}, groupId={}, clientId={}, offset={}, suggestBrokerId={}",
                             requestHeader.getTopic(), requestHeader.getConsumerGroup(),
-                            requestHeader.getQueueOffset(), responseHeader.getSuggestWhichBrokerId());
+                            requestHeader.getQueueOffset(), responseHeaderBuilder.getSuggestWhichBrokerId());
                     break;
                 default:
                     assert false;
+            }
+
+            if (responseBuilder != null && responseHeaderBuilder != null) {
+                responseBuilder.setPullMessageResponseHeader(responseHeaderBuilder);
             }
         } else {
             responseBuilder.setCode(ResponseCode.SYSTEM_ERROR);

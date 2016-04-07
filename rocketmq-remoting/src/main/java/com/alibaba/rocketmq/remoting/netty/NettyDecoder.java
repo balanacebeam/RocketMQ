@@ -15,7 +15,7 @@
  */
 package com.alibaba.rocketmq.remoting.netty;
 
-import com.alibaba.rocketmq.common.protocol.protobuf.Command;
+import com.alibaba.rocketmq.common.protocol.protobuf.Command.MessageCommand;
 import com.alibaba.rocketmq.remoting.common.RemotingHelper;
 import com.alibaba.rocketmq.remoting.common.RemotingUtil;
 import com.google.protobuf.ByteString;
@@ -37,7 +37,7 @@ public class NettyDecoder extends LengthFieldBasedFrameDecoder {
     private static final int FRAME_MAX_LENGTH = //
             Integer.parseInt(System.getProperty("com.rocketmq.remoting.frameMaxLength", "8388608"));
 
-    private Command.MessageCommand messageCommand = Command.MessageCommand.getDefaultInstance();
+    private MessageCommand messageCommand = MessageCommand.getDefaultInstance();
 
     public NettyDecoder() {
         super(FRAME_MAX_LENGTH, 0, 4, 0, 4);
@@ -54,8 +54,29 @@ public class NettyDecoder extends LengthFieldBasedFrameDecoder {
             }
 
             ByteBuffer byteBuffer = frame.nioBuffer();
+            int total = byteBuffer.limit();
+            boolean sendFileFlag = byteBuffer.getInt() == Integer.MAX_VALUE ? true : false;
+            if (sendFileFlag) {
+                int protobufPartLen = byteBuffer.getInt();
+                byte[] protobufData = new byte[protobufPartLen];
+                byteBuffer.get(protobufData);
+                MessageCommand command = messageCommand.getParserForType().parseFrom(protobufData);
 
-            return messageCommand.getParserForType().parseFrom(ByteString.copyFrom(byteBuffer));
+                int bodyLen = total - 4 - 4 - protobufPartLen;
+
+                if (bodyLen <= 0) {
+                    return command;
+                }
+
+                byte[] body = new byte[bodyLen];
+                byteBuffer.get(body);
+
+                return MessageCommand.newBuilder(command).setBody(ByteString.copyFrom(body)).build();
+            } else {
+                byteBuffer.clear();
+
+                return messageCommand.getParserForType().parseFrom(ByteString.copyFrom(byteBuffer));
+            }
         } catch (Exception e) {
             log.error("decode exception, " + RemotingHelper.parseChannelRemoteAddr(ctx.channel()), e);
             RemotingUtil.closeChannel(ctx.channel());

@@ -271,7 +271,7 @@ public class AdminBrokerProcessor implements NettyRequestProcessor {
         }
 
         try {
-            MessageCommand newRequest = CommandUtil.createRequestBuiler(requestCode, request.getBody().toByteArray())
+            MessageCommand newRequest = CommandUtil.createRequestBuilder(requestCode, request.getBody().toByteArray())
                     .addAllExtFields(request.getExtFieldsList())
                     .build();
 

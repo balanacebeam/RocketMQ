@@ -86,7 +86,7 @@ public class CommandUtil {
                 .build();
     }
 
-    public static MessageCommand.Builder createRequestBuiler(int code) {
+    public static MessageCommand.Builder createRequestBuilder(int code) {
         return MessageCommand.newBuilder()
                 .setRpcType(REQUEST)
                 .setCode(code)
@@ -94,7 +94,7 @@ public class CommandUtil {
                 .setOpaque(RequestId.getAndIncrement());
     }
 
-    public static MessageCommand.Builder createRequestBuiler(int code, byte[] body) {
+    public static MessageCommand.Builder createRequestBuilder(int code, byte[] body) {
         MessageCommand.Builder builder = MessageCommand.newBuilder()
                 .setRpcType(REQUEST)
                 .setCode(code)

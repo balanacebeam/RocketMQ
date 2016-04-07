@@ -130,7 +130,7 @@ public class BrokerOuterAPI {
         requestBody.setTopicConfigSerializeWrapper(topicConfigWrapper);
         requestBody.setFilterServerList(filterServerList);
 
-        MessageCommand request = CommandUtil.createRequestBuiler(RequestCode.REGISTER_BROKER, requestBody.encode())
+        MessageCommand request = CommandUtil.createRequestBuilder(RequestCode.REGISTER_BROKER, requestBody.encode())
                 .setRegisterBrokerRequestHeader(requestHeader)
                 .build();
 
