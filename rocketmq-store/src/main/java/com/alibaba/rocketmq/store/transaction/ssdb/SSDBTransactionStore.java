@@ -7,6 +7,7 @@ import com.alibaba.rocketmq.store.transaction.TransactionRecord;
 import com.alibaba.rocketmq.store.transaction.TransactionStore;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.nutz.ssdb4j.SSDBs;
 import org.nutz.ssdb4j.spi.Response;
@@ -45,7 +46,10 @@ public class SSDBTransactionStore implements TransactionStore {
     }
 
     private static String doBuildLogKey(String brokerName, String producerGroup, long offset) {
-        return brokerName + KEY_SEP + producerGroup + KEY_SEP + offset;
+        final int MAX_LONG_STR_LENGTH = 21;
+        String paddedOffset = StringUtils.leftPad(String.valueOf(offset), MAX_LONG_STR_LENGTH, '0');
+
+        return brokerName + KEY_SEP + producerGroup + KEY_SEP + paddedOffset;
     }
 
     private static boolean parseResponse(Response response) {
